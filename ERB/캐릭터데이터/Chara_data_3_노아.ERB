@@ -1,0 +1,207 @@
+﻿@CHARAMOVE_DATA_3(ARG, ARG:2)
+LOCAL = 3
+SELECTCASE ARG
+	;연동설정 (RETURN=의존하는 캐릭터, RESULT:1~3=대등하게 연동되는 캐릭터)
+	CASE 1
+		;안안이랑 미리아랑 같이 다니거라
+		RESULT:1 = [[안안]]
+		RESULT:2 = [[미리아]]
+	;특수생활시간 설정 (CFLAG:LOCAL:생활시간보정 을 설정)
+	CASE 3
+	;이동경향 (±~10=가기 쉽다/가기 어렵다, -100=가지 않는다)
+	CASE 4
+		SELECTCASE ARG:2
+			;노아는 아틀리에 좋아하지만 딱히 밖에 나가는 걸 싫어하는 느낌은 아니지
+
+			;방에 제발 그만 처박히고 움직이라고!!!
+			CASE P1메루루방, P2코코・한나방, P3레이아・미리아방, P5에마・히로방, P6마고・나노카방, P7셰리・아리사방, P79대마녀방
+				RETURN -10
+
+			;...이지만 노아는 자기 방 좋아하지... 그럼 좀 덜 - 해줘야겠네
+			CASE P4노아・안안방
+				RETURN -5
+
+			;저수조는 좀 덜 갈지도.
+			CASE P37저수조
+				RETURN -10
+
+			;아틀리에는 매우 좋아한다.
+			CASE P73아틀리에
+				RETURN 10
+
+			;자꾸 지하 1층에 애들 처박히는 거 막기 위해서 지하 1층의 모든 구역은 좀 덜 가게 설정하겠다
+			CASE P8감옥복도, P9지하1층계단, P10소각로통로, P11소각로, P12징벌방통로, P13징벌방복도, P14징벌방1, P15징벌방2, P16징벌방3, P17징벌방4, P18징벌방5, P19징벌방6, P20징벌방7, P21징벌방8
+				RETURN -5
+
+		ENDSELECT
+	;출현장소
+	CASE 7
+		SELECTCASE ARG:2
+		;	CASE 벚꽃길토리이, 신사경내, 신사본당, 신사툇마루
+		;		RETURN 1
+		ENDSELECT
+	;인력설정 (CFLAG:LOCAL:인력점을 설정한다)
+	CASE 8
+		;감옥 가 있어야 하는 시간에는 감옥에 있음
+		;본래 가야하는 시간의 약 20분 전부터 움직이게 해야 그나마 들어가는 듯...
+		;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		IF INRANGE(TIME, 0, 360) || INRANGE(TIME, 580, 720) || INRANGE(TIME, 880, 1020) || INRANGE(TIME, 1300, 1440)
+			TCVAR:LOCAL:인력점 = P4노아・안안방
+			;근데 못 들어갔을 때를 대비해야 하니까
+			;못 들어가면 인력점을 리셋하고 배회하도록... 안 그러면 무한루프 빠지네.
+			;SIF (INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)) && (CFLAG:3:현재위치 != P4노아・안안방)
+			;	TCVAR:LOCAL:인력점 = 0
+		ENDIF
+
+		;06:00~09:00 , 12:00~14:00, 17:00~21:00 에만 "맛없는식사" 제공
+		;안안 미리아 코코는 7시 30분 - 8시 30분 / 13시 - 14시 / 20시 - 21시
+		;노아도 얘들이랑 같이 밥을 먹는데 33% 확률로만 그날 나옴 CFLAG:LOCAL:오늘의운세 % 3 == 1
+		IF (INRANGE(TIME, 450, 510) || INRANGE(TIME, 780, 840) || INRANGE(TIME, 1200, 1260)) && CFLAG:LOCAL:오늘의운세 % 3 == 1
+			TCVAR:LOCAL:인력점 = P45식당
+		ENDIF
+
+		; 노 아 는 안 씻 어
+
+		;월 금 18시 ~ 19시 30분까지는 안안과 아틀리에에서 대 문 호 의 시간
+		IF FLAG:아틀리에개방 &&	INRANGE(TIME, 1080, 1170)
+			TCVAR:LOCAL:인력점 = P73아틀리에
+		ENDIF
+ENDSELECT
+
+@EXIST_캐릭터데이터3
+#LOCALSIZE 1
+#LOCALSSIZE 1
+
+@캐릭터데이터3(ARG, O_DATA, V_NAME)
+#FUNCTION
+#LOCALSIZE 1
+#LOCALSSIZE 1
+#DIMS O_DATA
+#DIMS V_NAME
+SELECTCASE O_DATA
+CASE "통칭"
+	CALLF MAKE_STR(V_NAME, "노아")
+
+;여기서부터 의상 설정
+
+;파자마 설정을 해줘야 하나... 얘들 걍 감옥 지급 옷 입고 자는데
+CASE "오늘의 파자마"
+	CALLF MAKE_STR(V_NAME, "노아의 파자마")
+
+CASE "평상복：모자"
+	CALLF MAKE_INT(V_NAME, CLOTHES_ID("모자", "빵모자"))
+
+CASE "평상복：외투"
+	CALLF MAKE_INT(V_NAME, CLOTHES_ID("외투", "검은 누비 점퍼"))
+
+CASE "평상복：상반신윗도리2"
+	CALLF MAKE_INT(V_NAME, CLOTHES_ID("상반신윗도리2", "레이스 흰 블라우스"))
+
+CASE "평상복：치마"
+	CALLF MAKE_INT(V_NAME, CLOTHES_ID("치마", "삼원색 치마"))
+
+CASE "평상복：양말"
+	CALLF MAKE_INT(V_NAME, CLOTHES_ID("양말", "검은 스타킹"))
+
+CASE "평상복：신발"
+	CALLF MAKE_INT(V_NAME, CLOTHES_ID("신발", "리본 부츠"))
+
+
+
+;CASE "평상복：원피스"
+;	CALLF MAKE_INT(V_NAME, CLOTHES_ID("원피스", "프릴 원피스"))
+;CASE "평상복：액세서리"
+;	CALLF MAKE_INT(V_NAME, CLOTHES_ID("액세서리", "스케치북"))
+;CASE "평상복：바지"
+;	CALLF MAKE_INT(V_NAME, CLOTHES_ID("바지", "호박 바지"))
+;CASE "평상복：그외1"
+;	CALLF MAKE_INT(V_NAME, CLOTHES_ID("그외1", "가터벨트"))
+;CASE "평상복：그외2"
+;	CALLF MAKE_INT(V_NAME, CLOTHES_ID("그외2", "브로치"))
+
+
+
+
+;CASE "고유커맨드"
+;	CALLF MAKE_STR(V_NAME, "운세뽑기계약")
+;CASE "고유커맨드 실행 가능"
+;	CALLF MAKE_INT(V_NAME, !FLAG:운세뽑기계약)
+
+CASE "고유 속옷 형용사"
+	CALLF MAKE_STR(V_NAME, "어딘가 아직 어린 느낌이 남아있는")
+CASE "고유 하반신속옷명"
+	CALLF MAKE_STR(V_NAME, "풋풋해 보이는 팬티")
+CASE "고유 상반신속옷"
+	CALLF MAKE_INT(V_NAME, 1)
+CASE "고유 상반신속옷명"
+	CALLF MAKE_STR(V_NAME, "풋풋해 보이는 브래지어")
+CASE "고유 속옷 착용 조건"
+	SIF !RAND:(1 + (2 * 승부속옷판정([[노아]])))
+		CALLF MAKE_INT(V_NAME, 1)
+CASE "고유 속옷 비쳐보이는(앞)"
+	CALLF MAKE_INT(V_NAME, 1)
+CASE "고유 속옷 비쳐보이는(뒤)"
+	CALLF MAKE_INT(V_NAME, 1)
+CASE "고유 속옷 옷감 두께"
+	CALLF MAKE_INT(V_NAME, 2)
+
+
+
+
+;요리 관련
+;노아는 스트리트 키드기도 하니까... 애같은 입맛에...
+CASE "요리：좋아하는 맛"
+	CALLF MAKE_STR(V_NAME, "양식/매운/생선 요리/짠/선명한/푸짐/우유/" + "단/정키/" * 2 + "예술적/" * 3)
+;	CALLF MAKE_STR(V_NAME, "쌀/양식/이파리/가벼운/담백/검소/품위있는/가정적/푹신푹신/" + "단/시큼한/" * 2 + "봄철/센베이/" * 3)
+CASE "요리：싫어하는 맛"
+	CALLF MAKE_STR(V_NAME, "담백/시큼한/콩/기능적/" * 2 + "야채/이파리/가정적/" * 3)
+;	CALLF MAKE_STR(V_NAME, "매운/요력/" * 2 + "그로테스크/수수께끼 요리/" * 5)
+CASE "요리：조수 효과"
+	CALLF MAKE_STR(V_NAME, "색배합/")
+;	CALLF MAKE_STR(V_NAME, "담백한 맛/특기요리＊일식＊/")
+
+
+;일단 선물 선호 관련은 차후로 미루는 것으로.
+
+;선물 관련
+;CASE "감성：좋아함" ;JP판 수정요망, 존재하지 않는 형용사 蓮華蝶の. 연꽃나비(蓮花蝶の) 오타로 추정
+;	CALLF MAKE_STR(V_NAME, "빨강빛/질서/귀여운/일본풍/" + "신령/주술/부적/여우의/봄의/영원한/" * 3 + "蓮華蝶の/벛꽃의/무녀의/낙원의/봉마의/바늘/불제봉/" * 5)
+;CASE "감성：싫어함"
+;	CALLF MAKE_STR(V_NAME, "혼돈/서양풍/로리타/매니악/" + "손목호구/기계/" * 3 + "요괴/" * 5 + "모리야의/요괴의/" * 10)
+
+
+;여기는 의뢰 ID가 관련하지 않는 정보
+;의뢰 발생율 스카2/일반3/고유 5
+CASE "의뢰 없음 발생율"
+	CALLF MAKE_INT(V_NAME, 3)
+CASE "일반의뢰발생율"
+	CALLF MAKE_INT(V_NAME, 2)
+CASE "고유의뢰발생율"
+	CALLF MAKE_INT(V_NAME, 5)
+CASE "고유의뢰최종 요소"
+	CALLF MAKE_INT(V_NAME, 103)
+CASEELSE
+	;고유의뢰관련의 데이터에 바톤 터치
+
+;고유 카운터 테스트
+
+ENDSELECT
+
+;-------------------------------------------------
+;고유요리설정
+;DISH_NAME          요리명
+;RESULTS            요리의 종류(경식/주식/디저트）
+;CALL 재료설정("")  재료의 설정。"범용"을 넣으면 자동으로 범용 식재료가 된다
+;DISH_TASTE         맛의 설정
+;DISH_COMMENT       (임의）한줄 코멘트
+;DISH_TIME          (임의）조리 소요 시간
+;DISH_MAXLIMIT      (임의）요리의 지속 시간
+;-------------------------------------------------
+@SPECIAL_MENU_3
+DISH_NAME = 양념 생선 반튀김
+RESULTS = 경식
+CALL 재료설정("물고기")
+DISH_TASTE = 생선 요리/정키/정키/매운/따뜻한/가벼운/짠/
+DISH_COMMENT = 물가에서 가끔 보이는 작은 피래미들을 물과 밀가루만을 사용해 구운 후, 몇 가지 향신료를 뿌려먹는 정크 푸드. 기교 섞인 정식 요리보단 심심한 입을 달래주는 군것질거리에 가깝다.
+
+RETURN 1
