@@ -1,0 +1,836 @@
+﻿;낚시를 한다
+@COM621
+#DIM 잡힌것
+#DIM 낚시파워
+#DIM 낚시파워M
+#DIM 낚시파워T
+#DIM 잡히지않는보정
+#DIM 낚시운
+#DIM CHARA
+#DIM 상대자가낚시했다
+#DIM 活性
+#DIM FISHED, 2
+
+상대자가낚시했다 = 0
+;참가자 판정
+IF FLAG:데이트상대
+	CHARA = FLAG:데이트상대
+ELSEIF TARGET && ABL:TARGET:친밀 >= 5 - TALENT:TARGET:낚시Lv && SHIRAHU(TARGET) && CFLAG:TARGET:행동 != 5
+	CHARA = TARGET
+ELSE
+	CHARA = 0
+ENDIF
+
+
+;(天候パッチ)連続降水カウンター10以上で鉄砲水に巻き込まれる可能性
+IF CONTINUOUS_RAINFALL >= 10 && RAND:(MAX(10, 40 - CONTINUOUS_RAINFALL)) == 0
+	PRINTFORML …호수의 모습이 이상하다
+	PRINTFORMW ！！　급류가 범람했다！！
+	
+	PRINTFORML 
+	PRINTFORML %마스터는% 호수에 쓸려나가다가
+	PRINTFORML 간신히 헤엄쳐 나오는 데에 성공했다…
+	PRINTL 
+	CALL ASK_DIARY("급류의 범람과 조우했다")
+	BASE:MASTER:체력 = 0
+	RETURN -1
+ENDIF
+
+;季節ごとの活性
+SELECTCASE DAY:2
+	CASE 1  ;春
+		活性 = 10
+	CASE 2  ;夏
+		活性 = 7
+	CASE 3  ;秋
+		活性 = 10
+	CASE 4  ;冬
+		活性 = 3
+ENDSELECT
+;時刻ごとの活性補正
+SELECTCASE TIME:2
+	CASE 1, 4  ;早朝と昼下がり
+		活性 += 10
+	CASE 5, 6  ;夕と夜
+		活性 += 5
+ENDSELECT
+;天気による活性
+;(天候パッチ)豪雨・ひょう・あられ
+SELECTCASE TIME:5
+	CASE 3, 6 ;曇、霧雨
+		活性 += 5
+	CASE 4, 5, 14, 15 ;雨
+		活性 += 7
+	CASE 13
+		IF GET_HEAT_THUNDERSTORM() == 1 || GET_FRONTAL_THUNDERSTORM() == 1
+			活性 += 7
+		ELSE
+			活性 -= 3
+		ENDIF
+	CASE 8 TO 12 ;雪系統はマイナス
+		活性 -= 3
+ENDSELECT
+;虹が出てるときは、雨の後で水が濁っているだろう
+SELECTCASE TIME:7
+	CASE 1
+		活性 += 7
+ENDSELECT
+;(天候パッチ)連続降水カウンター分活性にプラス(最大+10)
+活性 += MIN(10, CONTINUOUS_RAINFALL)
+
+;일일로―50~+50, 아이템이나 기원등으로 보정을 걸치는 일도 가능
+낚시운 = CFLAG:MASTER:오늘의운세 / 10 - 50
+
+;釣り技能で活性を察知
+IF TALENT:MASTER:낚시Lv >= 3
+	SETCOLOR C_L_GRAY
+	SELECTCASE (活性 + 낚시운)
+		CASE IS <= 10
+			PRINTFORML （물고기가 거의 없다시피 하다...）
+		CASE 11 TO 30
+			PRINTFORML （물고기의 수가 적다...）
+		CASE 31 TO 50
+			PRINTFORML （물고기가 그럭저럭 보인다...）
+		CASE 51 TO 65
+			PRINTFORML （물고기가 꽤 많이 보인다...）
+		CASEELSE
+			PRINTFORML （수면이 찰랑일정도로 물고기가 붐비고 있다...）
+	ENDSELECT
+	RESETCOLOR
+ENDIF
+
+;낚시의 묘미 (참다운 즐거움)은 대기 시간이라고 들었다
+FOR LOCAL, 0, 5
+	REUSELASTLINE  \@ CHARA ?  %조사처리(CALLNAME:CHARA,"과")% 함께 #  \@낚시중. %". " * LOCAL%
+	TWAIT 150, 1
+NEXT
+;낚시파워설정
+낚시파워M = MIN(10 + TALENT:MASTER:낚시Lv * 15 + 낚시운 + 잡히지않는보정, 100)
+SIF CHARA
+	낚시파워T = MIN(10 + TALENT:CHARA:낚시Lv * 15 + 잡히지않는보정, 100)
+
+;(낚시파워)%로 잡힌다
+FISHED:0 = RAND:100
+IF FISHED < 낚시파워M
+	낚시파워= 낚시파워M
+	$FISH
+	;잡히면(자) 보정 리셋
+	잡히지않는보정 = 0
+	;낚시파워로 잡히는 것이 바뀐다
+	SELECTCASE RAND:낚시파워
+	CASE IS < 5
+		;목재
+		잡힌것 = 610
+	CASE 51 TO 60
+		;개구리
+		잡힌것 = 706
+	CASE 10 TO 50, 61 TO 89
+		FISHED:1 = (FISHED:0 + 10) / 10 * 10
+		잡힌것 = FISHING_CATCH(FISHED:1)
+	CASE IS < 95
+		잡힌것 = FISHING_CATCH(95)
+	CASEELSE
+		잡힌것 = FISHING_CATCH(100)
+		;보너스
+		IF 상대자가낚시했다
+			EXP:CHARA:낚시경험 ++
+		ELSE
+			EXP:MASTER:낚시경험 ++
+		ENDIF
+	ENDSELECT
+	;아이템에 추가
+	SELECTCASE 잡힌것
+		CASE 1 TO 10, 22 TO 23
+			CALL GET_ITEM("물고기",1,1)
+		CASE 11 TO 20, 24 TO 60
+			CALL GET_ITEM("맛있는물고기",1,1)
+		CASE 21
+			CALL GET_ITEM("로터",1,1)
+		CASEELSE
+			SIF ITEM:잡힌것 < 99
+			ITEM:잡힌것 ++
+	ENDSELECT
+;CHARA가 낚시했을 경우
+ELSEIF CHARA && RAND:100 < 낚시파워T
+	낚시파워= 낚시파워T
+	상대자가낚시했다 = 1
+	GOTO FISH
+;잡히지 않았으면 보정 가산, 잡힐 때까지 축적해 나간다
+ELSE
+	잡히지않는보정 += 10
+	잡힌것 = 0
+ENDIF
+
+;기본의 경험
+EXP:MASTER:낚시경험 ++
+
+SIF ITEM:107 && !RAND:2
+	EXP:MASTER:낚시경험 ++
+
+SIF CHARA
+	EXP:CHARA:낚시경험 ++
+;낚시한 사람의 추가 경험
+IF 잡힌것
+	IF 상대자가낚시했다
+		EXP:CHARA:낚시경험 ++
+	ELSE
+		EXP:MASTER:낚시경험 ++
+	ENDIF
+ENDIF
+;데이트경험
+IF CHK_DATENOW(CFLAG:CHARA:데이트중) && CHARA > 0
+	CALL 붉은실발동
+	EXP:MASTER:데이트경험 ++
+	EXP:CHARA:데이트경험 ++
+ENDIF
+
+;당신이 낚시하면(자) 체력 감소
+SIF 잡힌것 && !상대자가낚시했다 && BASE:MASTER:기력 > 0
+	DOWNBASE:MASTER:체력 += 25
+DOWNBASE:MASTER:기력 += 100
+
+;참가자의 소스, 적당하게 설정하고 있습니다, 동일 커맨드 제한을 받지 않기 때문에 조심스럽게, 다만 잡히지 않으면 매회 반감
+IF CHARA > 0
+	;고정으로 획득하는 소스
+	SOURCE:CHARA:환락 = 400
+	SOURCE:CHARA:사랑 = 50
+	
+	;ABL:순종을 본다
+	IF ABL:순종 <= 1
+		SOURCE:CHARA:환락 += (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += (ABL:친밀 * 20)
+	ELSEIF ABL:순종 <= 3
+		SOURCE:CHARA:환락 += 200 + (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += 50 + (ABL:친밀 * 30)
+	ELSEIF ABL:순종 <= 5
+		SOURCE:CHARA:환락 += 500 + (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += 200 + (ABL:친밀 * 30)
+	ELSEIF ABL:순종 <= 8
+		SOURCE:CHARA:환락 += 750 + (ABL:순종 * 60)
+		SOURCE:CHARA:사랑 += 300 + (ABL:친밀 * 40)
+	ELSEIF ABL:순종 <= 11
+		SOURCE:CHARA:환락 += 1000 + (ABL:순종 * 60)
+		SOURCE:CHARA:사랑 += 600 + (ABL:친밀 * 40)
+	ELSE
+		SOURCE:CHARA:환락 += 1600 + (ABL:순종 * 30)
+		SOURCE:CHARA:사랑 += 1000 + (ABL:친밀 * 20)
+	ENDIF
+	SIF CHARA != FLAG:데이트상대 
+		SOURCE:CHARA:사랑 = 0
+	
+	;호감 도는 보지 않는다
+	
+	
+	SOURCE:CHARA:수동 = 200 + 100 * ABL:순종
+	SOURCE:CHARA:정복 = 200 + 100 * ABL:새드끼
+	
+	;낚시질의 성과를 본다
+	SELECTCASE 잡힌것
+	;잡히지 않는다
+	CASE 0
+		TIMES SOURCE:CHARA:환락 , 0.50
+		TIMES SOURCE:CHARA:수동 , 0.50
+		TIMES SOURCE:CHARA:정복 , 0.50
+	;목재, 모리야부적
+	CASE 610
+		TIMES SOURCE:CHARA:환락 , 0.10
+		TIMES SOURCE:CHARA:수동 , 0.50
+		TIMES SOURCE:CHARA:정복 , 0.50
+		SOURCE:CHARA:달성 = 20
+	;황어, 아마고, 송어 , 이와나
+	CASE 1 TO 10, 22
+		TIMES SOURCE:CHARA:환락 , 1.00
+		TIMES SOURCE:CHARA:수동 , 1.00
+		TIMES SOURCE:CHARA:정복 , 1.00
+		SOURCE:CHARA:달성 = 100
+	;개구리
+	CASE 706
+		TIMES SOURCE:CHARA:환락 , 1.25
+		TIMES SOURCE:CHARA:수동 , 1.00
+		TIMES SOURCE:CHARA:정복 , 1.00
+		SOURCE:CHARA:달성 = 150
+	;술, 빙어, 니지마스, 캄르치
+	CASE 11 TO 13, 15 TO 20, 24 TO 30
+		TIMES SOURCE:CHARA:환락 , 1.50
+		TIMES SOURCE:CHARA:수동 , 1.50
+		TIMES SOURCE:CHARA:정복 , 1.50
+		SOURCE:CHARA:달성 = 200
+	;칠성장어
+	CASE 14
+		TIMES SOURCE:CHARA:환락 , 1.50
+		TIMES SOURCE:CHARA:수동 , 1.50
+		TIMES SOURCE:CHARA:정복 , 1.50
+
+		SOURCE:CHARA:달성 = 250
+	;로터
+	CASE 21
+		SOURCE:CHARA:욕정 = 200
+	;실러캔스，타키타로우，얼음의비늘, 용의손톱，龍涎香
+	CASE 23, 31, 609, 606, 643
+		TIMES SOURCE:CHARA:환락 , 2.00
+		TIMES SOURCE:CHARA:수동 , 2.00
+		TIMES SOURCE:CHARA:정복 , 2.00
+		SOURCE:CHARA:달성 = 300
+	ENDSELECT
+ENDIF
+
+;시간경과
+TIME += 20
+
+;플래그 인도
+TFLAG:SELECTCOM분기 = 잡힌것
+SELECTCASE 잡힌것
+	CASE 0
+		COM_STR = 잡히지 않았다
+	CASE 21
+		COM_STR = 로터
+	CASE 1 TO 60
+		COM_STR = %FISH_NAME(잡힌것)%
+	CASE 610
+		COM_STR = 나무조각
+	CASEELSE
+		COM_STR = %ITEMNAME:(잡힌것)%
+ENDSELECT
+
+TFLAG:SOURCE등에영향을주지않는SELECTCOM분기 = CHARA + (상대자가낚시했다 * 1000)
+
+RETURN 1
+
+;-------------------------------------------------
+;실행 가능 판정
+;-------------------------------------------------
+;낚시를 한다
+@COM_ABLE621
+;일괄관리
+SIF GLOBAL_COMABLE(621)
+	RETURN RESULT
+;낚싯대가 없다
+SIF !ITEM:낚싯대
+	RETURN 0
+;거점에서는 할 수 없다(가짜)
+SIF !FISHING_SPOT(CFLAG:MASTER:현재위치)
+	RETURN 0
+;데이트중은 데이트상대와 만
+SIF FLAG:데이트상대 && TARGET != FLAG:데이트상대
+	RETURN 0
+;동침중
+SIF CFLAG:MASTER:동침중
+	RETURN 0
+;우후후中
+SIF CFLAG:MASTER:우후후
+	RETURN 0
+;수면중
+SIF CFLAG:MASTER:수면
+	RETURN 0
+RETURN 1
+
+;FileName_DATE_CMN.ERB ------------------------------- Rev1. 00
+;낚시가 생기는 장소
+;CALL		USER
+;ARG		현재위치
+;RETURN		할 수 있다면 1
+;COMMENT	장소를 추가했을 경우, CASE를 변경의 일 현재 KR판에만 있음
+;-----------------------------------------------------------
+@FISHING_SPOT(ARG)
+#FUNCTION
+SELECTCASE ARG
+	;호숫가
+	CASE 54
+		RETURNF 1
+ENDSELECT
+
+RETURNF 0
+
+;-------------------------------------------------
+;釣れたもの判定の拡張　場所、季節、時刻に応じて可変
+;ARG　…ランクに対応
+;-------------------------------------------------
+@FISHING_CATCH(ARG)
+#FUNCTION
+#DIM GOROGORO
+
+GOROGORO = 0
+GOROGORO = RAND(1,8)
+
+SELECTCASE ARG
+	CASE 20
+		SELECTCASE GOROGORO
+			CASE 1, 4 ;버들치
+				RETURNF 5
+			CASE 2, 7, 8 ;피라미
+				RETURNF 6
+			CASE 3, 5, 6 ;황어
+				RETURNF 1
+		ENDSELECT
+	CASE 30
+		SELECTCASE GOROGORO
+			CASE 1, 2, 6 ;붕어
+				RETURNF 7
+			CASE 3, 5 ;송어
+				RETURNF 2
+			CASE 4, 8 ;개구리
+				RETURNF 706
+			CASE 7 ;피라니아
+				RETURNF 8
+		ENDSELECT
+	CASE 40
+		SELECTCASE GOROGORO
+			CASE 1, 2, 6 ;둑중개
+				RETURNF 16
+			CASE 3, 5 ;산천어ちゃん
+				RETURNF 3
+			CASE 4, 8 ;개구리
+				RETURNF 706
+			CASE 7 ;가아
+				RETURNF 9
+		ENDSELECT
+	CASE 50
+		SELECTCASE GOROGORO
+			CASE 1, 6 ;블루길
+				RETURNF 10
+			CASE 2, 7, 8 ;은어（春夏）or피라미（秋冬）
+				IF DAY:2 < 3
+					RETURNF 17
+				ELSE
+					RETURNF 6
+				ENDIF
+			CASE 3, 5 ;곤들매기
+				RETURNF 4
+			CASE 4 ;개구리
+				RETURNF 706
+		ENDSELECT
+	CASE 70
+		SELECTCASE GOROGORO
+			CASE 1, 4, 6 ;메기or빙어（冬）
+				IF DAY:2 == 4
+					RETURNF 12
+				ELSE
+					RETURNF 18
+				ENDIF
+			CASE 2, 7, 8 ;뱀장어
+				RETURNF 19
+			CASE 3, 5 ;무지개송어or연어（秋）or빙어（冬）
+				IF DAY:2 == 3
+					RETURNF 11
+				ELSEIF DAY:2 == 4
+					RETURNF 12
+				ELSE
+					RETURNF 13
+				ENDIF
+		ENDSELECT
+	CASE 80
+		SELECTCASE GOROGORO
+			CASE 1 ;각시송어
+				RETURNF 20
+			CASE 2, 4, 6, 8 ;잉어
+				RETURNF 22
+			CASE 3, 5 ;칠성장어
+				RETURNF 14
+			CASE 7 ;철갑상어
+				RETURNF 24
+		ENDSELECT
+	CASE 90
+		SELECTCASE GOROGORO
+			CASE 1 ;쿠니마스
+				RETURNF 25
+			CASE 2 ;초어
+				RETURNF 26
+			CASE 3 ;가물치
+				RETURNF 15
+			CASE 4 ;떡붕어
+				RETURNF 27
+			CASE 5 ;일본연어
+				RETURNF 28
+			CASE 6 ;큰입배스
+				RETURNF 29
+			CASE 7 ;피라루쿠
+				RETURNF 30
+			CASE 8 ;강청어
+				RETURNF 32
+		ENDSELECT
+	CASE 95
+		SELECTCASE GOROGORO
+			CASE 1 ;타키타로우（新月の日）or로터
+				IF MOON_WATCH(DAY:3) == 1
+					RETURNF 31
+				ELSE
+					RETURNF 21
+				ENDIF
+			CASE 2 ;실러캔스
+				RETURNF 23
+			CASEELSE
+				;로터
+				RETURNF 21
+		ENDSELECT
+	CASE 100
+		SELECTCASE GOROGORO
+			CASE 1, 6, 8 ;龍涎香or얼음의비늘（冬）
+				IF DAY:2 == 4
+					RETURNF 609
+				ELSE
+					RETURNF 643
+				ENDIF
+			CASE 2, 3, 5, 7 ;용의손톱or얼음의비늘（冬）
+				IF DAY:2 == 4
+					RETURNF 609
+				ELSE
+					RETURNF 606
+				ENDIF
+			CASE 4 ;개구리
+				RETURNF 706
+		ENDSELECT
+ENDSELECT
+RETURNF 0
+
+;-----------------------------------------------------------
+;釣った魚のナンバーを名称に変換
+;コレクションリストにも利用するため、로터は除外しておく
+;ARG　…釣れたものナンバーに対応
+;-----------------------------------------------------------
+@FISH_NAME(ARG)
+#FUNCTIONS
+
+SELECTCASE ARG
+	CASE 1
+		RETURNF "황어"
+	CASE 2
+		RETURNF "송어"
+	CASE 3
+		RETURNF "산천어"
+	CASE 4
+		RETURNF "곤들매기"
+	CASE 5
+		RETURNF "버들치"
+	CASE 6
+		RETURNF "피라미"
+	CASE 7
+		RETURNF "붕어"
+	CASE 8
+		RETURNF "피라니아"
+	CASE 9
+		RETURNF "가아"
+	CASE 10
+		RETURNF "블루길"
+	CASE 11
+		RETURNF "연어"
+	CASE 12
+		RETURNF "빙어"
+	CASE 13
+		RETURNF "무지개송어"
+	CASE 14
+		RETURNF "칠성장어"
+	CASE 15
+		RETURNF "가물치"
+	CASE 16
+		RETURNF "둑중개"
+	CASE 17
+		RETURNF "은어"
+	CASE 18
+		RETURNF "메기"
+	CASE 19
+		RETURNF "뱀장어"
+	CASE 20
+		RETURNF "각시송어"
+	CASE 22
+		RETURNF "잉어"
+	CASE 23
+		RETURNF "실러캔스"
+	CASE 24
+		RETURNF "철갑상어"
+	CASE 25
+		RETURNF "쿠니마스"
+	CASE 26
+		RETURNF "초어"
+	CASE 27
+		RETURNF "떡붕어"
+	CASE 28
+		RETURNF "일본연어"
+	CASE 29
+		RETURNF "큰입배스"
+	CASE 30
+		RETURNF "피라루쿠"
+	CASE 31
+		RETURNF "타키타로우"
+	CASE 32
+		RETURNF "강청어"
+	CASEELSE
+		RETURNF ""
+ENDSELECT
+
+;-------------------------------------------------
+;釣れた魚のサイズを一般的サイズ内でランダムに出力する変数
+;ARG　…釣れたものナンバーに対応
+;-------------------------------------------------
+@FISHING_SIZE(ARG)
+#FUNCTION
+
+LOCAL = 0
+SELECTCASE ARG
+	CASE 1 ;황어
+		LOCAL = MAX(RAND:(56), 25)
+	CASE 2 ;송어 ;KR판 임의수정, 아마고(일본 송어)에서 한국 송어로 변경
+		LOCAL = MAX(RAND:(70), 40)
+	CASE 3 ;산천어ちゃん
+		LOCAL = MAX(RAND:(50), 25)
+	CASE 4 ;곤들매기
+		LOCAL = MAX(RAND:(70), 20)
+	CASE 5 ;버들치
+		LOCAL = MAX(RAND:(18), 10)
+	CASE 6 ;피라미
+		LOCAL = MAX(RAND:(18), 10)
+	CASE 7 ;붕어 ;KR판 임의수정, 일본 붕어에서 한국 붕어로
+		LOCAL = MAX(RAND:(40), 15)
+	CASE 8 ;피라니아
+		LOCAL = MAX(RAND:(61), 15)
+	CASE 9 ;가아
+		LOCAL = MAX(RAND:(300), 120)
+	CASE 10 ;블루길
+		LOCAL = MAX(RAND:(28), 12)
+	CASE 11 ;연어
+		LOCAL = MAX(RAND:(100), 65)
+	CASE 12 ;빙어
+		LOCAL = MAX(RAND:(18), 8)
+	CASE 13 ;무지개송어
+		LOCAL = MAX(RAND:(105), 35)
+	CASE 14 ;칠성장어
+		LOCAL = MAX(RAND:(65), 45)
+	CASE 15 ;가물치
+		LOCAL = MAX(RAND:(115), 80)
+	CASE 16 ;둑중개
+		LOCAL = MAX(RAND:(18), 10)
+	CASE 17 ;은어
+		LOCAL = MAX(RAND:(35), 25)
+	CASE 18 ;메기
+		LOCAL = MAX(RAND:(80), 50)
+	CASE 19 ;뱀장어
+		LOCAL = MAX(RAND:(120), 85)
+	CASE 20 ;각시송어
+		LOCAL = MAX(RAND:(55), 20)
+	CASE 21 ;로터
+		LOCAL = 5
+	CASE 22 ;잉어
+		LOCAL = MAX(RAND:(115), 55)
+	CASE 23 ;실러캔스
+		LOCAL = MAX(RAND:(200), 100)
+	CASE 24 ;철갑상어
+		LOCAL = MAX(RAND:(301), 100)
+	CASE 25 ;쿠니마스
+		LOCAL = MAX(RAND:(45), 30)
+	CASE 26 ;초어
+		LOCAL = MAX(RAND:(140), 70)
+	CASE 27 ;떡붕어
+		LOCAL = MAX(RAND:(62), 25)
+	CASE 28 ;일본연어
+		LOCAL = MAX(RAND:(220), 90)
+	CASE 29 ;큰입배스
+		LOCAL = MAX(RAND:(55), 25)
+	CASE 30 ;피라루쿠
+		LOCAL = MAX(RAND:(400), 250)
+	CASE 31; 타키타로우
+		LOCAL = MAX(RAND:(550), 300)
+	CASE 32; 강청어
+		LOCAL =  MAX(RAND:(220), 120)
+ENDSELECT
+RETURNF LOCAL
+
+;-------------------------------------------------
+;釣果の説明、消去行数の関係で５行に統一
+;ARG　…釣れたものナンバーに対応
+;-------------------------------------------------
+@FISHING_EXPLANATION(ARG)
+IF INRANGE(ARG, 11, 20) || INRANGE(ARG, 24, 60)
+	CALL COLOR_PRINT("　　☆맛있는 물고기☆", "C_YELLOW")
+ELSE
+	PRINTFORM 　　◇평범한 물고기◇
+ENDIF
+PRINTL 
+SELECTCASE ARG
+	CASE 1 ;황어
+		PRINTFORML 　　길이 30cm~50cm 정도, 잡식성. 등쪽은 짙은 갈색인데, 산란기가 되면 검정과 빨강의 혼인색을 띈다.
+		PRINTFORML 　　2~4년이면 성체가 되며, 무리 지어서 생활한다. 잔가시가 많으며, 비린내도 많이 난다.
+		PRINTFORML 　　하천의 상류와 하류, 또는 산정의 호수, 늪에서 산다. 수질 오염이나 산성에 강하다.
+		PRINTFORML 
+		PRINTFORML 
+	CASE 2 ;송어 ;KR판 임의수정, 아마고(일본 송어)에서 한국 송어로 변경
+		PRINTFORML 　　길이 40cm~60cm 정도. 작은 물고기나 곤충을 먹는다. 산천어와 생김새가 비슷하나 몸 측면의 무늬로 구분할 수 있다.
+		PRINTFORML 　　민물에서만 사는 육봉형 송어가 있고, 바다에서 알을 낳고 민물로 돌아오는 회유성 송어도 있다.
+		PRINTFORML 　　송어라는 이름은 살의 결이 붉고 선명해 소나무 마디와 같아 보인다고 하여 붙었다는 이야기가 있다.
+		PRINTFORML 　　회로 먹으면 흙냄새가 상당히 짙게 나 호불호가 갈린다.
+		PRINTFORML 
+	CASE 3 ;산천어ちゃん ;KR판 고유 줄바꿈 존재
+		PRINTFORML 　　길이 20cm~40cm 정도, 지렁이나 곤충을 먹는다. 등쪽이 녹색을 띄는 황갈색이며,
+		PRINTFORML 　　특유의 무늬인 파마크(parrmark)가 눈에 띈다.
+		PRINTFORML 　　송어의 육봉형이며 하천 상류의 물이 차가운 곳에 서식한다.
+		PRINTFORML 　　수명은 약 ３~４년. 생활 방식이 비슷한 곤들매기보다 하류에 서식하여 각각의 영역에서 공존한다.
+		PRINTFORML 　　경계심이 매우 강하여 잡기 어렵기 때문에 「계곡의 여왕」이라는 이명이 붙었다.
+	CASE 4 ;곤들매기
+		PRINTFORML 　　길이 20~60cm 정도, 식탐이 많은 육식성이며, 뱀까지 잡아먹었다는 사례가 있다.
+		PRINTFORML 　　등쪽은 녹갈색이나 회색이며 지역에 따라 다양하다.
+		PRINTFORML 　　하천 최상류의 냉수 지역에 서식하며, 생활 방식이 비슷한 산천어보다 상류에 서식하여 각각의 영역에서 공존한다.
+		PRINTFORML 　　육봉형이나, 예전에는 다른 연어과와 마찬가지로 강에서 태어나 바다로 내려가는 생활을 한 것 같다.
+		PRINTFORML 
+	CASE 5 ;버들치
+		PRINTFORML 　　길이 8cm~15cm 정도, 잡식성. 몸이 황갈색이며 비늘이 작은 편이다.
+		PRINTFORML 　　하천 중류에서 상류 지역, 산지 호수, 늪 등의 낮은 수온을 선호한다. 무리 지어서 산란을 하는 습성이 있다.
+		PRINTFORML 　　약간 쓴 맛이 있으며 튀김이나 마리네, 난반즈케 등으로 조리해서 먹는다.
+		PRINTFORML 
+		PRINTFORML 
+	CASE 6 ;피라미
+		PRINTFORML 　　길이 8cm~15cm 정도, 등쪽은 회백색, 번식기엔 수컷의 몸에 청록색과 분홍색의 선명한 혼인색이 나타난다.
+		PRINTFORML 　　하천 상류에서 중류 지역, 호수, 늪 등에 서식한다. 수질 오염이나 하천 개수에 의한 환경변화에 강하다.
+		PRINTFORML 　　초식성향의 잡식성. 찜이나 튀김, 식해 등으로 조리해서 먹는다.
+		PRINTFORML 
+		PRINTFORML 
+	CASE 7 ;붕어 ;KR판 임의수정, 일본 붕어에서 한국 붕어로
+		PRINTFORML 　　길이 12cm~30cm 정도, 드물게 60cm 이상으로 성장하기도 한다. 황갈색이나 회백색의 색을 띈다.
+		PRINTFORML 　　잡식성이며, 하천 하류나 호수, 늪, 저수지에서 서식한다.
+		PRINTFORML 　　수질 오염에 매우 강하여 4급수의 매우 더러운 물에서도 멀쩡하게 산다.
+		PRINTFORML 
+		PRINTFORML 
+	CASE 8 ;피라니아
+		PRINTFORML 　　아마존 강 등의 열대 지방에 서식하는 날카로운 이빨을 지닌 물고기.
+		PRINTFORML 　　이름은 현지인 말로「이빨 있는 물고기」라는 뜻으로, 소형종은 15cm 정도, 대형종은 60cm 정도까지 자란다.
+		PRINTFORML 　　「식인 물고기」라는 건 과장된 이미지이며, 실제로는 매우 겁이 많다. 무리지어 생활하나 단독으로 다니는 종도 있다.
+		PRINTFORML 　　고기가 상당히 맛이 좋다. 지저의 지열로 따뜻해진 강에 적응하고 있을까?
+		PRINTFORML 
+	CASE 9 ;가아
+		PRINTFORML 　　강력한 비늘을 가진 어류중에서도 원시적인 스타일의 물고기. 북아메리카 대륙이 원산지.
+		PRINTFORML 　　길쭉한 몸과 가늘고 긴 턱을 가지고 있으며, 종에 따라선 ３ｍ에 육박하는 거구로도 성장할 수 있다.
+		PRINTFORML 　　최근엔 일본 모 하천에서도 배수(온수)에 의해 정착하고 있는 건 아니냐고 추측되고 있다.
+		PRINTFORML 　　지저의 지열로 따뜻해진 강에 적응하고 있는 듯 한데..... 대체 누가 들여온 걸까?
+		PRINTFORML 
+	CASE 10 ;블루길
+		PRINTFORML 　　북미 대륙이 원산지인 물고기. 길이 15cm~25cm 정도. 호수, 늪이나 물의 흐름이 완만한 하천에서 서식한다.
+		PRINTFORML 　　팬피쉬(프라이팬에 들어가는 작고 잡기 쉬운 물고기)라 불리는 그룹의 물고기인 만큼 둥글고 평평한 모양새다.
+		PRINTFORML 　　높은 번식력과 뭐든지 잡아먹는 식성으로 생태계를 파괴하기 때문에 구제의 대상이 되고 있다.
+		PRINTFORML 　　환상향에서도 분포를 넓히고 있다면 나중에 큰 피해가 올지도 모른다.
+		PRINTFORML 
+	CASE 11 ;연어
+		PRINTFORML 　　길이 70cm정도까지 성장한다. 강에서 부화한 치어는 3~4월에 바다로 내려가 매우 긴 거리를 회유하며 성장한다.
+		PRINTFORML 　　４~６년 정도를 바다에서 지낸 뒤 가을 쯤 태어난 강으로 거슬러 올라가 용수가 있는 강바닥에 산란 후 생을 마감한다.
+		PRINTFORML 　　산란기의 연어는 알과 이리를 형성하느라 맛과 기름이 떨어져 바다에서 잡힌 것보다 맛이 떨어진다.
+		PRINTFORML 　　......바다가 없는 환상향에서, 대체 어디에서 이정도로 커져서 오는 걸까?
+		PRINTFORML 
+	CASE 12 ;빙어
+		PRINTFORML 　　길이는 성체가 15cm 정도. 호수, 늪이나 그에 이어지는 하류에 서식한다. 일부 개체는 바다로 내려가기도 한다.
+		PRINTFORML 　　겨울에 산란하는 한해살이 물고기라서 겨울・얼음낚시 같은 이미지가 떠오르지만 실제로는 일년내내 잡을 수 있다.
+		PRINTFORML 　　차가운 물을 선호하며, 의외로 염분이나 수질 오염에 강하고 대량 산란으로 수를 늘리는 번식력을 지니고 있다.
+		PRINTFORML 　　식용으로도 적합해서 스와호를 비롯한 많은 호수에 이식 되었다.
+		PRINTFORML 
+	CASE 13 ;무지개송어
+		PRINTFORML 　　몸길이는 보통 40cm 정도지만, 호수 등에서 사는 개체는 80cm~1ｍ 가까이 성장하기도 한다.
+		PRINTFORML 　　산란을 해도 바로 죽지 않고 수년에 걸쳐 산란을 할 수 있다.
+		PRINTFORML 　　산란기에는 수컷의 몸이 무지개빛으로 혼인색을 띈다.
+		PRINTFORML 　　일본에 들어온 시기는 메이지 시대, 환상향이 바깥과 분리 된 이후의 일인데..... 어디서 들어온 걸까?
+		PRINTFORML 
+	CASE 14 ;칠성장어
+		PRINTFORML 　　길이 50~60cm 정도. 무악류(턱이 없는 어류)라 불리는 극히 원시적인「살아있는 화석」이다.
+		PRINTFORML 　　몸에 7쌍의 아가미 구멍이 있고 그게 마치 눈처럼 보여「야츠메(八つ目)」라는 이름으로도 불린다.
+		PRINTFORML 　　깨끗한 냉수를 선호하며, 강해형과 육봉형이 존재한다. 덧붙여서 뱀장어와는 완전 다른 종류다.
+		PRINTFORML 　　딱딱하고 괴상한 질감이지만 영양이 풍부하며 비타민Ａ의 일종을 다량 함유하여 야맹증에 탁월한 효과가 있다고 한다.
+		PRINTFORML 
+	CASE 15 ;가물치 ;KR판 고유 줄바꿈 존재
+		PRINTFORML 　　별명은 뇌어(ライギョ). 길이 １ｍ 정도까지 자라는 물고기. 물의 흐름이 완만하고 수초 등이 많은 환경을 선호한다.
+		PRINTFORML 　　물고기를 잡아먹으나, 가끔은 거북이나 물새의 병아리를 잡아먹는 이상한 식성이다.
+		PRINTFORML 　　담백한 맛의 흰살생선이며, 튀김이나 냄비요리 등으로 먹을 수 있다.
+		PRINTFORML 　　대만가물치(タイワンドジョウ)라는 별칭이 있으며, 유라시아 대륙이 원산지인 외래종.
+		PRINTFORML 　　「그 쪽」 방면에서 온 누군가가 들여온 걸까?
+	CASE 16 ;둑중개
+		PRINTFORML 　　쏨뱅이와 동류인 민물고기로 길이 15cm 정도까지 성장한다. 색은 갈색~담갈색으로 다양하게 있다.
+		PRINTFORML 　　물이 깨끗한 하천 여울이나 자갈 바닥에 숨어있는 경우가 많다. 수생곤충이나 작은 물고기를 먹이로 삼는다.
+		PRINTFORML 　　생김새는 나쁘지만, 살이 매우 맛있고 좋은 육수가 나온다. 가라아게나 전골, 찜 등의 요리로 자주 쓰인다.
+		PRINTFORML 
+		PRINTFORML 
+	CASE 17 ;은어
+		PRINTFORML 　　길이 15cm~30cm 정도, 성체가 되면 돌에 붙은 조류를 먹는다. 1년 정도 살면 죽는 물고기.
+		PRINTFORML 　　성체는 영역을 가지고 있으며, 영역에 침입한 다른 은어를 내쫓는 습성이 있다. 이 습성을 이용해서 낚시를 한다.
+		PRINTFORML 　　본래 강과 바다를 회유하는 물고기인데, 비와호 유역에선 바다 대신에 비와호에 올라와 크게 성장하는 개체도 있다.
+		PRINTFORML 　　바다가 없는 환상향에선 호수를 통해 성장하고 있는 걸까?
+		PRINTFORML 
+	CASE 18 ;메기
+		PRINTFORML 　　길이 60cm 정도. 하천 중~하류나 호수, 늪, 논이나 용수로에서도 서식한다. 야행성이며, 발달 된 수염으로 사냥을 하는 육식성.
+		PRINTFORML 　　예로부터 개구리를 미끼로 써 낚시하는 방법으로 많이 잡아왔다.
+		PRINTFORML 　　또한 지진의 징조로 메기가 날뛰어 오른다는 미신이 있으나, 과학적 근거는 아직 없다고 한다.
+		PRINTFORML 　　지하에 큰 메기가 있으며, 이 녀석이 날뛰면 대지진이 일어난다는 설화도 유명ㅎ...... 뭐? 꿈에서 나온 거라고?
+		PRINTFORML 
+	CASE 19 ;뱀장어
+		PRINTFORML 　　길이 １ｍ 정도까지 자란다. 하천 중~하류나 호수, 늪에 서식한다. 몸은 끈적끈적한 점액으로 뒤덮여있다.
+		PRINTFORML 　　야행성에 육식성이며 민물고기로 분류 되나 바다로 나가 산란과 부화를 하는 강하성 물고기이다.
+		PRINTFORML 　　심해에서 태어나 바다에서 자라면서 실뱀장어가 되며, 이후 연안에서 강을 거슬러 오르며 성장해 ５~１０년이면 성체가 된다.
+		PRINTFORML 　　모습이 용의 화신, 보살의 심부름꾼 등으로 비유되기도 하고, 그 때문에 먹는 걸 금기하는 지역도 있었다고 한다.
+		PRINTFORML 　　부쩍 바깥 세상에서 뱀장어를 보기 힘들어진 건, 환상들이했기 때문인 걸까?
+	CASE 20 ;각시송어
+		PRINTFORML 　　길이 20cm~50cm 정도. 북미 대륙에 서식하는 홍연어의 육봉형.
+		PRINTFORML 　　차가운 물을 선호하며, 호수에 서식한다. 몸은 회색빛을 띄고 있다.
+		PRINTFORML 　　갑각류 등의 동물 플랑크톤을 잡아먹으며, 빙어와는 먹이를 두고 경쟁을 벌인다.
+		PRINTFORML 　　연어과 생선 중에서도 가장 맛이 좋다고 하나, 맛이 떨어지는 것이 매우 빠르다고 한다.
+		PRINTFORML 
+	;CASE 21 ;로터
+
+	CASE 22 ;잉어
+		PRINTFORML 　　길이 60cm~１ｍ 정도까지 커진다. 규모가 큰 하천 중~하류, 호수, 늪, 용수로 등 사는 범위가 넓다.
+		PRINTFORML 　　찬 물이나 수질 오염에도 견디는 생명력을 가진 데다 수명이 길어서 70~80년이나 사는 개체도 존재한다.
+		PRINTFORML 　　물 밑을 빨아들여서 입에 들어오는 것은 뭐든 먹는 강한 잡식성을 보인다.
+		PRINTFORML 　　흔히 보이는 체고가 높은 잉어는 아주 오래 전 중국에서 들여온 것으로 알려져 있다.
+		PRINTFORML 　　비와호 수계 등에 서식하는 갸름한 잉어는 예부터 일본에 서식했던 것으로 추측되며, 들잉어(野鯉)라고 불린다.
+	CASE 23 ;실러캔스
+		PRINTFORML 　　길이가 １ｍ를 넘는다. 일찍이 전 세계에 널리 분포한 고대 물고기로, 두꺼운 지느러미를 많이 가지고 있다.
+		PRINTFORML 　　햔셍 욱싱 척추동물은 모두 이 계통에서 진화했다고 하며 심해에서 생존중인 개체가 발견 된 살아있는 화석.
+		PRINTFORML 　　유감스럽게도 맛이 없다. 게살을 연하게 한 듯한 맛, 칫솔질 같은 맛 등으로 평가받고 있다.
+		PRINTFORML 　　이 개체는 담수성으로, 바깥에선 이미 멸종한 종으로 추정된다...... 유령인가?
+		PRINTFORML 
+	CASE 24 ;철갑상어
+		PRINTFORML 　　길이 １ｍ~４ｍ 정도로 성장한다. 생김새가 상어나 비슷하나, 종이 다른 고대어.
+		PRINTFORML 　　이 물고기의 알을 절인것이 바로 캐비어로, 많은 지역에서 남획당하는 씁쓸한 일을 당했다.
+		PRINTFORML 　　과거엔 일본에도 존재했다고 하나 ２０세기에 멸종했다고 한다.
+		PRINTFORML 　　현대엔 온천수의 열 등을 이용해 외국산 품종의 양식이 이루어지고 있다.
+		PRINTFORML 
+	CASE 25 ;쿠니마스
+		PRINTFORML 　　길이 30cm~40cm. 색은 회색이나 검은색. 각시송어의 아종이라고 하나 별개의 종일수도 있다고 한다.
+		PRINTFORML 　　수심이 깊은 호수에 살며 산란을 할 때 30~40ｍ 정도의 비교적 얕은 곳으로 올라온다.
+		PRINTFORML 　　본래는 아키타 현의 다자와호에서만 살던 고유종이나, 호수에 산성 하천수를 끌어들이면서 멸종하였다.
+		PRINTFORML 　　그러나 쇼와 초기에 야마나시 현의 서호(西湖)에서 알이 이입 되었고, 그 후손이 멸종 선언 70년 만에 다시 발견되었다.
+		PRINTFORML 　　어떻게 먹어도 매우 맛있다는 평가가 있으며, 과거에는 특산품으로 헌상 되었다.
+	CASE 26 ;초어
+		PRINTFORML 　　길이 1.2ｍ 정도, 높은 수온이나 산소 결핍에 강하다. 수초나 물가의 잡초를 먹는 초식성 잉어과 물고기.
+		PRINTFORML 　　본래는 중국의 큰 강에 서식하고 있으며, 상류에서 산란한 알이 떠내려가면서 부화하는 특성을 지녔다.
+		PRINTFORML 　　알이 바다까지 떠내려가면 죽어 버리기 때문에 물의 흐림이 느리고 장대한 유역면적의 강이 아니면 번식이 힘들다.
+		PRINTFORML 　　중국에선 4대 생선이라고 불릴 정도로 인기가 많으며, 찜, 조림, 튀김, 스프 등으로 많이 요리해 먹고 있다.
+		PRINTFORML 
+	CASE 27 ;떡붕어
+		PRINTFORML 　　비와호 수계의 떡붕어의 변종을 품종개량한 것으로, 옆에서 보면 마름모 모양이다.
+		PRINTFORML 　　길이는 30~60cm 정도. 수명이 길고 수십년을 사는 개체도 있다고 한다.
+		PRINTFORML 　　「낚시란 붕어로 시작해서 붕어로 끝난다」의 금언인 「마지막 붕어」가 이 물고기이며, 낚는 난이도가 높다.
+		PRINTFORML 　　계절에 따라 다른 종인마냥 행동이 변하고, 수온이나 날씨에 따라 유영층이 변한다.
+		PRINTFORML 　　먹이를 먹는 것도 녹아내린 먹이를 작게 빨아들일 뿐이라 감도가 높은 낚시찌와 낚시대를 이용하지 않으면 잡기 어렵다.
+	CASE 28 ;일본연어
+		PRINTFORML 　　길이 1~1.5ｍ. 가끔은 ２ｍ를 넘기는 일본 최대의 민물고기. 물이 차고 흐름이 느린 하천 중~하류에 서식한다.
+		PRINTFORML 　　몸은 푸른빛이 도는 갈색, 과거엔 혼슈 북부에도 서식했으나 현재는 홋카이도에서만 보인다.
+		PRINTFORML 　　일본의 일본연어는 연어처럼 강해형이나, 환상향의 일본연어는 외국종처럼 육봉형 생활을 하는 듯 하다.
+		PRINTFORML 　　고기는 흰살에 기름기가 많아 맛이 좋지만 성장이 느린것이 단점.
+		PRINTFORML 
+	CASE 29 ;큰입배스
+		PRINTFORML 　　길이 30~50cm. 북미가 원산지인 육식어로 호수, 늪이나 하천 중~하류에 서식한다.
+		PRINTFORML 　　자기 길이의 반 정도 되는 물고기나 작은 새, 개구리, 쥐까지 통째로 잡아먹는 식탐을 가지고 있다.
+		PRINTFORML 　　스포츠 피싱으로 유명하나, 이입된 큰입배스가 생태계를 파괴하는 등 문제도 많다.
+		PRINTFORML 　　고기는 담백한 흰살이라 느끼하지 않고, 뫼니에르나 튀김요리 등으로 맛있게 먹을 수 있다.
+		PRINTFORML 
+	CASE 30 ;피라루쿠
+		PRINTFORML 　　남미 대륙에 서식하는 길이 ３ｍ가 넘는 대어. 물고기를 먹으며 통나무 같은 몸통, 납작한 머리, 꼬리 지느러미가 특징.
+		PRINTFORML 　　세계 최대 크기의 민물고기의 일종이며 가아와 같이 옛날부터 모습이 바뀌지 않은 고대어.
+		PRINTFORML 　　색이 검정부터 회색까지 다양하며 성체는 꼬리쪽이 붉게 변한다. 현지 말로「붉은 물고기」라는 이름으로 불리는 이유.
+		PRINTFORML 　　고기는 포만감이 있으며, 무수한 돌기모양의 뼈 있는 혀는 강판으로, 비늘은 줄이나 구둣주걱으로 널리 쓰였다.
+		PRINTFORML 
+	CASE 31; 타키타로우
+		PRINTFORML 　　길이가 ３ｍ를 넘기는 대괴어. 대형 송어같은 모습이다. 집게같은 입에 아래턱이 튀어나와 있다.
+		PRINTFORML 　　차갑고 깊은 호수에 서식하고 있다고 하며 그 실태가 아직 밝혀지지 않은 수수께끼의 물고기.
+		PRINTFORML 　　고기는 살코기에 많은 지방을 함유하고 있으며 쉽게 구워지지 않지만 매우 맛있다고 한다.
+		PRINTFORML 　　정체는 완전히 새로운 어종일까, 곤들매기의 변종일까, 호수에 잔류하는 일본연어일까, 혹은 왕연어일까,
+		PRINTFORML 　　그 진상은 지금도 깊고 차가운 물속에 숨어있다......
+	CASE 32;강청어
+		PRINTFORML 　　중국 4대 생선 중 하나. 성장하면 길이가 ２ｍ를 넘는 물고기. 잉어보다 똑똑해 보이는 얼굴에 수염은 없다.
+		PRINTFORML 　　이름에 청(青)이 들어가며, 이름대로 군청색~진한 청색을 가진 물고기이다. 블랙 카프(ブラックカープ)라고도 한다.
+		PRINTFORML 　　물 밑을 빨아 저생동물을 잡아먹으며 특히 조개류를 즐겨먹는 잡식성이다.
+		PRINTFORML 　　4대 생선 중에선 가장 크며, 가장 유통이 적다. 찜, 조림, 튀김 등으로 먹을 수 있다.
+		PRINTFORML 　　농후한 맛이 나지만, 잔가시가 많아서 먹기가 좀 힘들지도.
+ENDSELECT

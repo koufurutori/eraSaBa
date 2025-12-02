@@ -1,0 +1,167 @@
+﻿@COM604
+#DIM LPCOUNT
+#DIM 현재지점
+#DIM P_ID
+#DIM 소요시간
+#DIM 시간보정
+#DIM 시간정지점프
+#DIM 특수워프
+#DIM ANIMATION_SEED
+#DIM PREV_REDRAW
+;散策する
+시간정지점프 = (GETBIT(FLAG:순간이동, 0) && !FLAG:데이트상대)
+
+ANIMATION_SEED = 0
+PREV_REDRAW = CURRENTREDRAW()
+;Map Animation Code
+$MAPANIMATION
+
+VARSET LOCAL
+DRAWLINEFORM ~
+
+
+
+DRAWLINEFORM ~
+PRINTL 어디로 향합니까?
+현재지점 = CFLAG:MASTER:현재위치 % 100 / 10
+FOR LPCOUNT, 1, 10
+	P_ID = CFLAG:MASTER:데이트중 * 100 + LPCOUNT * 10
+	SIF NAME_FROM_PLACE(P_ID) == ""
+		CONTINUE
+	IF LPCOUNT == 현재지점 ;KR판 임의수정, XX분 형식으로 쓰기 위해 간격 18 > 17
+		PRINTPLAINFORM [  0] - %NAME_FROM_PLACE(P_ID), 17, LEFT%
+		CALL COLORMESSAGE(@"현위치　", C_GREEN, 3)
+	ELSE
+		시간보정 = 0
+		소요시간 = 산책소요시간(CFLAG:MASTER:현재위치, P_ID, 시간보정)
+		PRINTFORM [{LPCOUNT, 3}] - %NAME_FROM_PLACE(P_ID), 18, LEFT%
+		IF 시간보정 < 0
+			SETCOLOR C_L_GREEN
+		ELSEIF 시간보정 > 0
+			SETCOLOR C_ROYAL_BLUE
+		ENDIF
+		PRINTFORM {소요시간, 3}%LOCALS%
+		RESETCOLOR
+	ENDIF
+	LOCAL ++
+	SIF LOCAL % 2 == 0
+		PRINTL
+NEXT
+SIF LOCAL % 2 == 1
+	PRINTL
+
+PRINTL [100] - 돌아간다　　　　　　　　　　　[ 99] - 다른 지역으로 이동
+$INPUT_LOOP
+;Map Animation Code
+
+INPUT
+
+IF INRANGE(RESULT, 1, 9)
+	P_ID = CFLAG:MASTER:데이트중 * 100 + RESULT * 10
+	;소요시간は消費TSPも込みになっているので注意
+	소요시간 = 산책소요시간(CFLAG:MASTER:현재위치, P_ID, 시간보정)
+ENDIF
+;戻る
+IF RESULT == 100 || RESULT == 0
+	RETURN -1
+;他の地域に移動
+ELSEIF RESULT == 99
+	DRAWLINE
+	CALL OTHERREGIONS("산책한다")
+	IF RESULT == 100
+		RESTART
+	ELSE
+		RETURN 1
+	ENDIF
+;특수워프,10分/30TSP固定
+ELSEIF 특수워프 && RESULT == 특수워프
+
+	TIME += 10
+
+	PRINTFORML %마스터가% 공간의 왜곡에 발을 들여놓자
+	PRINTFORMW 어느새 %NAME_FROM_PLACE(특수워프)%에 서있었다…
+	P_ID = 특수워프
+	CFLAG:MASTER:현재위치 = P_ID
+	CFLAG:MASTER:데이트중 = GET_MAPID(P_ID)
+	IF FLAG:데이트상대
+		CFLAG:(FLAG:데이트상대):현재위치 = P_ID
+		CFLAG:(FLAG:데이트상대):데이트중 = GET_MAPID(P_ID)
+	ENDIF
+	RETURN 1
+ELSEIF RESULT == 1234
+	PREV_REDRAW = CURRENTREDRAW()
+	REDRAW 0
+	CLEARLINE LINECOUNT
+	GOTO MAPANIMATION
+;散策移動
+ELSEIF INRANGE(RESULT, 1, 9) && NAME_FROM_PLACE(P_ID) != ""
+	;移動できるかチェック
+	CALL SANSAKU_UNIQUEPLACE(P_ID)
+	IF RESULT
+		;P_IDへ移動
+		P_ID = RESULT
+		CFLAG:MASTER:현재위치 = P_ID
+		IF FLAG:데이트상대
+			CFLAG:(FLAG:데이트상대):현재위치 = P_ID
+			TIME += 소요시간
+		ELSE
+			TIME += 소요시간
+		ENDIF
+		RETURN 1
+	ENDIF
+ENDIF
+RESTART
+
+;-------------------------------------------------
+;실행 가능 판정
+;-------------------------------------------------
+;산책한다
+@COM_ABLE604
+SIF TFLAG:망상중
+	RETURN 0
+;일괄관리
+SIF GLOBAL_COMABLE(604)
+	RETURN RESULT
+;데이트중 이외
+SIF AT_HOME(MASTER)
+	RETURN 0
+SIF CFLAG:MASTER:현재위치 == OMANEKIBEYA()
+	RETURN 0
+SIF CFLAG:우후후
+	RETURN 0
+;잠복モード中は不可
+SIF GETBIT(FLAG:잠복,0)
+	RETURN 0
+;데이트 도중
+SIF TFLAG:데이트도중
+	RETURN 0
+;망상중
+SIF TFLAG:망상중 == 1
+	RETURN 0
+RETURN 1
+
+
+;-----------------------------------------------------------
+;現在地→移動先の散策にかかる소요시간
+;시간정지中は消費TSP
+;二次元座標間の距離を算出してる,例えば12→64だったら5+2=7
+;-----------------------------------------------------------
+@산책소요시간(현위치ID, 이동처ID, 시간보정)
+#FUNCTION
+#DIM 현위치ID
+#DIM 이동처ID
+#DIM 시간보정
+#DIM 현위치좌표
+#DIM 이동처좌표
+
+;-----------------------------------------------------------
+;散策時に移動できるかを返す関数
+;散策版MAP_CAN_MOVE, メッセージもここで表示する
+;ARG     移動先の場所ID
+;RETRUN  0=移動できない, 0以外=移動先
+;-----------------------------------------------------------
+@SANSAKU_UNIQUEPLACE(ARG)
+SELECTCASE ARG
+	
+ENDSELECT
+RETURN ARG

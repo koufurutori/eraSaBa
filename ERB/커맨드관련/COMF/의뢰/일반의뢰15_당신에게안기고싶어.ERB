@@ -1,0 +1,585 @@
+﻿;存否関数
+;F関数はTRYCALL系が使えないので通常関数で存否配列を作っちゃう
+@EXIST_일반의뢰15
+#LOCALSIZE 1
+#LOCALSSIZE 1
+
+;オブジェクト本体
+;ここでARGで渡されるのはCLIENT_IDです
+@일반의뢰15(ARG, O_DATA, V_NAME)
+#FUNCTION
+#LOCALSIZE 1
+#LOCALSSIZE 1
+#DIMS O_DATA
+#DIMS V_NAME
+SELECTCASE O_DATA
+CASE "의뢰명"
+	IF TALENT:ARG:무지
+		CALLF MAKE_STR(V_NAME, @"%TEXTR("가슴이 두근두근거려/가랑이가 저릿저릿해")%")
+	ELSEIF TALENT:ARG:마조
+		CALLF MAKE_STR(V_NAME, @"%CALLNAME:MASTER%에게 %TEXTR("범해지고 싶어/엉망진창 당하고 싶어")%")
+	ELSE
+		CALLF MAKE_STR(V_NAME, @"%마스터가% 안아줬으면 해")
+	ENDIF
+CASE "의뢰내용 표시"
+	IF TALENT:ARG:무지
+		CALLF MAKE_STR(V_NAME, "어떻게든 해줘")
+	ELSEIF TALENT:ARG:마조
+		CALLF MAKE_STR(V_NAME, "바라는 대로 괴롭힌다")
+	ELSE
+		CALLF MAKE_STR(V_NAME, @"%CALLNAME:ARG%의 욕구 불만을 해소한다")
+	ENDIF
+CASE "의뢰 보수 표시"
+	CALLF MAKE_STR(V_NAME, "없음")
+
+CASE "의뢰실행 커맨드 이름"
+	IF TALENT:ARG:무지
+		CALLF MAKE_STR(V_NAME, "어떻게든 해 준다")
+	ELSEIF TALENT:ARG:마조
+		CALLF MAKE_STR(V_NAME, @"%ARG를% 범한다")
+	ELSE
+		CALLF MAKE_STR(V_NAME, @"%ARG를% 안는다")
+	ENDIF
+CASE "의뢰내용"
+	CALLF MAKE_INT(V_NAME, MAKE_IRAI_DATA(0, "작업"))
+CASE "의뢰 서브"
+CASE "의뢰기한"
+
+;発生時ではなく受託時に確定します
+CASE "의뢰 발생율"
+
+	;初期設定でヤリマン幻想郷にした場合は依頼発生頻度高すぎると阿鼻叫喚になりそうだからヤリマンの場合は確率低下
+	;かわりに溜まってる度に関わらず発生するようにしてバランスが取れるといいなぁ
+	IF TALENT:ARG:걸레
+		CALLF MAKE_INT(V_NAME, 4)
+	ELSEIF TALENT:ARG:자존심 == 1 || TALENT:ARG:수치심 == 1
+		;プライドが高かったり恥じらいを持ってるキャラは言い出しづらいだろうから確率低下
+		;CALLF MAKE_INT(V_NAME, 9)
+		CALLF MAKE_INT(V_NAME, 50)
+	ELSE
+		;それ以外は発生条件が厳しめなので基本の発生率はとりあえず高めに
+		;CALLF MAKE_INT(V_NAME, 15)
+		CALLF MAKE_INT(V_NAME, 70)
+
+		;디버그용 확률
+		;CALLF MAKE_INT(V_NAME, 100000)
+	ENDIF
+
+CASE "의뢰 발생 조건"
+;섹프or애욕かつ욕구불만도500以上 or 걸레
+	;debug
+	;SIF TALENT:ARG:처녀
+	SIF (TALENT:ARG:섹프 && CFLAG:ARG:욕구불만도 > 500) || (TALENT:ARG:애욕 && CFLAG:ARG:욕구불만도 > 500) || TALENT:ARG:걸레
+		CALLF MAKE_INT(V_NAME, 1)
+CASE "의뢰 수탁 가능 조건"
+	CALLF MAKE_INT(V_NAME, 1)
+CASE "의뢰실행 가능 조건"
+	CALLF MAKE_INT(V_NAME, 1)
+;成功/失敗処理はCARRYOUTで直接書く
+;SOURCEやITEM入手、消費が煩雑になるので
+CASE "의뢰 소멸 조건"
+;依頼以外の要因で욕구불만도が解消された場合消えるべきなのかもしれないけど文法とかよくわかんないので雑にスルー
+	SIF RAND:100 < 30
+		CALLF MAKE_INT(V_NAME, 1)
+CASE "의뢰인 데리고 나가 가능"
+	CALLF MAKE_INT(V_NAME, 1)
+ENDSELECT
+
+
+
+@IRAI_일반15(CHARA, IRAI_ID, SCENE)
+#DIM  CHARA
+#DIM  IRAI_ID
+#DIMS SCENE
+#DIM  CLIENT_ID
+#DIM 장소
+#DIMS 일기기술
+;1=대상의 방 2=이외
+
+#DIM 호감도상승량
+#DIM 횟수
+#DIMS PLACE
+
+#DIM 종류
+
+종류 = 0
+
+
+CLIENT_ID = IRAI_ID_TO_CLIENT(IRAI_ID)
+SELECTCASE SCENE
+CASE "의뢰 조건 표시"
+;何か専用の表示情報を設けたい時用
+;受託済みの依頼表示で使用されます
+;
+;PRINT系だけでSOURCEとかは入れちゃダメ、WAITも無しで
+;ここ以外の表示項目は
+;PRINTFORML 　　　　　：
+;となっているのでスペースを揃えたほうが見栄えが良いです
+
+CASE "의뢰실행시"
+;このCASEに限り、RESULTが意味を持ちます
+;依頼実行時のRESULTにはIRAI_CONST_RESULT()を使用してください
+;可能な引数は"キャンセル", "実行して成功", "実行して失敗", "実行して未解決"です
+;独自処理を仕込みたい時は"実行して未解決"で先延ばしするなりしてください
+;
+;"依頼実行時"に限っていえば、CHARAはTARGETと同一であり、必ずしもCLIENT_IDと一致するとは限りません
+;個々のケースで確認する必要があります
+;この依頼は「作業」扱いであり、CLIENTがTARGETになっている時のみ実行できます
+;
+;
+;以下デフォルト地の文
+
+IF TALENT:CLIENT_ID:무지
+	PRINTFORML %마스터는% 미지의 흥분에 당황하며 뜨거운 숨결을 내쉬는 %CALLNAME:CLIENT_ID%의 손을 잡고, 
+ELSEIF TALENT:CLIENT_ID:수치심 == 1
+	PRINTFORML %마스터는% 부끄러운 듯 볼을 새빨갛게 물들이는 %CALLNAME:CLIENT_ID%의 손을 잡고, 
+;紫の場合は以下の派生に繋げるために紫主導限定で
+ELSEIF RAND:2 == 0
+	PRINTFORML %조사처리(CALLNAME:CLIENT_ID,"는")% 요염한 미소를 얼굴에 띄우며 %CALLNAME:MASTER%의 손을 끌어 당겨, 
+ELSE
+	PRINTFORML %마스터는% 자신을 원하는 듯 몸을 비비적대는 %CALLNAME:CLIENT_ID%의 %TEXTR("손을 끌어 당겨/허리를 끌어안으며/")%, 
+ENDIF
+
+
+
+;장소分岐
+;そのキャラの自室があるMAPの場合33%で自室に連れ込む
+
+IF GET_MAPID(CFLAG:MASTER:현재위치) == GET_MAPID(GET_CHARAHOME(CLIENT_ID)) && RAND:3 == 0
+	PRINTFORMW %CALLNAME:CLIENT_ID%의 방으로 향했다.
+	장소 = 1
+ELSE
+	PRINTFORMW 소녀들이 평소에는 잘 오지 않을 법한 감옥저택의 그늘진 장소로 향했다.
+	장소 = 2
+ENDIF
+
+
+
+
+; 대충 섹스하러 어딘가에 들어가는 부분을 쓰면 되는 듯
+; 손을 잡고 어디로 가고 있고, 어디에 가기 직전임
+
+;【써라.】
+
+
+;에마
+IF CLIENT_ID == 1
+	PRINTFORML
+	PRINTFORML 
+	SETCOLOR 255, 192, 203
+	PRINTFORMW 「히로 쨔앙……」
+	RESETCOLOR
+	PRINTFORML 
+	SETCOLOR 184, 38, 71
+	PRINTFORMW 「……너는 바보 개가 아니라 발정난 암캐였나보지?」
+	PRINTFORMW 「그렇게 녹을대로 녹은 표정으로 돌아다니면 모두한테 자신이 발정났다고 광고하는 꼴이잖아.」
+	PRINTFORMW 「아니면, 다른 누구라도 좋으니까 안아줄 사람을 찾고 있던 거냐?」
+	RESETCOLOR
+	PRINTFORML 
+	PRINTFORMW 에마는 살며시 히로의 이름을 부르고 잡은 손을 더 강하게 쥐여왔다.
+	PRINTFORMW 그 모습에 심장이 고동치면서도 어딘가 마음에 들지 않아 히로는 괜시리 퉁명스럽게 말을 던졌다.
+	PRINTFORMW 내색은 하지 않았지만, 평소보다도 높아진 에마의 색기와 목소리에서 전해지는 욕망에 히로 안에서도 열기가 차츰 쌓여가고 있었다.
+	PRINTFORML 
+	SETCOLOR 255, 192, 203
+	PRINTFORMW 「그러는 히로 쨩도 평소에는 자기 내킬대로 찾아와서 나랑 하는 주제에.」
+	PRINTFORMW 「히로 쨩도 동의했으니까 우리가 이런 관계가 된 거 아니야?」
+	PRINTFORMW 「앞에서는 『옳지않다, 옳지않다』하면서 뒤로는 할 거 다 하는 히로 쨩이 할 말은 아니라고 생각해.」
+	PRINTFORMW 「지금도 내 제안을 받아들인 건 히로 쨩도 하고 싶다고 생각한 거잖아?」
+	RESETCOLOR
+	PRINTFORML 
+	SETCOLOR 184, 38, 71
+	PRINTFORMW 「큭……」
+	RESETCOLOR
+	PRINTFORML 
+	PRINTFORMW 그 말에 정곡을 찔린 히로는 가만히 입을 다물었다.
+	PRINTFORMW ……동시에 분노 때문인지, 흥분 때문인지는 몰라도 누가봐도『그럴 마음』이라는 것을 알 수 있을 정도로 숨이 거칠어져갔다.
+	PRINTFORML
+	SETCOLOR 184, 38, 71 
+	PRINTFORMW 「……이번에는 네가 꼬신 거니까.」
+	RESETCOLOR
+	PRINTFORML 
+	SETCOLOR 255, 192, 203
+	PRINTFORMW 「응……♡」
+	RESETCOLOR
+	PRINTFORML 
+;안안
+ELSEIF CLIENT_ID == 2
+
+;노아
+ELSEIF CLIENT_ID == 3
+
+;레이아
+ELSEIF CLIENT_ID == 4
+
+;미리아
+ELSEIF CLIENT_ID == 5
+
+;마고
+ELSEIF CLIENT_ID == 6
+
+;나노카
+ELSEIF CLIENT_ID == 7
+
+;아리사
+ELSEIF CLIENT_ID == 8
+
+;셰리
+ELSEIF CLIENT_ID == 9
+
+;한나
+ELSEIF CLIENT_ID == 10
+
+;코코
+ELSEIF CLIENT_ID == 11
+
+;메루루
+ELSEIF CLIENT_ID == 12
+
+;유키
+ELSEIF CLIENT_ID == 15
+
+ENDIF
+
+
+PRINTFORMW 그 말을 끝으로, 발을 재촉한 둘은 어느새 목적지 앞에 와 있었다.
+PRINTFORML 
+
+
+
+IF TALENT:CLIENT_ID:자존심 == 1
+	PRINTFORML %조사처리(CALLNAME:CLIENT_ID,"는")% %마스터가% 흥분을 깨닫지 못 하도록 새침한 표정을 지었으나,
+	PRINTFORMW 평소보다 뜨거워진 숨결과 새빨개진 볼은 숨기지 못하고 있다.
+ELSE
+ENDIF
+
+
+횟수 = MAX(MIN(ABL:CLIENT_ID:욕망 / 2, 5) + CFLAG:CLIENT_ID:욕구불만도 / 200,1)
+
+
+IF 장소 == 1 || 장소 == 2
+	;각 캐릭터의 자기방／마을내
+	PRINTFORM %조사처리(CALLNAME:CLIENT_ID,"는")% 
+		IF 장소 == 1
+			PRINTFORML %마스터를% 방에 들여보내자,
+		ELSE
+			PRINTFORML 들어온 방의 열쇠를 잠그자,
+		ENDIF
+	PRINTFORMW 더 이상 참을 수 없다는 듯 %CALLNAME:MASTER%의 목에 팔을 감싸고 입술을 쭈욱 내밀며 %CALLNAME:MASTER%와의 키스를 졸라댔다.
+	PRINTFORM %CALLNAME:MASTER%가 바라는 대로 
+		SIF TALENT:CLIENT_ID:키스미경험
+			PRINTFORM 아직 누군가와도 입을 마주친 적이 없는 그녀의 입술에 
+	PRINTFORML 입을 맞춰주자 %조사처리(CALLNAME:CLIENT_ID,"는")% 욕정과 기쁨에 몸을 베베 꼬았다.
+	PRINTFORML 
+	PRINTFORML ・
+	PRINTFORML ・
+	PRINTFORMW ・
+	PRINTFORML 
+		IF 장소 == 1
+			PRINTFORM %CALLNAME:CLIENT_ID%의 방
+		ELSEIF 장소 == 2
+			PRINTFORM 드문드문 다른 소녀들의 목소리가 들리는 한 구석
+		ELSE
+		ENDIF
+	PRINTFORM 에서, 
+	PRINTFORMW %TEXTR("질척질척 하는 거친 물소리/운동을 하는 듯 거친 두 사람의 호흡 소리/")%와 %TEXTR("녹아내리는 듯한 암컷의 신음 소리가/쾌락에 허덕이는 신음 소리가/여자답지 않은 교성이/")% 울려퍼졌다.
+		SIF TALENT:CLIENT_ID:무지
+			PRINTFORMW 머리로는 이해되지 않더라도, %CALLNAME:MASTER%의 손으로 암컷의 본능에 눈뜨게한 %CALLNAME:CLIENT_ID%의 몸은 완전한 쾌락의 포로다.
+
+
+	;페니반 있냐에 따라 할 수 있는 플레이가 변함. 페니반 있으면 33퍼 확률로 박는 섹스
+	IF ITEM:페니스밴드 && RAND:3 == 0
+		SELECTCASE RAND:5
+			CASE 0
+				PRINTFORML 
+				PRINTFORMW %마스터는% 끈적끈적한 애무와 허리놀림으로 %조사처리(CALLNAME:CLIENT_ID,"를")% 애태우게 만들었다.
+				PRINTFORML 
+				PRINTFORML 가기 직전마다 계속 끊겨 이제 더 이상 참을 수 없어진 %CALLNAME:CLIENT_ID%의 입에서「가게 해줘」라는 말을 이끌어낸 %마스터는% 잠시 가만히 있더니,
+				PRINTFORMW %CALLNAME:CLIENT_ID%가 예상치 못한 타이밍에 착용한 페니스밴드로 실컷 애태워져 내려앉은 자궁을 강하게 쳐 올렸다.
+			CASE 1
+				PRINTFORML 
+				PRINTFORMW %마스터는% %CALLNAME:CLIENT_ID%가 바란대로 대면좌위로 연결되어 있다.
+				PRINTFORML 
+				CALL HPH_PRINT(@"분위기를 띄우기 위해서인지, 아니면 진심인건지, 귓전에 %CALLNAME:CLIENT_ID%에게 「좋아…HPH 좋아해…HPH」라며 속삭일 때 마다","L")
+				PRINTFORMW %CALLNAME:MASTER%의 두근거리는 소리는 커져갔다.
+				PRINTFORML 
+				PRINTFORML 이윽고 서로 한계가 가까워짐에 따라 움직임이 빨라지자, 혀가 돌지 않게 된 %조사처리(CALLNAME:CLIENT_ID,"는")%
+				PRINTFORMW 정담을 나누는 대신 %CALLNAME:MASTER%에게 꽉 매달려왔다.
+			CASE 2
+				PRINTFORML 
+				PRINTFORMW 목적지에 도착하자마자 계속해서 서로를 껴안고 있던 두 사람은 질척질척하게 젖어있었다.
+				PRINTFORML 
+				PRINTFORML 옷을 벗기 위해 껴안는 걸 풀 생각조차 하지 않던 %CALLNAME:CLIENT_ID%의 옷은 땀과 체액으로 축축하게 젖었고,
+				PRINTFORMW %CALLNAME:MASTER%의 옷과 달라붙어 두 사람의 연결을 더욱 공고히 하고 있었다.
+				PRINTFORML 
+				PRINTFORML 그녀의 안쪽을 격렬하게 찔러대며 %CALLNAME:MASTER%가「이런 옷 상태를 다른 사람들에게 보이면 큰일이겠어」라며 붉게 물든 귀에 속삭이자
+				PRINTFORMW %조사처리(CALLNAME:CLIENT_ID,"는")% 상상을 했는지 더더욱 시뻘겋게 귀를 물들이면서도, %마스터를% 끌어안은 손을 더욱 강하게 했다.
+			CASE 3
+				PRINTFORML 
+				PRINTFORMW %조사처리(CALLNAME:CLIENT_ID,"는")% 머리카락을 흩날리면서 %CALLNAME:MASTER%의 위에서 허리를 흔들고 있다.
+				PRINTFORML 
+				PRINTFORML 빙글빙글하며 허리를 그라인드시켜 쾌락을 탐하는 %CALLNAME:CLIENT_ID%의 %TEXTR("젖꼭지/클리토리스/")%를 기습적으로 손가락으로 문질러 주자,
+				PRINTFORMW 괴로운듯한 신음소리와 함께 흠칫 몸을 떨면서 %CALLNAME:CLIENT_ID%가 절정했다.
+				PRINTFORML 
+				PRINTFORML 몸도 마음도 완전히 녹아내린 %조사처리(CALLNAME:CLIENT_ID,"가")% 바란대로 두 사람은 계속해서 서로의 몸을 섞어갔으며
+				PRINTFORMW 두 사람이 있는 장소에서 땀어린 열기와 체액과 쾌락의 냄새가 짙어지기 시작했다.
+			CASE 4
+				PRINTFORML 
+				PRINTFORMW %조사처리(CALLNAME:CLIENT_ID,"는")% 속옷 차림으로 %CALLNAME:MASTER%에게 봉사하고 있었다.
+				PRINTFORML 
+				PRINTFORML 『옷은 다 벗되, 속옷만은 입고서 한다』는 규칙으로 음란하고 매니악한 섹스 플레이가 일어나고 있는 곳에서는
+				PRINTFORMW 이미 두 사람의 다른 옷들이 매미 허물마냥 여기저기 널부러져 나뒹굴고 있었다.
+				PRINTFORML 
+				PRINTFORML %CALLNAME:MASTER%가 속옷차림으로 %CALLNAME:MASTER%의 위에서 허리를 흔드는 %CALLNAME:CLIENT_ID%에게
+				PRINTFORML 「그 속옷을 입을 때 마다 오늘의 정사를 떠올리도록」이라고 속삭이며 %CALLNAME:CLIENT_ID% 약한 부분을 찔러버리자
+				PRINTFORMW 상상했는지, %조사처리(CALLNAME:CLIENT_ID,"는")% 얼굴을 가리면서 격렬한 절정과 환희에 몸을 떨었다.
+		ENDSELECT
+		CALL MAKELOVE(CLIENT_ID, "V", 횟수, "섹스 권유", @"발정한 %CALLNAME:CLIENT_ID%에게 섹스를 제안받아, {횟수}번 했다")
+	ELSE
+		PRINTFORML 
+		PRINTFORMW %TEXTR("망측한 모습을 볼 수 없도록/신음소리를 내는 건 역시 부끄러운 듯 해서/")%, %TEXTR(@"입을 손으로 막아/%CALLNAME:MASTER%의 입술에 달라붙어/입술을 깨물면서/고개를 숙여/")% 필사적으로 신음소리를 참고있는 모습이 너무나도 사랑스럽다.
+		PRINTFORML 
+		SELECTCASE RAND:5
+		CASE 0
+			PRINTFORML 머리를 쓰다듬고 귓가에 달콤한 말을 속삭이며
+		CASE 1
+			PRINTFORML 클리토리스를 주무르듯 자극하면서
+		CASE 2
+			PRINTFORML 손가락으로 애널을 주무르듯 자극하면서
+			종류 = 1
+		CASE 3
+			IF TALENT:CLIENT_ID:가슴사이즈 >= 1
+				PRINTFORM %TEXTR("부드러우며 탱글한/어른스럽게 풍만해진/")% 
+			ELSEIF TALENT:CLIENT_ID:가슴사이즈 == -1
+				PRINTFORM %TEXTR("다소곳한/손 안에 쏙 들어오는/")% 
+			ELSEIF TALENT:CLIENT_ID:가슴사이즈 == -2
+				PRINTFORM %TEXTR("살집 앏은/갈비뼈가 도드라진/")% 
+			ELSE
+				PRINTFORM %CALLNAME:MASTER%의 움직임에 맞춰 흔들리는 
+			ENDIF
+			PRINTFORML 가슴을 주무르면서
+		CASE 4
+			IF ABL:CLIENT_ID:마조끼 >= 3
+				PRINTFORML 젖꼭지를 손가락으로 꽉 꼬집어 짓눌러
+			ELSE
+				PRINTFORML 젖꼭지를 손가락으로 문지르듯 쓸어올려
+			ENDIF
+		ENDSELECT
+		PRINTFORML %TEXTR("자궁구를/Ｇ스팟 쪽을/")% 손가락으로 %TEXTR("끈적끈적하게 반죽하듯/퍽퍽 힘차게/")% 찔러주자,
+		{
+		PRINTFORMW %조사처리(CALLNAME:CLIENT_ID,"는")% 움찔움찔 등골을 떨며 절정해 %TEXTR("녹아버린 질육으로 손가락을 꽉 조였다./칠칠치 못한 몰골을 드러냈다./쾌락으로 느슨해진 입에서 침을 흘렸다./억제하지 못한 음란한 소리가 주변에 울려퍼졌다.")%
+		}
+
+		IF 종류 == 1
+			CALL MAKELOVE(CLIENT_ID, "V약+A약", 횟수, "섹스 권유", @"발정한 %CALLNAME:CLIENT_ID%에게 섹스를 제안받아, {횟수}번 했다")
+		ELSE
+		CALL MAKELOVE(CLIENT_ID, "V약", 횟수, "섹스 권유", @"발정한 %CALLNAME:CLIENT_ID%에게 섹스를 제안받아, {횟수}번 했다")
+		ENDIF
+
+	ENDIF
+ELSE
+ENDIF
+
+PRINTFORMW …
+PRINTFORMW ……
+PRINTFORMW ………
+PRINTFORML 
+PRINTFORMW 정사 후, 짐승 같던 아까 전까지의 모습과는 다르게 바로 착실하게 청소를 시작한 %CALLNAME:MASTER%의 모습에 %조사처리(CALLNAME:CLIENT_ID,"는")% 『그럼 그렇지』라는 듯한 표정으로 웃었다.
+
+EXP:MASTER:청소경험 ++
+
+RETURN IRAI_CONST_RESULT("실행해 성공")
+
+
+CASE "의뢰 성공시"
+;成功報告時の報酬など
+	TALENT:TARGET:기분 = LIMIT(TALENT:기분 + 1, -1, 1)
+	CALL CHANGE_CFLAG(2, TARGET, 30)
+	CALL CHANGE_CFLAG(4, TARGET, 5)
+
+CASE "의뢰 실패시"
+;失敗報告時の処理
+	CALL CHANGE_CFLAG(2, TARGET, -10)
+	CALL CHANGE_CFLAG(4, TARGET, -5)
+	CALL CHANGE_CFLAG(340, TARGET, 100)
+ENDSELECT
+
+;抱かれたい依頼の経験などの処理を切り出し
+
+@MAKELOVE(C_ID, type, 횟수, 시추에이션, 일기기술)
+#DIM  C_ID
+#DIM 기본주입량
+#DIM 호감도상승량
+#DIM 횟수
+#DIM 경험증가수,58
+#DIMS type
+#DIMS 시추에이션
+#DIMS 일기기술
+VARSET 경험증가수
+SPLIT @"%시추에이션%", "/", LOCALS
+
+PRINTFORML 
+PRINTFORML ・
+PRINTFORML ・
+PRINTFORMW ・
+PRINTFORML 
+PRINTFORM %마스터는% 
+IF (TALENT:C_ID:처녀 && type == "V" || TALENT:C_ID:처녀 && type == "V약" || TALENT:C_ID:처녀 && type == "V약+A약") 
+	PRINTFORM %CALLNAME:C_ID%의 순결을 빼았고, 
+ENDIF
+PRINTFORML %조사처리(CALLNAME:C_ID,"를")% {횟수}번 %TEXTR("범했다/안았다/")%.
+
+
+SIF TALENT:MASTER:키스미경험
+	CALL SET_FIRSTKISS(MASTER, C_ID, 2)
+SIF TALENT:C_ID:키스미경험
+	CALL SET_FIRSTKISS(C_ID, MASTER, 2)
+
+;C
+경험증가수:0 += 1 + RAND:(횟수 * 2) 
+경험증가수:5 += 경험증가수:0 / 2
+;B
+경험증가수:3 += RAND:(횟수 * 2) 
+경험증가수:8 += 경험증가수:3 / 2
+;M
+경험증가수:4 += 3 + ABL:C_ID:M감각 * 2
+;絶頂経験
+경험증가수:10 += 경험증가수:0 / 2
+;口淫経験
+경험증가수:25 = 경험증가수:4
+;キス経験
+경험증가수:27 = 경험증가수:4
+EXP:MASTER:M경험 += 경험증가수:4
+EXP:MASTER:키스경험 += 경험증가수:4
+EXP:MASTER:펠라티오경험 += 경험증가수:4
+
+
+IF type == "V약+A약"
+;처녀는 무조건 뚫리는 모양이다
+;ㅅㅂ 구분을 두려고 노력했는데 이게 안 되시네
+	IF !CFLAG:C_ID:애널처녀상실기념일
+		SETCOLOR 247,171,166
+		PRINTFORMW 【애널처녀상실】
+		CALL SET_HISTORY_LOST_A(C_ID, MASTER, "손가락", @"%LOCALS:0%", @"%LOCALS:1%")
+	ENDIF
+	IF TALENT:C_ID:처녀 == -1
+		SETCOLOR 247,171,166
+		PRINTFORMW 【무자각비처녀상실】
+		TALENT:C_ID:처녀 = 0
+	ENDIF
+	IF TALENT:C_ID:처녀 == 1
+		SETCOLOR 247,171,166
+		PRINTFORMW 【처녀상실】
+		CALL SET_HISTORY_LOST_V(C_ID, MASTER, "손가락", @"%LOCALS:0%", @"%LOCALS:1%")
+	ENDIF
+	경험증가수:1 += 횟수 
+	경험증가수:6 += 횟수
+	경험증가수:20 += 횟수 
+	경험증가수:2 += 횟수 
+	경험증가수:7 += 횟수
+	경험증가수:21 += 횟수 
+ENDIF
+
+
+IF type == "V약"
+;처녀는 무조건 뚫리는 모양이다
+;ㅅㅂ 구분을 두려고 노력했는데 이게 안 되시네
+	IF TALENT:C_ID:처녀 == -1
+		SETCOLOR 247,171,166
+		PRINTFORMW 【무자각비처녀상실】
+		TALENT:C_ID:처녀 = 0
+	ENDIF
+	IF TALENT:C_ID:처녀 == 1
+		SETCOLOR 247,171,166
+		PRINTFORMW 【처녀상실】
+		CALL SET_HISTORY_LOST_V(C_ID, MASTER, "손가락", @"%LOCALS:0%", @"%LOCALS:1%")
+	ENDIF
+	경험증가수:1 += 횟수
+	경험증가수:6 += 횟수
+	경험증가수:20 += 횟수 
+ENDIF
+
+
+IF type == "A"
+	IF !CFLAG:C_ID:애널처녀상실기념일
+		SETCOLOR 247,171,166
+		PRINTFORMW 【애널처녀상실】
+		CALL SET_HISTORY_LOST_A(C_ID, MASTER, "페니스밴드", @"%LOCALS:0%", @"%LOCALS:1%")
+	ENDIF
+	경험증가수:2 += 횟수 * 2 
+	경험증가수:7 += 횟수
+	경험증가수:21 += 횟수 * 2 
+ENDIF
+
+IF type == "V"
+	IF TALENT:C_ID:처녀 == -1
+		SETCOLOR 247,171,166
+		PRINTFORMW 【무자각비처녀상실】
+		TALENT:C_ID:처녀 = 0
+	ENDIF
+	IF TALENT:C_ID:처녀 == 1
+		SETCOLOR 247,171,166
+		PRINTFORMW 【처녀상실】
+		CALL SET_HISTORY_LOST_V(C_ID, MASTER, "페니스밴드", @"%LOCALS:0%", @"%LOCALS:1%")
+	ENDIF
+	경험증가수:1 += 횟수 * 2 
+	경험증가수:6 += 횟수
+	경험증가수:20 += 횟수 * 2 
+ENDIF
+
+SETCOLOR C_YELLOW
+FOR LOCAL,0,58
+	IF 경험증가수:LOCAL
+		PRINTFORML %EXPNAME:LOCAL% ＋{경험증가수:LOCAL}
+		EXP:C_ID:LOCAL += 경험증가수:LOCAL
+	ENDIF
+NEXT
+RESETCOLOR
+
+CALL JUEL_UP_SPECIAL(C_ID,"욕정","욕망",20,1)
+
+
+IF type == "V"
+	IF TCVAR:C_ID:파과
+		CALL JUEL_UP_SPECIAL(C_ID,"쾌V","V감각",100,1)
+	ELSE
+		CALL JUEL_UP_SPECIAL(C_ID,"쾌V","V감각",15,1)
+	ENDIF
+
+ELSEIF type == "A"
+	CALL JUEL_UP_SPECIAL(C_ID,"쾌A","A감각",100,1)
+
+ELSEIF type == "V약+A약"
+	IF TCVAR:C_ID:파과
+		CALL JUEL_UP_SPECIAL(C_ID,"쾌V","V감각",50,1)
+		CALL JUEL_UP_SPECIAL(C_ID,"쾌A","A감각",50,1)
+	ELSE
+		CALL JUEL_UP_SPECIAL(C_ID,"쾌V","V감각",5,1)
+		CALL JUEL_UP_SPECIAL(C_ID,"쾌A","A감각",50,1)
+	ENDIF
+	CALL JUEL_UP_SPECIAL(C_ID,"쾌A","A감각",50,1)
+
+ELSEIF type == "V약"
+	IF TCVAR:C_ID:파과
+		CALL JUEL_UP_SPECIAL(C_ID,"쾌V","V감각",50,1)
+	ELSE
+		CALL JUEL_UP_SPECIAL(C_ID,"쾌V","V감각",5,1)
+	ENDIF
+
+ENDIF
+
+
+CALL ADD_EXP_LESNIAN(횟수 * 5, C_ID, "PRINT")
+
+TIME += 횟수 * 20
+IF BASE:MASTER:기력 > 0
+	DOWNBASE:MASTER:기력 += 횟수 * 150
+ELSE
+	DOWNBASE:MASTER:체력 += 횟수 * 50
+ENDIF
+
+호감도상승량 = 횟수 * ABL:C_ID:친밀 * 5
+
+CALL CHANGE_CFLAG(2,C_ID,호감도상승량)
+CFLAG:C_ID:욕구불만도 = 0
+TCVAR:C_ID:파과 = 0
+CALL ASK_DIARY(@"%일기기술%")
