@@ -1,0 +1,38 @@
+﻿;-------------------------------------------------
+;600접수대, 데이트
+;-------------------------------------------------
+
+;대응 커맨드 불명
+;쇼핑 한다
+@COM_ABLE611
+;일괄관리
+SIF GLOBAL_COMABLE(611)
+	RETURN RESULT
+;お出掛け道中
+SIF TFLAG:데이트도중
+	RETURN 0
+;수면중
+SIF CFLAG:MASTER:수면
+	RETURN 0
+RETURN 1
+
+;대응 커맨드 불명
+;선물
+@COM_ABLE612
+;일괄관리
+SIF GLOBAL_COMABLE(612)
+	RETURN RESULT
+;상대가 없다
+SIF !TARGET
+	RETURN 0
+;데이트중 이외
+SIF !CHK_DATENOW(CFLAG:12)
+	RETURN 0
+;데이트 도중
+SIF TFLAG:데이트도중
+	RETURN 0
+;수면중
+SIF CFLAG:수면
+	RETURN 0
+RETURN 1
+
