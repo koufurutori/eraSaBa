@@ -1,0 +1,148 @@
+﻿;-----------------------------------------------------------
+;데이트중을 판정하는 함수
+;현재는 CFLAG:데이트중이 현재위치의 MAPID사용되고 있기 때문에、데이트중 판정이 별도로 필요함
+;ARG      CFLAG:X:데이트중（MAPID)
+;RETURNF  0=데이트하지 않음,1=데이트하고 있음
+;-----------------------------------------------------------
+@CHK_DATENOW(ARG)
+#FUNCTION
+#DIM MAPID_DATE
+IF ARG == MAIN_MAP
+	RETURNF 0
+ELSE
+	RETURNF 1
+ENDIF
+
+;-----------------------------------------------------------
+;장소ARG의 MAPID를 반환하는 함수
+;ARG      장소ID
+;RETURNF  MAPID
+;-----------------------------------------------------------
+@GET_MAPID(ARG)
+#FUNCTION
+RETURNF ARG / 100
+
+;-------------------------------------------------
+;이른바 ROUND 함수 판정
+;ARG <= ARG:1 <= ARG:2이면 1을, 그렇지 않으면 0을 돌려준다
+;-------------------------------------------------
+@CHK_FOCUS(ARG, ARG:1, ARG:2)
+#FUNCTION
+SIF INRANGE(ARG:1, ARG:0, ARG:2)
+	RETURNF 1
+SIF ARG > ARG:2
+	PRINT ARG:0 > ARG:2 에러
+RETURNF 0
+
+;-----------------------------------------------------------
+;재택 판정
+;캐릭터 ARG가 거점에 있는지 판정
+;ARG        캐릭터번호
+;RETURN     0=거점에 없음, 1=거점에 있음, 2=거점 밖
+;-----------------------------------------------------------
+@AT_HOME(ARG)
+#FUNCTION
+RETURNF IN_HOME(CFLAG:ARG:현재위치)
+
+;-----------------------------------------------------------
+;거점 판정
+;장소 ARG가 거점 안인지 판정
+;ARG		장소ID
+;RETURN		0=거점은 아닌,1=거점의 안,2=거점 밖
+;-----------------------------------------------------------
+@IN_HOME(ARG)
+#FUNCTION
+IF ARG == MAXROOM
+	RETURNF 2
+ELSEIF INRANGE(ARG, MINROOM(), MAXROOM)
+	RETURNF 1
+ELSE
+	RETURNF 0
+ENDIF
+
+;------------------------------------------
+;거점(외출처)의 출입구가 되는 지점의 장소ID를 반환한다
+;------------------------------------------
+@GET_ENTRANCE(MAPID)
+#FUNCTION
+#DIM MAPID
+;拠点
+IF MAPID == MAIN_MAP
+	RETURNF ENTRANCE
+;외출처
+ELSE
+	RETURNF MAPID * 100 + 10
+ENDIF
+
+;------------------------------------------
+;장소 ID가 MAPID의 참배길(출입구)인지 판정한다
+;MAPID를 생략한 경우는 MAPID에 ARG의 소속 MAP를 대입한다
+;ARG:장소ID
+;MAPID：대상MAP
+;------------------------------------------
+@CHK_ENTRANCE(ARG, MAPID = 999)
+#FUNCTION
+#DIM MAPID
+;	// MAPID가 생략 되었을 경우
+SIF MAPID == 999
+	MAPID = GET_MAPID(ARG)
+;	//ODEKAKEMAP 사용시
+SIF ARG == GET_ENTRANCE(MAPID)
+	RETURNF 1
+RETURNF 0
+
+;------------------------------------------
+;초대방(お招き部屋)의 이름 문자열을 반환한다. 초대 받기 전에는 TARGET의 초대방 문자열을 반환한다
+;호출 전:NAME_FROM_PLACE()
+;ARG  집주인
+;------------------------------------------
+@OMANEKI_PLACE(ARG)
+#FUNCTIONS
+#DIMS PNAME
+#DIM OMANEKI_TARGET
+IF ARG
+	OMANEKI_TARGET = ARG
+ELSE
+	IF CFLAG:MASTER:초대
+		OMANEKI_TARGET = CFLAG:MASTER:초대
+	ELSE
+		OMANEKI_TARGET = TARGET
+	ENDIF
+ENDIF
+
+PNAME = %CALLNAME:(OMANEKI_TARGET)%
+
+IF TEQUIP:목욕탕플레이
+	IF TFLAG:거품목욕
+		PNAME = %PNAME%의 개인목욕탕
+	ELSE
+		PNAME = %PNAME%의 목욕탕
+	ENDIF
+ELSE
+	SELECTCASE OMANEKI_TARGET
+		CASEELSE
+			IF OUTROOF(CFLAG:OMANEKI_TARGET:자택위치)
+				PNAME = %PNAME%의 거처
+			ELSE
+				PNAME = %PNAME%의 방
+			ENDIF
+	ENDSELECT
+ENDIF
+RETURNF PNAME
+
+;-----------------------------------------------------------
+;외출지점을 랜덤으로 출력하는 함수
+;거점마다 같은 확률로 출력한다(지점이 많을수록 확률이 높아지지 않는다)
+;-----------------------------------------------------------
+@RANDOM_ODEKAKE
+#FUNCTION
+#DIM MAPID
+#DIM P_ID
+MAPID = RAND:MAXHOME
+SIF MAPID == MAIN_MAP
+	RESTART
+P_ID = 0
+WHILE NAME_FROM_PLACE(P_ID) == "" || P_ID == 0
+	P_ID = MAPID * 100 + RAND:10 * 10
+WEND
+RETURNF P_ID

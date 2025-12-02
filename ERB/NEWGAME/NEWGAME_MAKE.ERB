@@ -1,0 +1,224 @@
+﻿;-----------------------------------------------------------
+;캐릭터메이킹
+;전 캐릭터 추가 후에 실시
+;-----------------------------------------------------------
+@NEWGAME_MAKE
+;공통 초기화
+CALL NEWGAME_MAKE_INIT
+;모드 선택
+CALL NEWGAME_MAKE_SELECT_MODE
+;스테이터스 설정
+
+;-----------------------------------------------------------
+;초기화
+;-----------------------------------------------------------
+@NEWGAME_MAKE_INIT
+
+;MASTER는 초기 히로로 설정
+NAME:MASTER = %NAME:0%
+CALLNAME:MASTER = %CALLNAME:0%
+FOR LOCAL,0,450
+	TALENT:MASTER:LOCAL = TALENT:0:LOCAL
+NEXT
+FOR LOCAL,0,55
+	ABL:MASTER:LOCAL = ABL:0:LOCAL
+NEXT
+;기력, 체력 등. 나중에 여기에 스트레스와 공복도 넣어서 만들어야 할 것.
+FOR LOCAL,0,20
+	MAXBASE:MASTER:LOCAL = MAXBASE:0:LOCAL
+	BASE:MASTER:LOCAL = MAXBASE:0:LOCAL
+NEXT
+FOR LOCAL,0,100
+	EXP:MASTER:LOCAL = EXP:0:LOCAL
+NEXT
+
+CFLAG:MASTER:초기위치 = CFLAG:0:초기위치
+
+;NO는 적당하게 설정
+NO:MASTER = 0
+
+
+;-----------------------------------------------------------
+;모드 선택
+;-----------------------------------------------------------
+@NEWGAME_MAKE_SELECT_MODE
+CLEARLINE 10000
+PRINTL ★★모드를 선택해 주세요★★
+PRINTL START를 누를 경우 히로를 주인공으로 한 본편 게임이 실행됩니다.
+CALL ASK_CHOICES10("START","역극 모드(일부 구상이 표시되지 않습니다)")
+SELECTCASE RESULT
+	CASE 0
+		FLAG:게임모드 = 0
+		CALL NEWGAME_MAKE_ANATA
+	CASE 1
+		FLAG:게임모드 = 1
+		CALL NEWGAME_MAKE_NARIKIRI
+		SIF !RESULT
+			RESTART
+ENDSELECT
+
+;-----------------------------------------------------------
+;통상
+;-----------------------------------------------------------
+@NEWGAME_MAKE_ANATA
+PRINTW 게임 개시 전에 히로를 커스터마이즈할 수 있습니다.
+PRINTW 커스터마이즈하고 싶지 않다면 설정 종료를 눌러주세요.
+CALL CUSTOM_TERMINAL(MASTER)
+
+;-----------------------------------------------------------
+;역극
+;-----------------------------------------------------------
+@NEWGAME_MAKE_NARIKIRI
+#DIM nNo
+PRINTL 
+PRINTL 누가 되겠습니까?
+CALL ASK_CALLNAME
+IF RESULT == 999
+	RETURN 0
+ELSEIF !IS_NAMED(RESULT)
+	RESTART
+ENDIF
+nNo = RESULT
+PRINTFORMW %조사처리(CALLNAME:nNo,"으로")%서 게임을 개시합니다
+
+;역극 복사
+NAME:MASTER = %NAME:nNo%
+CALLNAME:MASTER = %CALLNAME:nNo%
+FOR LOCAL,0,450
+	TALENT:MASTER:LOCAL = TALENT:nNo:LOCAL
+NEXT
+FOR LOCAL,0,55
+	ABL:MASTER:LOCAL = ABL:nNo:LOCAL
+NEXT
+FOR LOCAL,0,20
+	MAXBASE:MASTER:LOCAL = MAXBASE:nNo:LOCAL
+	BASE:MASTER:LOCAL = MAXBASE:nNo:LOCAL
+NEXT
+FOR LOCAL,0,100
+	EXP:MASTER:LOCAL = EXP:nNo:LOCAL
+NEXT
+
+
+;체력기력 최저치 올림
+IF MAXBASE:MASTER:체력 < 2000
+	PRINTFORML 이 캐릭터는 체력이 낮습니다. 2000까지 올릴까요?
+	CALL ASK_YN("올린다","이대로")
+	SIF RESULT == 0
+		MAXBASE:MASTER:체력 = 2000
+ENDIF
+IF MAXBASE:MASTER:기력 < 2000
+	PRINTFORML 이 캐릭터는 기력이 낮습니다. 2000까지 올릴까요?
+	CALL ASK_YN("올린다","이대로")
+	SIF RESULT == 0
+		MAXBASE:MASTER:기력 = 2000
+ENDIF
+
+;처녀
+IF !TALENT:MASTER:처녀
+	PRINTL 처녀가 되겠습니까?
+	CALL ASK_YN("네","아니오")
+	IF RESULT == 0
+		CALL SET_VIRGIN(MASTER)
+	ENDIF
+ENDIF
+
+;CFLAG:MASTER:초기위치 = CFLAG:nNo:초기위치
+FLAG:역극 = nNo
+CFLAG:nNo:출금 = 1
+CALL CUSTOM_INIT(MASTER)
+RETURN 1
+
+
+
+;-----------------------------------------------------------
+;하드하드 모드하게 변경
+;-----------------------------------------------------------
+@HARDERMODE
+PRINTFORML 게임 난이도를 올릴까?
+CALL ASK_YN("좋지","싫어")
+IF !RESULT
+	PRINTFORMW 난이도를 올립니다(캐릭터들과의 상성이 나빠졌다)
+	FOR I,1,12
+		RELATION:I:(MASTER) = 50
+	NEXT
+	RELATION:1:(MASTER) = 30
+	RELATION:15:(MASTER) = 30
+	FLAG:난이도상승 = 1
+ELSE
+	PRINTFORMW 난이도를 올리지 않습니다
+	FOR I,1,12
+		RELATION:I:(MASTER) = 0
+	NEXT
+	RELATION:1:(MASTER) = 50
+	RELATION:7:(MASTER) = 110
+	RELATION:8:(MASTER) = 80
+	RELATION:15:(MASTER) = 50
+	FLAG:난이도상승 = 0
+ENDIF
+
+;FileName_SHOP_CUSTOM.ERB -------------------------- Rev1. 00
+;복장의 설정
+;CALL		USER
+;ARG		MASTER 캐릭터 NO
+;RETURN		VOID
+;COMMENT	
+;-----------------------------------------------------------
+@MASTER_CLOTHES_INIT
+IF FLAG:역극
+	CFLAG:MASTER:기본복장세트 = FLAG:역극 + 100
+ELSE
+	CFLAG:MASTER:기본복장세트 = 1
+ENDIF
+
+@MASTER_CLOTHES
+#DIMS choices, 100
+;리스트 작성
+VARSET choices
+FOR LOCAL, 0, 10
+	IF LOCAL >= 7
+		choices:LOCAL '= MASTER_CLOTHES_NAME(LOCAL+1)
+	ELSE
+		choices:LOCAL '= MASTER_CLOTHES_NAME(LOCAL)
+	ENDIF
+NEXT
+choices:99 '= MASTER_CLOTHES_NAME(99)
+;표시
+PRINTL
+PRINTL
+PRINTFORML 평상복을 선택해주세요.
+DRAWLINE
+CALL ASK_CHOICES(choices, 100)
+SELECTCASE RESULT
+	CASE 100
+		RETURN 0
+	CASE 0 TO 99
+		CALL MASTER_CLOTHES_SET(RESULT)
+		SIF RESULT
+			RETURN 1
+	CASE 99
+		CALL MASTER_CLOTHES_SET(99)
+			RETURN 1
+ENDSELECT
+RESTART
+
+@MASTER_CLOTHES_SET(ARG)
+SELECTCASE ARG
+	CASE 0
+		PRINTFORMW 너무 과격하잖아!
+		RETURN 0
+	CASE 1 TO 6
+		CFLAG:MASTER:기본복장세트 = RESULT
+	CASE 7 TO 9
+		CFLAG:MASTER:기본복장세트 = RESULT + 1
+	CASE 99
+		CALL MASTER_CLOTHES_INIT
+	CASEELSE
+		THROW 유효하지 않은 지정입니다。
+ENDSELECT
+PRINTFORMW 복장을 %조사처리(MASTER_CLOTHES_NAME(CFLAG:MASTER:기본복장세트),"으로")% 변경했습니다.
+RETURN 1
+
+@MASTER_CLOTHES_NAME(ARG)
+#FUNCTIONS
+RETURNF CALLNAME:MASTER + "의 기본 의상"
+THROW

@@ -1,0 +1,221 @@
+﻿;-----------------------------------------------------------
+;거점맵 존재판정
+;현재는 0~10까지 모두 갖추어졌으므로 큰 의미는 없다
+;-----------------------------------------------------------
+@GET_EXISTMAP(ARG)
+#FUNCTION
+SIF GROUPMATCH(ARG, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+	RETURNF 1
+
+
+;-----------------------------------------------------------
+;대상 맵의 호칭 문자열을 반환
+;ARG     MAPID
+;-----------------------------------------------------------
+@GET_MAPNAME(ARG)
+#FUNCTIONS
+#DIMS PNAME
+SELECTCASE ARG
+	CASE 0
+		PNAME = 감옥저택
+	CASEELSE
+		PNAME = 수수께끼의 영역
+ENDSELECT
+RETURNF PNAME
+
+;------------------------------------------
+;거점 내 장소 ARG로 CHARA가 이동할 수 있는지를 반환하는 함수
+;鍵や危険地帯・幻影地帯など
+;ARG    장소ID
+;CHARA  캐릭터ID, 생략 하면 0=MASTER, 현상 캐릭터 이동 이외에서는 사용하지 않습니다
+;------------------------------------------
+@MAP_CAN_MOVE(ARG, CHARA)
+#FUNCTION
+#DIM CHARA
+#DIM 집주인
+#DIM 재택
+IF ROOMDATA:(ARG % 100) & 장소_원룸
+	집주인 = PRIVATEROOM:(ARG % 100)
+	RETURNF MAP_CAN_MOVE_ONEROOM(ARG, CHARA, 집주인)
+ENDIF
+
+;미등록지점
+IF STR:(8000 + ARG) == ""
+	TFLAG:이동불능메시지 = 998
+	RETURNF 0
+ENDIF
+;;잠금 처리 ;KR판 구잔재 또는 오리지날
+IF FLAG:자실잠금 && ARG == CFLAG:MASTER:초기위치 && CHARA != MASTER && ARG != CFLAG:CHARA:초기위치
+	SIF CFLAG:MASTER:현재위치 == ARG
+		TFLAG:이동불능메시지 = -1 * CHARA
+	RETURNF 0
+ENDIF
+;현행 일판 버전
+; ;自室施錠
+; SIF FLAG:自室施錠 && ARG == CFLAG:MASTER:初期位置 && CHARA != MASTER && ARG != CFLAG:CHARA:初期位置
+; 	RETURNF 0
+SELECTCASE MAIN_MAP
+	CASE 0
+		RETURNF MAP_CAN_MOVE_0(ARG, CHARA)
+ENDSELECT
+RETURNF 1
+
+@MAP_CAN_MOVE_ONEROOM(ARG, CHARA, 집주인)
+#FUNCTION
+#DIM CHARA
+#DIM 집주인
+#DIM 재택
+재택 = 0
+;당신
+IF CHARA == MASTER
+	;자택이라면 가능
+	IF ARG == Default초기위치
+		RETURNF 1
+	;동행이나 연모라면 넣는다(집주인 수면중도 가능
+	ELSEIF CFLAG:집주인:동행 || TALENT:집주인:연모
+		재택 = 1
+	;집주인이 있어 일어나고 있다
+	ELSEIF CFLAG:집주인:현재위치 == ARG
+		IF SHIRAHU(집주인)
+			재택 = 1
+		; 개인 임의수정, 집주인 수면으로 열쇠가 걸린 문에 한해 KR판 문따기기능 구현
+		;---- EDIT START ---------------------------------
+		ELSEIF ITEM:【문따기기능】 ;|| GROUPMATCH(MAIN_MAP, 13,14)
+			재택 = 1
+		;---- EDIT END -----------------------------------
+		ENDIF
+	;집주인 이외의누군가가 있는, 이 사람 물건은 자기도 해도 좋다
+	ELSEIF IN_ROOM_NUMBER(ARG)
+		재택 = 1
+	;KR판 오리지날용 분기 + 개인 임의수정, 문따기기능 주석처리
+	ELSEIF GROUPMATCH(MAIN_MAP, 13,14) ;|| ITEM:【문따기기능】
+		RETURNF 1
+	ENDIF
+;집주인은 넣는다
+ELSEIF CHARA == 집주인
+	재택 = 1
+;그렇지 않은 캐릭터는 궁합이 100을 넘지 않았다고 안 돼
+ELSEIF RELATION:집주인:(CHARA) > 100
+	재택 = 1
+ENDIF
+IF !재택
+	IF FINDCHARA(CFLAG:초기위치, ARG, 1) != -1 && FINDCHARA(CFLAG:초기위치, ARG, 1) != 집주인
+		집주인 = FINDCHARA(CFLAG:초기위치, ARG, 1)
+		RESTART
+	ENDIF
+	TFLAG:이동불능메시지 = 999
+	RETURNF 0
+ENDIF
+RETURNF 1
+;-----------------------------------------------------------
+;지점의 연결 설정
+;ARG    기준 지점
+;ARG:1  대상 지점
+;RETURNF 0=이동할 수 없다, 보이지 않는다
+;        1=이동할 수 있다, 보이지 않는다
+;        2=이동할 수 없다, 보인다
+;        3=이동할 수 있다, 보인다(직통)
+;-----------------------------------------------------------
+@CAN_MOVE(ARG, ARG:1)
+#FUNCTION
+
+IF MAIN_MAP == GET_MAPID(ARG)
+SELECTCASE MAIN_MAP
+	CASE 0
+		RETURNF CAN_MOVE_0(ARG, ARG:1)
+ENDSELECT
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;장소ID의 이름 문자열을 반환하는 함수
+;ARG  장소ID
+;-----------------------------------------------------------
+@NAME_FROM_PLACE(ARG)
+#FUNCTIONS
+#DIM MAPID
+#DIMS PNAME
+PNAME = 
+MAPID = GET_MAPID(ARG)
+IF TFLAG:망상중 == 1
+	PNAME = 근사한 공간
+ELSEIF ARG == OMANEKIBEYA()
+	;초대방의 이름 처리
+	RETURNF OMANEKI_PLACE()
+ELSEIF ARG == ROAD_TO(MAPID)
+	PNAME = %GET_MAPNAME(MAPID)%%조사만처리(GET_MAPNAME(MAPID), "으로")% 가는 중
+ELSEIF MAPID == MAIN_MAP
+	;物件マップ内の名前処理
+	SELECTCASE MAPID
+		CASE 0
+			PNAME = %MAP_PLACENAME_0(ARG)%
+	ENDSELECT
+ELSEIF ARG < 2000
+	;외출 맵 쪽
+	PNAME = %STR:(6000 + ARG / 10)%
+ELSE
+	;도중외, 그외범위
+	PNAME = %STR:(ARG)%
+ENDIF
+RETURNF PNAME
+
+;-----------------------------------------------------------
+;맵의 지역 번호를 반환하는 함수, 지역 번호는 TFLAG:맵변환 의 맵 번호
+;ARG    MAPID
+;ARG:1  判定する場所ID（0ならMASTERの現在位置）
+;-----------------------------------------------------------
+@MAP_AREASELECT(ARG, ARG:1)
+#FUNCTION
+SIF !ARG:1
+	ARG:1 = CFLAG:MASTER:현재위치
+SELECTCASE ARG
+	CASE 0
+		RETURNF MAP_AREASELECT_0(ARG:1)
+ENDSELECT
+
+;-----------------------------------------------------------
+;묘화하는 맵의 함수명을 반환하는 함수
+;MAP_X.ERB参照
+;ARG    MAPID
+;-----------------------------------------------------------
+@MAP_VIEWING_NAME(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+	CASE 0
+		RETURNF MAP_VIEWING_NAME_0()
+ENDSELECT
+
+;-----------------------------------------------------------
+;내부구조가 있는 장소의 내부 판정
+;表示するマップ（TFLAG:マップ切り替え）によって変化するので注意
+;ARG    MAPID
+;ARG:1  表示場所ID
+;ARG:2  内部場所ID
+;-----------------------------------------------------------
+@GETMAP_BUILDING(ARG, ARG:1, ARG:2)
+#FUNCTION
+SELECTCASE ARG
+
+ENDSELECT
+
+
+;-----------------------------------------
+;私室に最も近い共用風呂を判定する関数
+;ヒノキ風呂の効果を付与する際の判定に利用
+;ARG =1のときは設置場所を表記する時に利用する
+;基本は=0
+;-----------------------------------------
+@NEAR_BATH(ARG = 0)
+#FUNCTION
+RETURNF 0
+
+;とりあえず凍結
+[SKIPSTART]
+;拠点でなければ判定しない
+SIF !IN_HOME(CFLAG:MASTER:현재위치) && ARG == 0
+	RETURNF 0
+SELECTCASE CFLAG:MASTER:초기위치
+	CASEELSE
+		RETURNF 35
+ENDSELECT
+[SKIPEND]

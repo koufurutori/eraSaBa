@@ -1,0 +1,1183 @@
+﻿;-------------------------
+; SKIP_MOVE 보완판
+; - 직접 이동 불가 시 BFS로 최단경로 탐색하여 "다음 한 칸" 반환
+; - P1 ~ P79 범위의 링크는 @GET_LINKS에서 정의
+;-------------------------
+
+; 못 해먹겠어서 AI 돌렸다. 작동 안 하면 나는 이제 몰라...
+
+
+
+;-------------------------
+; 실제 SKIP_MOVE_0 (메인 함수)
+;원거리 이동 설정
+;ARG     목적지
+;ARG:1   현위치
+;RETURN  다음 목적지
+;-------------------------
+@SKIP_MOVE_0(ARG, ARG:1)
+#DIM START
+#DIM GOAL
+#DIM CUR
+#DIM IDX
+#DIM NEXTWAY
+#DIM CAT
+#DIM 현재의위치
+
+#DIM CHARA
+
+#DIM CUR_LINKS, 50
+#DIM CUR_LINK_COUNT
+
+#DIM VISITED, 1000
+#DIM VISITED_COUNT
+
+#DIM PREV, 1000 
+#DIM QUEUE, 1000
+#DIM QHEAD
+#DIM QTAIL
+
+#DIM PATH, 1000
+#DIM PATH_LEN
+
+; 초기화
+VISITED_COUNT = 0
+QHEAD = 0
+QTAIL = 0
+START = 0
+GOAL = 0
+
+CHARA = 이동캐릭터
+
+
+; ARG의 연결리스트를 개씹 차력쇼해서 작성.
+; 사실상 MOVEMENT_CAN_MOVE_00_t.ERB 를 여기에 다시 쓴거나 다름 없다.
+; 눈물난다.
+; 기본적으로 SKIP_MOVE은 주인공 사용 함수인 것 같으니 히로 기준으로 썼다.
+; 아니면 뭐 알아서 잘 돌아다니라고 해.
+; 어딘가 찐빠 나면 고쿠쵸 간수 나노카 이동이 병신되는거지 난 몰라.
+
+; 와씨 PUSH() 함수가 없어? 존나 운다
+; 하드 코딩의 끝 판 왕
+
+
+
+; 현재위치 취득 (호출 방식에 따라 ARG:1에 주어질 수도 있음)
+IF ARG:1
+    현재의위치 = ARG:1
+ELSE
+    현재의위치 = CFLAG:MASTER:현재위치
+ENDIF
+
+
+
+[IF_DEBUG]
+SIF (CHARA != MASTER) && (ARG != 0)
+    PRINTFORML 현재의위치 값은 {현재의위치}고 ARG 값은 {ARG}야.
+[ENDIF]
+
+
+
+
+; 목적지로 직접 이동할 수 있는 경우 그곳으로 이동
+SIF CAN_MOVE(현재의위치, ARG) & 1
+    RETURN ARG
+
+
+; 막다른 골목에서 갈 수 있는 곳은 고정 매핑 
+; 야 시발 이거 이상해 여기에 TO 쓰면 안 먹히는 거 같아 좆같아
+SELECTCASE ARG
+    CASE P1메루루방
+        SIF !(CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막 || FLAG:의무실비밀통로개방)
+            RETURN P8감옥복도
+	CASE P2코코・한나방
+		RETURN P8감옥복도
+    CASE P3레이아・미리아방
+		RETURN P8감옥복도
+    CASE P4노아・안안방
+		RETURN P8감옥복도
+    CASE P5에마・히로방
+		RETURN P8감옥복도
+    CASE P6마고・나노카방
+		RETURN P8감옥복도
+    CASE P7셰리・아리사방
+		RETURN P8감옥복도
+
+	CASE P14징벌방1
+		RETURN P13징벌방복도
+    CASE P15징벌방2
+		RETURN P13징벌방복도
+    CASE P16징벌방3
+		RETURN P13징벌방복도
+    CASE P17징벌방4
+		RETURN P13징벌방복도
+    CASE P18징벌방5	
+		RETURN P13징벌방복도
+    CASE P19징벌방6
+		RETURN P13징벌방복도
+    CASE P20징벌방7
+		RETURN P13징벌방복도
+    CASE P21징벌방8	
+		RETURN P13징벌방복도
+
+	CASE P30창고1층
+		RETURN P33복도1
+	CASE P31화장실
+		RETURN P33복도1
+	CASE P36안뜰
+		RETURN P33복도1
+	CASE P37저수조
+		RETURN P55호수
+	CASE P38응접실
+		RETURN P40현관홀
+	CASE P44주방
+		RETURN P45식당
+	CASE P56벽앞
+		RETURN P23벽가는길
+	CASE P58꽃밭
+		RETURN P57꽃밭앞
+
+	CASE P59창고방1
+		RETURN P63창고
+    CASE P60창고방2	
+		RETURN P63창고
+    CASE P61창고방3	
+		RETURN P63창고
+    CASE P62창고방4	
+		RETURN P63창고
+
+	CASE P65샐러맨더의방
+		RETURN P68게스트하우스앞
+	CASE P67노움의방
+		RETURN P68게스트하우스앞
+	CASE P71오락실
+		RETURN P69복도1
+	CASE P72작은창고
+		RETURN P70복도2
+	CASE P78대마녀화장실
+		RETURN P77자료실
+	CASE P79대마녀방
+		RETURN P77자료실
+ENDSELECT
+
+;  여러 개일 경우 현위치에서 제일 가까운 방(최단 경유지) 반환
+;-------------------------
+; BFS로 최단경로를 찾아서 "다음 한칸"을 반환
+; 시작 = 현재의위치, 목표 = GOAL
+;-------------------------
+
+START = 현재의위치
+GOAL = ARG
+
+; 큐에 START 넣기
+VISITED:0 = START
+PREV:0 = -1
+VISITED_COUNT = 1
+QUEUE:0 = START
+QTAIL = 1
+
+
+; BFS 루프
+WHILE QHEAD < QTAIL
+    CUR = QUEUE:QHEAD
+    QHEAD += 1
+
+    CUR_LINK_COUNT = 0
+
+    ; --- 여기에 P1 ~ P79의 인접 링크를 정의 ---
+    SELECTCASE CUR
+        ; CASE에서 출발하는 거 기준임 -> 화살표
+        CASE P1메루루방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINKS:1 = P29의무실
+                CUR_LINK_COUNT = 2
+            ;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시 에는 감옥복도 쪽 잠금
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+                IF FLAG:의무실비밀통로개방 && TALENT:CHARA:마녀화
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINKS:1 = P29의무실
+                    CUR_LINK_COUNT = 2  
+                ELSEIF FLAG:의무실비밀통로개방 
+                    CUR_LINKS:0 = P29의무실
+                    CUR_LINK_COUNT = 1  
+                ELSEIF TALENT:CHARA:마녀화
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1 
+                ELSE
+                    CUR_LINK_COUNT = 0
+                ENDIF
+            ELSE
+                IF FLAG:의무실비밀통로개방
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINKS:1 = P29의무실
+                    CUR_LINK_COUNT = 2  
+                ELSE
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1 
+                ENDIF
+            ENDIF
+
+        CASE P2코코・한나방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1
+            ;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시 에는 감옥복도 쪽 잠금
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:마녀화
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1
+                ELSE
+                    CUR_LINK_COUNT = 0
+                ENDIF
+            ELSE
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1 
+            ENDIF
+
+        CASE P3레이아・미리아방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1
+            ;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시 에는 감옥복도 쪽 잠금
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:마녀화
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1
+                ELSE
+                    CUR_LINK_COUNT = 0
+                ENDIF
+            ELSE
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1 
+            ENDIF
+
+        CASE P4노아・안안방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1
+            ;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시 에는 감옥복도 쪽 잠금
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:마녀화
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1
+                ELSE
+                    CUR_LINK_COUNT = 0
+                ENDIF
+            ELSE
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1 
+            ENDIF
+
+        CASE P5에마・히로방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1
+            ;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시 에는 감옥복도 쪽 잠금
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:옥실열쇠 || TALENT:CHARA:마녀화
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1
+                ;히로가 열쇠 가지고 있으면 감옥 시간에도 동행하고 있는 NPC 데리고 나갈 수 있음. 일단은.
+                ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && TALENT:MASTER:옥실열쇠
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1
+                ELSE
+                    CUR_LINK_COUNT = 0
+                ENDIF
+            ELSE
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1 
+            ENDIF
+
+        CASE P6마고・나노카방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1
+            ;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시 에는 감옥복도 쪽 잠금
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:마녀화
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1
+                ELSE
+                    CUR_LINK_COUNT = 0
+                ENDIF
+            ELSE
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1 
+            ENDIF
+
+        CASE P7셰리・아리사방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1
+            ;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시 에는 감옥복도 쪽 잠금
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:마녀화
+                    CUR_LINKS:0 = P8감옥복도
+                    CUR_LINK_COUNT = 1
+                ELSE
+                    CUR_LINK_COUNT = 0
+                ENDIF
+            ELSE
+                CUR_LINKS:0 = P8감옥복도
+                CUR_LINK_COUNT = 1 
+            ENDIF
+
+        CASE P8감옥복도
+            ;간수, 고쿠쵸, 유키, 흑막, 마녀화한 인물은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막 || TALENT:CHARA:마녀화
+                CUR_LINKS:0 = P1메루루방
+                CUR_LINKS:1 = P2코코・한나방
+                CUR_LINKS:2 = P3레이아・미리아방
+                CUR_LINKS:3 = P4노아・안안방
+                CUR_LINKS:4 = P5에마・히로방
+                CUR_LINKS:5 = P6마고・나노카방
+                CUR_LINKS:6 = P7셰리・아리사방
+                CUR_LINKS:7 = P9지하1층계단
+                CUR_LINK_COUNT = 8
+            ;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시 에는 감옥복도 쪽 잠금
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:옥실열쇠
+                    CUR_LINKS:0 = P5에마・히로방
+                    CUR_LINKS:1 = P9지하1층계단
+                    CUR_LINK_COUNT = 2
+                ELSE
+                    CUR_LINKS:0 = P9지하1층계단
+                    CUR_LINK_COUNT = 1
+                ENDIF
+            ELSE
+                CUR_LINKS:0 = P1메루루방
+                CUR_LINKS:1 = P2코코・한나방
+                CUR_LINKS:2 = P3레이아・미리아방
+                CUR_LINKS:3 = P4노아・안안방
+                CUR_LINKS:4 = P5에마・히로방
+                CUR_LINKS:5 = P6마고・나노카방
+                CUR_LINKS:6 = P7셰리・아리사방
+                CUR_LINKS:7 = P9지하1층계단
+                CUR_LINK_COUNT = 8
+            ENDIF
+
+        CASE P9지하1층계단
+            CUR_LINKS:0 = P8감옥복도
+            CUR_LINKS:1 = P10소각로통로
+            CUR_LINKS:2 = P12징벌방통로
+            CUR_LINKS:3 = P42지상1층계단2
+            CUR_LINK_COUNT = 4
+
+        CASE P10소각로통로
+            CUR_LINKS:0 = P9지하1층계단
+            CUR_LINKS:1 = P11소각로
+            CUR_LINK_COUNT = 2
+
+        CASE P11소각로
+            IF FLAG:더스트슈트통로개방 || TALENT:CHARA:환시
+                CUR_LINKS:0 = P10소각로통로
+                CUR_LINKS:1 = P35샤워실
+                CUR_LINKS:2 = P73아틀리에
+                CUR_LINK_COUNT = 3
+            ELSE
+                CUR_LINKS:0 = P10소각로통로
+                CUR_LINK_COUNT = 1
+            ENDIF
+
+        CASE P12징벌방통로
+            CUR_LINKS:0 = P9지하1층계단
+            CUR_LINKS:1 = P13징벌방복도
+            CUR_LINK_COUNT = 2
+
+        CASE P13징벌방복도
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 인근으로 이동 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P12징벌방통로
+                CUR_LINKS:1 = P14징벌방1
+                CUR_LINKS:2 = P15징벌방2
+                CUR_LINKS:3 = P16징벌방3
+                CUR_LINKS:4 = P17징벌방4
+                CUR_LINKS:5 = P18징벌방5
+                CUR_LINKS:6 = P19징벌방6
+                CUR_LINKS:7 = P20징벌방7
+                CUR_LINKS:8 = P21징벌방8
+                CUR_LINK_COUNT = 9
+            ;징벌방열쇠 혹은 세뇌 능력 있으면 언제든 들어갈 수 있다.
+		    ELSEIF TALENT:CHARA:징벌방열쇠 || TALENT:CHARA:세뇌
+			    CUR_LINKS:0 = P12징벌방통로
+                CUR_LINKS:1 = P14징벌방1
+                CUR_LINKS:2 = P15징벌방2
+                CUR_LINKS:3 = P16징벌방3
+                CUR_LINKS:4 = P17징벌방4
+                CUR_LINKS:5 = P18징벌방5
+                CUR_LINKS:6 = P19징벌방6
+                CUR_LINKS:7 = P20징벌방7
+                CUR_LINKS:8 = P21징벌방8
+                CUR_LINK_COUNT = 9
+            ELSE
+                CUR_LINKS:0 = P12징벌방통로
+                CUR_LINK_COUNT = 1
+            ENDIF
+
+        CASE P14징벌방1 TO P21징벌방8
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 인근으로 이동 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P13징벌방복도
+                CUR_LINK_COUNT = 1
+            ELSEIF TALENT:CHARA:징벌방구속 && !TALENT:CHARA:징벌방열쇠
+                CUR_LINK_COUNT = 0
+            ELSE
+                CUR_LINKS:0 = P13징벌방복도
+                CUR_LINK_COUNT = 1
+            ENDIF
+
+        CASE P22창고가는길
+            CUR_LINKS:0 = P23벽가는길
+            CUR_LINKS:1 = P27게스트하우스가는길
+            CUR_LINKS:2 = P28선룸
+            CUR_LINKS:3 = P29의무실
+            CUR_LINKS:4 = P64창고앞
+            CUR_LINK_COUNT = 5
+
+        CASE P23벽가는길
+            CUR_LINKS:0 = P22창고가는길
+            CUR_LINKS:1 = P24호수가는길
+            CUR_LINKS:2 = P29의무실
+            CUR_LINKS:3 = P56벽앞
+            CUR_LINK_COUNT = 4
+
+        CASE P24호수가는길
+            CUR_LINKS:0 = P23벽가는길
+            CUR_LINKS:1 = P25꽃밭가는길
+            CUR_LINKS:2 = P53호수앞
+            CUR_LINK_COUNT = 3
+
+        CASE P25꽃밭가는길
+            CUR_LINKS:0 = P24호수가는길
+            CUR_LINKS:1 = P26감옥저택앞
+            CUR_LINKS:2 = P57꽃밭앞
+            CUR_LINK_COUNT = 3
+
+        CASE P26감옥저택앞
+            CUR_LINKS:0 = P25꽃밭가는길
+            CUR_LINKS:1 = P41감옥저택입구
+            CUR_LINK_COUNT = 2
+
+        CASE P27게스트하우스가는길
+            CUR_LINKS:0 = P22창고가는길
+            CUR_LINKS:1 = P28선룸
+            CUR_LINKS:2 = P68게스트하우스앞
+            CUR_LINK_COUNT = 3
+
+        CASE P28선룸 ; 들어왔다는 건 이미 선룸개방 되었다는 것
+            CUR_LINKS:0 = P22창고가는길
+            CUR_LINKS:1 = P27게스트하우스가는길
+            CUR_LINK_COUNT = 2
+
+        CASE P29의무실
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 나올 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P22창고가는길
+                CUR_LINKS:1 = P23벽가는길
+                CUR_LINKS:2 = P33복도1
+                CUR_LINKS:3 = P1메루루방
+                CUR_LINK_COUNT = 4
+            ELSEIF FLAG:의무실비밀통로개방
+                CUR_LINKS:0 = P22창고가는길
+                CUR_LINKS:1 = P23벽가는길
+                CUR_LINKS:2 = P33복도1
+                CUR_LINKS:3 = P1메루루방
+                CUR_LINK_COUNT = 4
+            ELSE
+                CUR_LINKS:0 = P22창고가는길
+                CUR_LINKS:1 = P23벽가는길
+                CUR_LINKS:2 = P33복도1
+                CUR_LINK_COUNT = 3
+            ENDIF
+
+        CASE P30창고1층
+            CUR_LINKS:0 = P33복도1
+            CUR_LINK_COUNT = 1
+
+        CASE P31화장실
+            CUR_LINKS:0 = P33복도1
+            CUR_LINK_COUNT = 1
+
+        CASE P32라운지
+            CUR_LINKS:0 = P33복도1
+            CUR_LINKS:1 = P40현관홀
+            CUR_LINK_COUNT = 2
+
+        CASE P33복도1
+            CUR_LINKS:0 = P30창고1층
+            CUR_LINKS:1 = P31화장실
+            CUR_LINKS:2 = P32라운지
+            CUR_LINKS:3 = P34복도2
+            CUR_LINKS:4 = P35샤워실
+            CUR_LINKS:5 = P36안뜰
+            CUR_LINKS:6 = P29의무실
+            CUR_LINK_COUNT = 7
+
+        CASE P34복도2
+            CUR_LINKS:0 = P33복도1
+            CUR_LINKS:1 = P40현관홀
+            CUR_LINK_COUNT = 2
+
+        CASE P35샤워실
+            IF FLAG:더스트슈트통로개방 || TALENT:CHARA:환시
+                CUR_LINKS:0 = P33복도1
+                CUR_LINKS:1 = P11소각로
+                CUR_LINKS:2 = P73아틀리에
+                CUR_LINK_COUNT = 3
+            ELSE
+                CUR_LINKS:0 = P33복도1
+                CUR_LINK_COUNT = 1
+            ENDIF    
+
+        CASE P36안뜰
+            CUR_LINKS:0 = P33복도1
+            CUR_LINK_COUNT = 1
+
+        CASE P37저수조 ; 들어왔다는 건 이미 개방됐다는 거라 굳이 구분할 필요는 없지만...
+            IF FLAG:저수조개방
+                CUR_LINKS:0 = P55호수
+                CUR_LINK_COUNT = 1
+            ELSE
+                CUR_LINK_COUNT = 0
+            ENDIF
+
+        CASE P38응접실
+            CUR_LINKS:0 = P40현관홀
+            CUR_LINK_COUNT = 1
+
+        CASE P39지상1층계단1
+            CUR_LINKS:0 = P40현관홀
+            CUR_LINKS:1 = P75지상2층계단
+            CUR_LINK_COUNT = 2
+
+        CASE P40현관홀
+            CUR_LINKS:0 = P32라운지
+            CUR_LINKS:1 = P34복도2
+            CUR_LINKS:2 = P38응접실
+            CUR_LINKS:3 = P39지상1층계단1
+            CUR_LINKS:4 = P41감옥저택입구
+            CUR_LINKS:5 = P43재판소앞통로
+            CUR_LINK_COUNT = 6
+
+        CASE P41감옥저택입구
+            CUR_LINKS:0 = P40현관홀
+            CUR_LINKS:1 = P26감옥저택앞
+            CUR_LINK_COUNT = 2
+
+        CASE P42지상1층계단2
+            CUR_LINKS:0 = P9지하1층계단
+            CUR_LINKS:1 = P43재판소앞통로
+            CUR_LINK_COUNT = 2
+
+
+
+        CASE P43재판소앞통로
+            ;간수, 고쿠쵸, 유키, 흑막, 마녀화들은 언제든 자유롭게 재판소에 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막 || TALENT:CHARA:마녀화
+                CUR_LINKS:0 = P40현관홀
+                CUR_LINKS:1 = P42지상1층계단2
+                CUR_LINKS:2 = P46재판소
+                CUR_LINKS:3 = P45식당
+                CUR_LINK_COUNT = 4
+            ;재판소 개방되면 재판소 앞 통로에서 모두가 들어갈 수 있게 된다.
+            ELSEIF FLAG:재판소개방
+                CUR_LINKS:0 = P40현관홀
+                CUR_LINKS:1 = P42지상1층계단2
+                CUR_LINKS:2 = P46재판소
+                CUR_LINKS:3 = P45식당
+                CUR_LINK_COUNT = 4
+            ELSE
+                CUR_LINKS:0 = P40현관홀
+                CUR_LINKS:1 = P42지상1층계단2
+                CUR_LINKS:2 = P45식당
+                CUR_LINK_COUNT = 3
+            ENDIF
+
+        CASE P44주방 ; 들어갈 수 있다면 이미 열린 것
+            CUR_LINKS:0 = P45식당
+            CUR_LINK_COUNT = 1
+
+        CASE P45식당
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P44주방
+                CUR_LINKS:1 = P43재판소앞통로
+                CUR_LINK_COUNT = 2
+            ;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+            ELSEIF TALENT:CHARA:마녀화
+                CUR_LINKS:0 = P44주방
+                CUR_LINKS:1 = P43재판소앞통로
+                CUR_LINK_COUNT = 2
+            ;주방이 개방되면 모두가 들어갈 수 있게 된다.
+            ELSEIF FLAG:주방개방
+                CUR_LINKS:0 = P44주방
+                CUR_LINKS:1 = P43재판소앞통로
+                CUR_LINK_COUNT = 2
+            ELSE
+                CUR_LINKS:0 = P43재판소앞통로
+                CUR_LINK_COUNT = 1
+            ENDIF
+
+        CASE P46재판소
+            IF (TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막) && (FLAG:재판소개방 || TALENT:CHARA:마녀화 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막)
+                CUR_LINKS:0 = P43재판소앞통로
+                CUR_LINKS:1 = P52처형대보관실
+                CUR_LINK_COUNT = 2            
+            ELSEIF FLAG:재판소개방 || TALENT:CHARA:마녀화 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+				CUR_LINKS:0 = P43재판소앞통로
+                CUR_LINK_COUNT = 1
+            ELSEIF TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P52처형대보관실
+                CUR_LINK_COUNT = 1
+            ELSE
+                CUR_LINK_COUNT = 0
+            ENDIF  
+
+        CASE P47엘리베이터
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINKS:1 = P66운디네의방
+                CUR_LINK_COUNT = 2
+            ;상식적으로는 엘베 있음 타고 올라가서 헉 운디네였네! 할 수 있겠지만 그럼 너무 복잡해지니 미지의 물건은 건들지 않기로 했어요 라고 하자...
+            ELSEIF FLAG:지하실발견
+                CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINKS:1 = P66운디네의방
+                CUR_LINK_COUNT = 2
+            ELSE
+                CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINK_COUNT = 1
+            ENDIF  
+
+        CASE P48엘리베이터대기실
+            CUR_LINKS:0 = P47엘리베이터
+            CUR_LINKS:1 = P49조작실
+            CUR_LINK_COUNT = 2
+
+        CASE P49조작실
+            IF FLAG:환풍구개방 && (CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막 || TALENT:CHARA:마녀화 || TALENT:CHARA:냉동고비밀번호 || FLAG:냉동고개방)
+                CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINKS:1 = P51냉동고
+                CUR_LINKS:2 = P50환풍기통로
+                CUR_LINK_COUNT = 3
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 냉동고로 들어갈 수 있다.
+	    	ELSEIF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			    CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINKS:1 = P51냉동고
+                CUR_LINK_COUNT = 2
+	    	;마녀화된 캐릭터들이나 비번 아는 애들은 자유롭게 냉동고로 들어갈 수 있다.
+	    	ELSEIF TALENT:CHARA:마녀화 || TALENT:CHARA:냉동고비밀번호
+			    CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINKS:1 = P51냉동고
+                CUR_LINK_COUNT = 2
+            ;환풍구 개방 시 환풍구로 갈 수 있다
+            ELSEIF FLAG:환풍구개방
+                CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINKS:1 = P50환풍기통로
+                CUR_LINK_COUNT = 2
+            ;냉동고 개방 시 냉동고로 갈 수 있다
+            ELSEIF FLAG:냉동고개방
+                CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINKS:1 = P51냉동고
+                CUR_LINK_COUNT = 2
+            ELSE 
+                CUR_LINKS:0 = P48엘리베이터대기실
+                CUR_LINK_COUNT = 1
+            ENDIF
+
+
+        CASE P50환풍기통로
+            IF FLAG:환풍구개방
+                CUR_LINKS:0 = P49조작실
+                CUR_LINKS:1 = P51냉동고
+                CUR_LINK_COUNT = 2
+            ELSE
+                CUR_LINK_COUNT = 0
+            ENDIF  
+
+
+        CASE P51냉동고
+            IF FLAG:환풍구개방 && (TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막) && (CHARA == [[간수]] || CHARA == [[고쿠쵸]] || TALENT:CHARA:흑막 || TALENT:CHARA:마녀화 || FLAG:냉동고개방 || TALENT:CHARA:냉동고비밀번호)
+                CUR_LINKS:0 = P49조작실
+                CUR_LINKS:1 = P50환풍기통로
+                CUR_LINKS:2 = P52처형대보관실
+                CUR_LINK_COUNT = 3
+            ;조작실과 처형대보관실로 갈 수 있다 (환풍기 못 가는 조건)
+            ELSEIF (TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막) && (CHARA == [[간수]] || CHARA == [[고쿠쵸]] || TALENT:CHARA:흑막 || TALENT:CHARA:마녀화 || FLAG:냉동고개방 || TALENT:CHARA:냉동고비밀번호)
+                CUR_LINKS:0 = P49조작실
+                CUR_LINKS:1 = P52처형대보관실
+                CUR_LINK_COUNT = 2
+            ;환풍구와 처형대보관실로 갈 수 있다 (조작실 못 가는 조건)
+            ELSEIF (TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막) && FLAG:환풍구개방
+                CUR_LINKS:0 = P50환풍기통로
+                CUR_LINKS:1 = P52처형대보관실
+                CUR_LINK_COUNT = 2
+            ;조작실과 환풍구로 갈 수 있다 (처형대 못 가는 조건)
+            ELSEIF FLAG:환풍구개방 && (CHARA == [[간수]] || CHARA == [[고쿠쵸]] || TALENT:CHARA:흑막 || TALENT:CHARA:마녀화 || FLAG:냉동고개방 || TALENT:CHARA:냉동고비밀번호)
+                CUR_LINKS:0 = P49조작실
+                CUR_LINKS:1 = P50환풍기통로
+                CUR_LINK_COUNT = 2
+            ;간수, 고쿠쵸, 흑막, 마녀화 된 캐릭터들은 언제든 조작실로 자유롭게 들어갈 수 있다.
+		    ELSEIF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || TALENT:CHARA:흑막 || TALENT:CHARA:마녀화
+	            CUR_LINKS:0 = P49조작실
+                CUR_LINK_COUNT = 1
+            ;조작실은 이때 갈 수 있다
+            ELSEIF FLAG:냉동고개방	|| TALENT:CHARA:냉동고비밀번호
+                CUR_LINKS:0 = P49조작실
+                CUR_LINK_COUNT = 1
+            ;환풍기 열리면 환풍기로 갈 수 있다
+            ELSEIF FLAG:환풍구개방
+                CUR_LINKS:0 = P50환풍기통로
+                CUR_LINK_COUNT = 1
+            ;TALENT 조작판사용가능 혹은 흑막은 처형대 보관실로 자유롭게 들어갈 수 있다. 냉동고 -> 처형대는 간수를 일단 막는 거로...
+	        ELSEIF TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막
+		    	CUR_LINKS:0 = P52처형대보관실
+                CUR_LINK_COUNT = 1
+            ELSE
+                CUR_LINK_COUNT = 0
+            ENDIF 
+
+
+
+
+        CASE P52처형대보관실
+            IF (TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막) && (CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막 || FLAG:냉동고개방 || TALENT:CHARA:냉동고비밀번호)
+		    	CUR_LINKS:0 = P51냉동고
+                CUR_LINKS:1 = P46재판소
+                CUR_LINK_COUNT = 2
+            ;재판소로 갈 수 있는 조건
+            ;TALENT 조작판사용가능 혹은 흑막 있으면 자유롭게 들어갈 수 있다.
+		    ELSEIF TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P46재판소
+                CUR_LINK_COUNT = 1
+            ;냉동고로 갈 수 있는 조건. 처형대 -> 냉동고는 냉동고 기준으로.
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+	    	ELSEIF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P51냉동고
+                CUR_LINK_COUNT = 1
+            ;냉동고 비밀번호를 알 거나 개방되면 처형대보관실에서 냉동고로 들어갈 수 있음
+		    ELSEIF FLAG:냉동고개방 || TALENT:CHARA:냉동고비밀번호
+                CUR_LINKS:0 = P51냉동고
+                CUR_LINK_COUNT = 1
+            ELSE
+                CUR_LINK_COUNT = 0
+            ENDIF
+
+
+        CASE P53호수앞
+            CUR_LINKS:0 = P24호수가는길
+            CUR_LINKS:1 = P54호숫가
+            CUR_LINK_COUNT = 2
+
+        CASE P54호숫가
+            CUR_LINKS:0 = P53호수앞
+            CUR_LINKS:1 = P55호수
+            CUR_LINK_COUNT = 2
+
+        CASE P55호수
+            CUR_LINKS:0 = P54호숫가
+            CUR_LINK_COUNT = 1
+            IF FLAG:저수조개방
+                CUR_LINKS:1 = P37저수조
+                CUR_LINK_COUNT += 1
+            ENDIF
+
+        CASE P56벽앞
+            CUR_LINKS:0 = P23벽가는길
+            CUR_LINK_COUNT = 1
+
+        CASE P57꽃밭앞
+            CUR_LINKS:0 = P25꽃밭가는길
+            CUR_LINKS:1 = P58꽃밭
+            CUR_LINK_COUNT = 2
+
+        CASE P58꽃밭
+            CUR_LINKS:0 = P57꽃밭앞
+            CUR_LINK_COUNT = 1
+
+        CASE P59창고방1
+            CUR_LINKS:0 = P63창고
+            CUR_LINK_COUNT = 1
+
+        CASE P60창고방2
+            CUR_LINKS:0 = P63창고
+            CUR_LINK_COUNT = 1
+
+        CASE P61창고방3
+            CUR_LINKS:0 = P63창고
+            CUR_LINK_COUNT = 1
+
+        CASE P62창고방4
+            CUR_LINKS:0 = P63창고
+            CUR_LINK_COUNT = 1
+
+        CASE P63창고
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P59창고방1
+                CUR_LINKS:1 = P60창고방2
+                CUR_LINKS:2 = P61창고방3
+                CUR_LINKS:3 = P62창고방4
+                CUR_LINKS:4 = P64창고앞
+                CUR_LINK_COUNT = 5
+            ;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+            ELSEIF TALENT:CHARA:마녀화
+                CUR_LINKS:0 = P59창고방1
+                CUR_LINKS:1 = P60창고방2
+                CUR_LINKS:2 = P61창고방3
+                CUR_LINKS:3 = P62창고방4
+                CUR_LINKS:4 = P64창고앞
+                CUR_LINK_COUNT = 5
+            ;TALENT:외부창고열쇠 OR TALENT:환시 있으면 언제든 들어갈 수 있다.
+            ELSEIF TALENT:CHARA:외부창고열쇠 || TALENT:CHARA:환시
+                CUR_LINKS:0 = P59창고방1
+                CUR_LINKS:1 = P60창고방2
+                CUR_LINKS:2 = P61창고방3
+                CUR_LINKS:3 = P62창고방4
+                CUR_LINKS:4 = P64창고앞
+                CUR_LINK_COUNT = 5
+            ELSE
+                CUR_LINKS:0 = P59창고방1
+                CUR_LINKS:1 = P60창고방2
+                CUR_LINKS:2 = P61창고방3
+                CUR_LINKS:3 = P62창고방4
+                CUR_LINK_COUNT = 4
+            ENDIF
+
+
+        
+        CASE P64창고앞
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P22창고가는길
+                CUR_LINKS:1 = P63창고
+                CUR_LINK_COUNT = 2
+            ;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+            ELSEIF TALENT:CHARA:마녀화
+                CUR_LINKS:0 = P22창고가는길
+                CUR_LINKS:1 = P63창고
+                CUR_LINK_COUNT = 2
+            ;TALENT:외부창고열쇠 OR TALENT:환시 있으면 언제든 들어갈 수 있다.
+            ELSEIF TALENT:CHARA:외부창고열쇠 || TALENT:CHARA:환시
+                CUR_LINKS:0 = P22창고가는길
+                CUR_LINKS:1 = P63창고
+                CUR_LINK_COUNT = 2
+            ELSE
+                CUR_LINKS:0 = P22창고가는길
+                CUR_LINK_COUNT = 1
+            ENDIF
+
+
+        CASE P65샐러맨더의방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINK_COUNT = 1
+            ;게스트하우스열쇠 있으면 자유롭게 들어갈 수 있다.
+            ELSEIF TALENT:CHARA:게스트하우스열쇠
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINK_COUNT = 1
+            ; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+            ; 게스트하우스에 누군가를 데려간다라... 흠....
+            ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && TALENT:MASTER:게스트하우스열쇠
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINK_COUNT = 1
+            ;22:00 ~ 익일06:00 외출 금지 시간이라 잠금 걸림
+            ;즉, 0시 ~ 6시 / 22시 ~ 24시
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 1320, 1440)
+                CUR_LINK_COUNT = 0
+            ;기본적으로는 저 시간만 아니면 열려있어요?
+            ELSE
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINK_COUNT = 1
+            ENDIF
+
+        CASE P66운디네의방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINKS:1 = P47엘리베이터
+                CUR_LINK_COUNT = 2
+            ;특정 시간대일때
+            ;    -> 열쇠 있으면 연결
+            ;        -> 지하실도 발견했으면 엘베도 연결
+            ;    -> 히로 가능하고 동행이면 연결
+            ;        -> 지하실도 발견했으면 엘베도 연결
+            ;    -> 열쇠도 히로 찬스도 없으면 지하실 발견 여부에 따라
+            ;특정 시간대가 아닌 ELSE
+            ;    -> 지하실 발견했으면 엘베 연결
+            ;    -> 아니면 걍 게스트하우스 앞만
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:게스트하우스열쇠
+                    CUR_LINKS:0 = P68게스트하우스앞
+                    CUR_LINK_COUNT = 1
+                    IF FLAG:지하실발견
+                        CUR_LINKS:1 = P47엘리베이터
+                        CUR_LINK_COUNT += 1
+                    ENDIF
+                ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && TALENT:MASTER:게스트하우스열쇠
+                    CUR_LINKS:0 = P68게스트하우스앞
+                    CUR_LINK_COUNT = 1
+                    IF FLAG:지하실발견
+                        CUR_LINKS:1 = P47엘리베이터
+                        CUR_LINK_COUNT += 1
+                    ENDIF
+                ELSEIF FLAG:지하실발견
+                        CUR_LINKS:0 = P47엘리베이터
+                        CUR_LINK_COUNT = 1
+                ELSE
+                    CUR_LINK_COUNT = 0
+                ENDIF
+            ELSE
+                IF FLAG:지하실발견
+                    CUR_LINKS:0 = P68게스트하우스앞
+                    CUR_LINKS:1 = P47엘리베이터
+                    CUR_LINK_COUNT = 2
+                ELSE
+                    CUR_LINKS:0 = P68게스트하우스앞
+                    CUR_LINK_COUNT = 1
+                ENDIF
+            ENDIF
+
+        CASE P67노움의방
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINK_COUNT = 1
+            ;게스트하우스열쇠 있으면 자유롭게 들어갈 수 있다.
+            ELSEIF TALENT:CHARA:게스트하우스열쇠
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINK_COUNT = 1
+            ; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+            ; 게스트하우스에 누군가를 데려간다라... 흠....
+            ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && TALENT:MASTER:게스트하우스열쇠
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINK_COUNT = 1
+            ;22:00 ~ 익일06:00 외출 금지 시간이라 잠금 걸림
+            ;즉, 0시 ~ 6시 / 22시 ~ 24시
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 1320, 1440)
+                CUR_LINK_COUNT = 0
+            ;기본적으로는 저 시간만 아니면 열려있어요?
+            ELSE
+                CUR_LINKS:0 = P68게스트하우스앞
+                CUR_LINK_COUNT = 1
+            ENDIF
+            
+        CASE P68게스트하우스앞
+            ;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+            IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+                CUR_LINKS:0 = P65샐러맨더의방
+                CUR_LINKS:1 = P66운디네의방
+                CUR_LINKS:2 = P67노움의방
+                CUR_LINKS:3 = P27게스트하우스가는길
+                CUR_LINK_COUNT = 4
+            ;특정시간일 때
+                ;열쇠 있음 -> 셋다 가능
+                ;열쇠는 없지만 히로가 동행하고 가지고 있음 -> 셋다 가능
+                ;열쇠도 히로도 없음 -> 게스트하우스가는길만 가능
+            ;특정시간 아닐 때 -> 전부 가능
+            ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 1320, 1440)
+                IF TALENT:CHARA:게스트하우스열쇠
+                    CUR_LINKS:0 = P65샐러맨더의방
+                    CUR_LINKS:1 = P66운디네의방
+                    CUR_LINKS:2 = P67노움의방
+                    CUR_LINKS:3 = P27게스트하우스가는길
+                    CUR_LINK_COUNT = 4
+                ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && TALENT:MASTER:게스트하우스열쇠
+                    CUR_LINKS:0 = P65샐러맨더의방
+                    CUR_LINKS:1 = P66운디네의방
+                    CUR_LINKS:2 = P67노움의방
+                    CUR_LINKS:3 = P27게스트하우스가는길
+                    CUR_LINK_COUNT = 4
+                ELSE
+                    CUR_LINKS:0 = P27게스트하우스가는길
+                    CUR_LINK_COUNT = 1
+                ENDIF
+            ELSE
+                CUR_LINKS:0 = P65샐러맨더의방
+                CUR_LINKS:1 = P66운디네의방
+                CUR_LINKS:2 = P67노움의방
+                CUR_LINKS:3 = P27게스트하우스가는길
+                CUR_LINK_COUNT = 4
+            ENDIF
+
+        CASE P69복도1
+            CUR_LINKS:0 = P71오락실
+            CUR_LINKS:1 = P70복도2
+            CUR_LINKS:2 = P74복도3
+            CUR_LINK_COUNT = 3
+
+        CASE P70복도2
+            CUR_LINKS:0 = P69복도1
+            CUR_LINKS:1 = P74복도3
+            CUR_LINK_COUNT = 2
+            IF FLAG:작은창고개방
+                CUR_LINKS:2 = P72작은창고 
+                CUR_LINK_COUNT += 1 
+            ENDIF
+
+        CASE P71오락실
+            CUR_LINKS:0 = P69복도1
+            CUR_LINK_COUNT = 1
+
+        CASE P72작은창고
+            CUR_LINK_COUNT = 0
+            IF FLAG:작은창고개방
+                CUR_LINKS:0 = P70복도2
+                CUR_LINK_COUNT += 1
+            ENDIF
+
+        CASE P73아틀리에
+            IF FLAG:아틀리에개방 && (FLAG:더스트슈트통로개방 || TALENT:CHARA:환시)
+                CUR_LINKS:0 = P11소각로
+                CUR_LINKS:1 = P35샤워실
+                CUR_LINKS:2 = P74복도3
+                CUR_LINK_COUNT = 3
+            ;아틀리에 개방 시 -> 복도와 연결
+            ELSEIF FLAG:아틀리에개방
+                CUR_LINKS:0 = P74복도3
+                CUR_LINK_COUNT = 1
+            ;더스트슈트 개방하거나 환시 있으면 -> 소각로 샤워실 연결
+            ELSEIF FLAG:더스트슈트통로개방 || TALENT:CHARA:환시
+                CUR_LINKS:0 = P11소각로
+                CUR_LINKS:1 = P35샤워실
+                CUR_LINK_COUNT = 2
+            ENDIF
+
+        CASE P74복도3
+            CUR_LINKS:0 = P69복도1
+            CUR_LINKS:1 = P70복도2
+            CUR_LINKS:2 = P75지상2층계단
+            CUR_LINKS:3 = P76도서관
+            CUR_LINK_COUNT = 4
+            IF FLAG:아틀리에개방
+                CUR_LINKS:4 = P73아틀리에
+                CUR_LINK_COUNT += 1
+            ENDIF
+
+        CASE P75지상2층계단
+            CUR_LINKS:0 = P39지상1층계단1
+            CUR_LINKS:1 = P74복도3
+            CUR_LINK_COUNT = 2
+
+        CASE P76도서관
+            CUR_LINKS:0 = P74복도3
+            CUR_LINK_COUNT = 1
+            IF FLAG:대마녀유키
+                CUR_LINKS:1 = P77자료실
+                CUR_LINK_COUNT += 1
+            ENDIF
+
+        CASE P77자료실
+            CUR_LINKS:0 = P78대마녀화장실
+            CUR_LINKS:1 = P79대마녀방
+            CUR_LINK_COUNT = 2
+            IF FLAG:대마녀유키
+                CUR_LINKS:2 = P76도서관
+                CUR_LINK_COUNT += 1
+            ENDIF
+
+        CASE P78대마녀화장실
+            CUR_LINKS:0 = P77자료실
+            CUR_LINK_COUNT = 1
+
+        CASE P79대마녀방
+            CUR_LINKS:0 = P77자료실
+            CUR_LINK_COUNT = 1
+
+        CASE P80만년필
+            CUR_LINK_COUNT = 0
+
+    ENDSELECT
+
+
+    FOR I, 0, CUR_LINK_COUNT
+        NEXTWAY = CUR_LINKS:I
+        ; 이미 방문했는지 검사
+        IDX = -1
+        FOR J, 0, VISITED_COUNT
+            IF VISITED:J  == NEXTWAY
+                IDX = J
+                BREAK
+            ENDIF
+        NEXT
+        IF IDX != -1
+            CONTINUE
+        ENDIF
+
+        ; 방문 처리: VISITED에 추가하고 PREV 기록, 큐에 넣기
+        
+        VISITED:VISITED_COUNT = NEXTWAY
+
+        IDX = -1
+        FOR J, 0, VISITED_COUNT
+            IF VISITED:J == CUR
+                IDX = J
+                BREAK
+            ENDIF
+        NEXT
+        PREV:VISITED_COUNT = IDX
+
+        QUEUE:QTAIL = NEXTWAY
+        QTAIL += 1
+        VISITED_COUNT += 1
+
+
+        IF NEXTWAY == GOAL
+            PATH_LEN = 0
+            IDX = VISITED_COUNT - 1
+
+
+            WHILE IDX != -1
+                PATH:PATH_LEN = VISITED:IDX
+                PATH_LEN += 1
+                IDX = PREV:IDX
+            WEND
+
+            [IF_DEBUG]
+            PRINTFORML PATH_LEN 길이는 {PATH_LEN}.
+            [ENDIF]
+
+
+            IF PATH_LEN >= 2
+                [IF_DEBUG]
+                FOR I,0,PATH_LEN
+		        PRINTFORM {PATH:I} -> 
+		        NEXT
+                PRINTFORML
+                [ENDIF]
+                RETURN PATH:(PATH_LEN-2)
+            ELSE
+                RETURN START
+            ENDIF
+        ENDIF
+
+    
+    NEXT
+WEND
+
+[IF_DEBUG]
+PRINTFORML 이동하려던 캐릭터는 {CHARA} 이고 {ARG:1}에서 {NEXTWAY}에 대한 SKIP을 돌리던 도중 무한루프에 빠졌다.
+[ENDIF]
+
+
+; 찾지 못했을 경우 0 반환
+RETURN  0
+
+
+
+
+
+
+
+
+

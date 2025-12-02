@@ -1,0 +1,346 @@
+﻿;＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+;지점의 속성 설정 (DIM_t.ERH 참조)
+;장소_원룸			집주인이 부재중일때 잠기고, 이불・옥내・주방・공부・휴식・음식・Private가 자동 부여
+;장소_이불			휴식이 자동으로 부여
+;장소_서양식		실내지만 신발을 신은 채, 옥내가 자동으로 부여
+;장소_옥내         
+;장소_지붕			옥외지만 지붕이 있는 곳, 옥내라도 지붕이 없는 경우는 야외판정 (구 창공)
+;장소_넓은         
+;장소_달구경		옥내나 지붕이 있어도 달이 보이는 장소
+;장소_휴식         
+;장소_목욕탕         
+;장소_화장실       
+;장소_주방         	집어먹기가 자동으로 부여
+;장소_훈련         
+;장소_공부         
+;장소_하늘의소리       
+;장소_텃밭         
+;장소_물긷기       
+;장소_신체측정     
+;장소_빨래너는곳	풍경묘사용
+;장소_음식			자유행동 전용
+;장소_집어먹기		자유행동 전용
+;장소_머물지않는다	캐릭터가 잘 머물지 않는다 (이동하기 쉽다)
+;장소_과소			캐릭터가 잘 들어가지 않는다 (이동해오기 어렵다)
+;장소_Private		절도 있는 캐릭터는 들어오지 않는다, 주로 개인실과 목욕탕・화장실
+;장소_코타츠		자유행동전용
+;장소_공공장소		덮치지 않는다
+;장소_모브		   풍경 묘사용, 동물들이 있는 곳
+;＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+@ROOMSETTING_0
+#DIM ROOM
+VARSET ROOMDATA
+MAXROOM = 90
+피난처 = P31화장실
+ENTRANCE = P26감옥저택앞
+
+MAP_PAGES = 9
+MAPNAME:1 = 지하 1층
+MAPNAME:2 = 지상 1층 메인
+MAPNAME:3 = 지하실
+MAPNAME:4 = 호수
+MAPNAME:5 = 벽
+MAPNAME:6 = 꽃밭
+MAPNAME:7 = 창고
+MAPNAME:8 = 게스트하우스
+MAPNAME:9 = 지상 2층
+
+FOR LOCAL, MINROOM(), MAXROOM
+	ROOM = LOCAL % 100
+	SELECTCASE LOCAL
+	CASE P1메루루방
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_이불
+	CASE P2코코・한나방
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_이불
+	CASE P3레이아・미리아방
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_이불
+	CASE P4노아・안안방
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_이불
+	CASE P5에마・히로방
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_이불
+	CASE P6마고・나노카방
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_이불
+	CASE P7셰리・아리사방
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_이불
+	CASE P8감옥복도
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P9지하1층계단
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P10소각로통로
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P11소각로
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P12징벌방통로
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P13징벌방복도
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P14징벌방1
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_머물지않는다
+	CASE P15징벌방2
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_머물지않는다	
+	CASE P16징벌방3	
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_머물지않는다
+	CASE P17징벌방4	
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_머물지않는다
+	CASE P18징벌방5	
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_머물지않는다
+	CASE P19징벌방6	
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_머물지않는다
+	CASE P20징벌방7	
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_머물지않는다
+	CASE P21징벌방8	
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_머물지않는다
+
+
+
+	CASE P22창고가는길
+		ROOMDATA:ROOM |= 장소_넓은
+	CASE P23벽가는길
+		ROOMDATA:ROOM |= 장소_넓은
+	CASE P24호수가는길
+		ROOMDATA:ROOM |= 장소_넓은
+	CASE P25꽃밭가는길
+		ROOMDATA:ROOM |= 장소_넓은
+	CASE P26감옥저택앞
+		ROOMDATA:ROOM |= 장소_훈련
+		ROOMDATA:ROOM |= 장소_넓은
+	CASE P27게스트하우스가는길
+		ROOMDATA:ROOM |= 장소_넓은
+	CASE P28선룸
+		ROOMDATA:ROOM |= 장소_지붕
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_텃밭
+	CASE P29의무실
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_이불
+	CASE P30창고1층
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P31화장실
+		ROOMDATA:ROOM |= 장소_Private
+		ROOMDATA:ROOM |= 장소_물긷기
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_화장실
+	CASE P32라운지
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P33복도1
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P34복도2
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P35샤워실
+		; 목욕에 소요되는 시간 30분, 그러니 자유시간 중 1시간 빼서 17:00~21:00에만 샤워실 사용 가능
+		; PLACE_거점공통_t.ERB에 목욕 가능을 작성해두었음.
+		ROOMDATA:ROOM |= 장소_물긷기
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P36안뜰
+		ROOMDATA:ROOM |= 장소_빨래너는곳
+		ROOMDATA:ROOM |= 장소_넓은
+	CASE P37저수조
+		ROOMDATA:ROOM |= 장소_과소
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P38응접실
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P39지상1층계단1
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P40현관홀
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_공공장소
+	CASE P41감옥저택입구
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P42지상1층계단2
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P43재판소앞통로
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P44주방
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_주방
+		ROOMDATA:ROOM |= 장소_물긷기
+	CASE P45식당
+		; 식사에 소요되는 시간은 30분, 이동시간 감안해서 밥 시간은 자유시간 -1시간 동안만 먹을 수 있게(커맨드 사용 가능) 
+		; 즉, 06:00~09:00 , 12:00~14:00, 17:00~21:00 에만 "맛없는식사" 제공
+		; PLACE_거점공통_t.ERB에 작성해두었음.
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P46재판소
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+
+
+		
+	CASE P47엘리베이터
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_서양식
+	CASE P48엘리베이터대기실
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_서양식
+	CASE P49조작실
+		ROOMDATA:ROOM |= 장소_서양식
+	CASE P50환풍기통로
+		ROOMDATA:ROOM |= 장소_서양식
+		ROOMDATA:ROOM |= 장소_머물지않는다
+	CASE P51냉동고
+		ROOMDATA:ROOM |= 장소_서양식
+	CASE P52처형대보관실
+		ROOMDATA:ROOM |= 장소_서양식
+
+
+
+	CASE P53호수앞
+		ROOMDATA:ROOM |= 장소_넓은
+	CASE P54호숫가
+		ROOMDATA:ROOM |= 장소_물긷기 
+		ROOMDATA:ROOM |= 장소_훈련  
+		ROOMDATA:ROOM |= 장소_모브
+	CASE P55호수
+
+
+
+	CASE P56벽앞
+		ROOMDATA:ROOM |= 장소_모브
+
+
+
+	CASE P57꽃밭앞
+		ROOMDATA:ROOM |= 장소_모브
+	CASE P58꽃밭
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_휴식 
+		ROOMDATA:ROOM |= 장소_모브
+
+			
+	
+	CASE P59창고방1
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_옥내  
+	CASE P60창고방2	
+		ROOMDATA:ROOM |= 장소_옥내  
+	CASE P61창고방3	
+		ROOMDATA:ROOM |= 장소_옥내  
+	CASE P62창고방4	
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_옥내  
+	CASE P63창고
+		ROOMDATA:ROOM |= 장소_옥내  
+		ROOMDATA:ROOM |= 장소_이불	
+		ROOMDATA:ROOM |= 장소_달구경
+	CASE P64창고앞
+
+
+
+	CASE P65샐러맨더의방
+		ROOMDATA:ROOM |= 장소_옥내  
+		ROOMDATA:ROOM |= 장소_이불	
+		ROOMDATA:ROOM |= 장소_달구경
+	CASE P66운디네의방
+		ROOMDATA:ROOM |= 장소_옥내  
+		ROOMDATA:ROOM |= 장소_이불	
+		ROOMDATA:ROOM |= 장소_달구경
+	CASE P67노움의방
+		ROOMDATA:ROOM |= 장소_옥내  
+		ROOMDATA:ROOM |= 장소_이불	
+		ROOMDATA:ROOM |= 장소_달구경
+	CASE P68게스트하우스앞
+
+
+
+
+	CASE P69복도1
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P70복도2
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P71오락실
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_휴식
+		ROOMDATA:ROOM |= 장소_달구경
+	CASE P72작은창고
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P73아틀리에
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_달구경
+	CASE P74복도3
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_넓은
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P75지상2층계단
+		ROOMDATA:ROOM |= 장소_머물지않는다
+		ROOMDATA:ROOM |= 장소_옥내
+	CASE P76도서관
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_공부
+	CASE P77자료실
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_공부
+	CASE P78대마녀화장실
+		ROOMDATA:ROOM |= 장소_Private
+		ROOMDATA:ROOM |= 장소_물긷기
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_화장실
+	CASE P79대마녀방
+		ROOMDATA:ROOM |= 장소_옥내
+		ROOMDATA:ROOM |= 장소_달구경
+		ROOMDATA:ROOM |= 장소_이불
+
+	CASE P80만년필
+		ROOMDATA:ROOM |= 장소_옥내
+
+
+		
+	ENDSELECT
+NEXT
+
+;-----------------------------------------
+;디폴트 초기위치 및 거점주인 설정
+;-----------------------------------------
+@DEFAULT_OWNER_0
+Default초기위치 = P5에마・히로방
+거점_주인 = [[고쿠쵸]]

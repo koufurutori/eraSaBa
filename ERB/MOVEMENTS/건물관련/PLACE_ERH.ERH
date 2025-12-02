@@ -1,0 +1,132 @@
+﻿;TAB幅40ぐらい
+;◆MAPID
+#DIM CONST MAP감옥	= 0
+
+
+
+;◆장소ID
+
+;▼지하 1층
+
+#DIM CONST P1메루루방	= 1
+#DIM CONST P2코코・한나방	= 2
+#DIM CONST P3레이아・미리아방	= 3
+#DIM CONST P4노아・안안방	= 4
+#DIM CONST P5에마・히로방	= 5
+#DIM CONST P6마고・나노카방	= 6
+#DIM CONST P7셰리・아리사방	= 7
+#DIM CONST P8감옥복도	= 8
+#DIM CONST P9지하1층계단	= 9
+#DIM CONST P10소각로통로	= 10
+#DIM CONST P11소각로	= 11
+#DIM CONST P12징벌방통로	= 12
+#DIM CONST P13징벌방복도	= 13
+#DIM CONST P14징벌방1	= 14
+#DIM CONST P15징벌방2	= 15
+#DIM CONST P16징벌방3	= 16
+#DIM CONST P17징벌방4	= 17
+#DIM CONST P18징벌방5	= 18
+#DIM CONST P19징벌방6	= 19
+#DIM CONST P20징벌방7	= 20
+#DIM CONST P21징벌방8	= 21
+
+
+
+;▼지상 1층 메인
+
+#DIM CONST P22창고가는길	= 22
+#DIM CONST P23벽가는길	= 23
+#DIM CONST P24호수가는길	= 24
+#DIM CONST P25꽃밭가는길	= 25
+#DIM CONST P26감옥저택앞	= 26
+#DIM CONST P27게스트하우스가는길	= 27
+#DIM CONST P28선룸	= 28
+#DIM CONST P29의무실	= 29
+#DIM CONST P30창고1층	= 30
+#DIM CONST P31화장실	= 31
+#DIM CONST P32라운지	= 32
+#DIM CONST P33복도1	= 33
+#DIM CONST P34복도2	= 34
+#DIM CONST P35샤워실	= 35
+#DIM CONST P36안뜰	= 36
+#DIM CONST P37저수조	= 37
+#DIM CONST P38응접실	= 38
+#DIM CONST P39지상1층계단1	= 39
+#DIM CONST P40현관홀	= 40
+#DIM CONST P41감옥저택입구	= 41
+#DIM CONST P42지상1층계단2	= 42
+#DIM CONST P43재판소앞통로	= 43
+#DIM CONST P44주방	= 44
+#DIM CONST P45식당	= 45
+#DIM CONST P46재판소	= 46
+
+
+
+;▼지하실
+
+#DIM CONST P47엘리베이터	= 47
+#DIM CONST P48엘리베이터대기실	= 48
+#DIM CONST P49조작실	= 49
+#DIM CONST P50환풍기통로	= 50
+#DIM CONST P51냉동고	= 51
+#DIM CONST P52처형대보관실	= 52
+
+
+
+;▼호수
+
+#DIM CONST P53호수앞	= 53
+#DIM CONST P54호숫가	= 54
+#DIM CONST P55호수	= 55
+
+
+
+;▼벽
+
+#DIM CONST P56벽앞	= 56
+
+
+
+;▼꽃밭
+
+#DIM CONST P57꽃밭앞	= 57
+#DIM CONST P58꽃밭	= 58
+
+
+
+;▼창고
+
+#DIM CONST P59창고방1 = 59
+#DIM CONST P60창고방2 = 60
+#DIM CONST P61창고방3 = 61
+#DIM CONST P62창고방4 = 62
+#DIM CONST P63창고 = 63
+#DIM CONST P64창고앞 = 64
+
+
+
+;▼게스트하우스
+
+#DIM CONST P65샐러맨더의방	= 65
+#DIM CONST P66운디네의방	= 66
+#DIM CONST P67노움의방	= 67
+#DIM CONST P68게스트하우스앞	= 68
+
+
+
+
+;▼지상 2층
+
+#DIM CONST P69복도1	= 69
+#DIM CONST P70복도2	= 70
+#DIM CONST P71오락실	= 71
+#DIM CONST P72작은창고	= 72
+#DIM CONST P73아틀리에	= 73
+#DIM CONST P74복도3	= 74
+#DIM CONST P75지상2층계단	= 75
+#DIM CONST P76도서관	= 76
+#DIM CONST P77자료실	= 77
+#DIM CONST P78대마녀화장실	= 78
+#DIM CONST P79대마녀방	= 79
+
+#DIM CONST P80만년필	= 80

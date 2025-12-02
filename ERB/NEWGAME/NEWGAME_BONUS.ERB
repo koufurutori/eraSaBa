@@ -1,0 +1,109 @@
+﻿;-----------------------------------------------------------
+;【뉴게임특전】
+;-----------------------------------------------------------
+@NEWGAME_BONUS_SELECT
+#DIMS buttonText, 10
+SETCOLOR 103,228,126
+PRINTFORML 【뉴 게임 특전】
+RESETCOLOR
+PRINTFORML ...은 아쉽게도 EraSABA에서는 없습니다.
+PRINTFORML 다만, 주인공이 히로며 그녀의 능력이 【사망회귀】인만큼 계속해서 주차를 돌리다보면 늘어나는 것이 있겠지요.
+PRINTFORML 한 세계에서의 기억을 토대로 다음 세계의 모두를 구해내봅시다.
+PRINTFORML 
+buttonText:0 '= "OK!"
+CALL ASK_BUTTONS(buttonText)
+SELECTCASE RESULT
+	CASE 0
+		뉴게임특전 '= "없음"
+ENDSELECT
+RETURN
+
+
+
+
+;나중에 참고해서 써먹을지도 모르는 이전 코드들
+
+;buttonText:0 '= "₩50000"
+;buttonText:1 '= "초기 호감도・신뢰도 업"
+;buttonText:2 '= "초기 능력 업"
+;buttonText:3 '= "애욕을 독점하는 미라다의돌 밀레니엄"
+;KR판 오리지날 뉴 게임 특전. 추후 일판 보너스 추가시 배열 buttonText도 같이 만져야함. 일판 기본값 10
+;buttonText:4 '= "【붉은실】"
+;buttonText:5 '= "【절륜】"
+;buttonText:6 '= "【수수께끼의매력】"
+;buttonText:7 '= "【만능잉태】"
+;buttonText:8 '= "【익스텐드】"
+;buttonText:9 '= "【습득 빠름】"
+
+;	CASE 0
+;		뉴게임특전 '= "₩50000"
+;	CASE 1
+;		CALL NEWGAME_BONUS_CHARA
+;		IF !RESULT
+;			RESTART
+;		ENDIF
+;	CASE 2
+;		뉴게임특전 '= "초기 능력 업"
+;	CASE 3
+;		뉴게임특전 '= "호색한 세트"
+;	;KR판 오리지날 뉴게임특전
+;	CASE 4 TO 9
+;		CALL TWKR_NEWGMAE_BONUS(buttonText:RESULT)
+;		IF !RESULT
+;			RESTART
+;		ENDIF
+
+
+
+
+
+
+;-----------------------------------------------------------
+;초기 호감도
+;-----------------------------------------------------------
+@NEWGAME_BONUS_CHARA
+PRINTFORML 캐릭터 한 명의 초기호감도를 500、신뢰도를 50으로 합니다
+PRINTFORML 대상을 골라주세요
+CALL ASK_CALLNAME
+IF RESULT == 999
+	RETURN 0
+ELSE
+	뉴게임특전 '= TOSTR(RESULT)
+	RETURN 1
+ENDIF
+
+;-----------------------------------------------------------
+;특전 적용
+;미지정의 경우는 글쎄... 뭐로 하지
+;-----------------------------------------------------------
+@NEWGAME_BONUS_APPLY
+#DIM C_ID
+C_ID = TOINT(뉴게임특전)
+SELECTCASE 뉴게임특전
+	CASE "없음"
+	CASE ""
+ENDSELECT
+
+;	CASE "초기 능력 업"
+;		ABL:MASTER:청소기능 = 1
+;		ABL:MASTER:교양 = 1
+;		ABL:MASTER:요리기능 = 1
+;		ABL:MASTER:기교 = 2
+;		ABL:MASTER:화술기능 = 3
+
+
+;	CASEELSE
+;		CFLAG:C_ID:호감도 = 500
+;		CFLAG:C_ID:신뢰도 = 100
+
+
+
+;-----------------------------------------------------------
+;설정 표시용 텍스트화
+;-----------------------------------------------------------
+@NEWGAMEBONUS_TEXT
+#FUNCTIONS
+SELECTCASE 뉴게임특전
+;	CASEELSE
+;		RETURNF @"%CALLNAME:TOINT(뉴게임특전)%의 호감도와 신뢰도가 오른 상태로 시작합니다 임신이 어려운 종족의 경우 확률 향상 능력도 추가로 취득합니다"
+ENDSELECT

@@ -1,0 +1,162 @@
+﻿;FileName_JOB.ERB ----------------------------- Rev1. 00
+;휴일 판정 처리
+;CALL		USER
+;ARG		캐릭터 NO
+;ARG:1(생략가능)	0:일이 끝나 있으면 휴일 1:일인 어느 날은 일일(일량·종료시각을 보지 않는다)
+;RETURN		0:일일, 1:휴일
+;COMMENT	
+;-----------------------------------------------------------
+@CHARA_HOLIDAY(ARG, ARG:1=0)
+#FUNCTION
+
+;잔일량·일종료시간을 확인할까 분기
+IF !ARG:1
+	SIF BASE:ARG:일량 <= 0
+		RETURNF 1
+	SIF TCVAR:ARG:일종료 > 0 && TIME > TCVAR:ARG:일종료
+		RETURNF 1
+ENDIF
+RETURNF TCVAR:ARG:일개시 == -1
+
+;-----------------------------------------------------------
+;@CHARA_HOLIDAY로부터 분리
+;MOVEMENT가 불릴 때에 갱신된다
+;ARG:1에 1을 설정하면(자) 연회나 업무중에 의한 스킵을 무시
+;-----------------------------------------------------------
+@일내용설정(ARG, ARG:1)
+#DIM 청소하기
+VARSET LOCAL
+
+;CFLAG:350 직종(40, 청소　41, 회화　42, 전투　43, 교양　44, 요리　45, 음악 46, 놀이 47, 장사중(도울수없다) 48, 연회준비 49, 연회참가 50, 연회 정리 51, 연회 후의 취기 52, 여자 모임
+;TCVAR:도울수없다 =1 도울수없다 =2 도와도 빨리는 끝나지 않는다
+;연회계의 일은 여기에서는 설정하지 않습니다. 연회. ERB를 참조해 주세요.
+
+
+IF !ARG:1
+	;현재 업무중이라면 돌아간다
+	SIF CFLAG:ARG:행동 == 5
+		RETURN
+
+	;연회에 참가하는 놈은 그 날의 일을 쉰다
+	IF FLAG:연회개최플래그 > 0 && CFLAG:ARG:연회참가 > 0
+		IF !GROUPMATCH(CFLAG:ARG:직종, JOB_연회준비, JOB_연회참가, JOB_연회의정리, JOB_꽐라된)
+			TCVAR:ARG:일개시 = -1
+			TCVAR:ARG:일종료 = -1
+		ENDIF
+		RETURN
+	ENDIF
+ENDIF
+
+
+;일개시·일종료시각을―1으로 한다(개시시각이―1이라면 휴일이라고 판정)
+TCVAR:ARG:일개시 = -1
+TCVAR:ARG:일종료 = -1
+
+;일의 처리
+SELECTCASE ARG
+;todo - possibly replace with a new framework if more cases like this appear
+
+
+;다른 사람들은 지금 바쁜 일에는 붙지 않았습니다. 일안 모집. 아마 요우무와 란 님은 부정기에 바쁘겠지……
+ENDSELECT
+
+;휴가 플래그 사용하지 않아도 TCVAR:ARG:일개시에 판별할 수 있었으므로
+;일이 없는 경우의 리셋 처리를 정리했다
+IF TCVAR:ARG:일개시 >= 0
+	;GET_JOBPLACE는 주인의 REPLACEMENT유기 처리
+	CFLAG:ARG:직장 = GET_JOBPLACE("일", ARG)
+	RETURN
+ELSE
+	MAXBASE:ARG:일량 = 0
+ENDIF
+
+;FileName_JOB.ERB ----------------------------- Rev1. 00
+;업무중의 이동 처리
+;CALL		USER
+;ARG		캐릭터 NO
+;RETURN		VOID
+;COMMENT	
+;-----------------------------------------------------------
+@JOBMOVE(ARG)
+#DIM 전의직장
+#DIM 청소하기
+SIF CFLAG:ARG:연회참가 > 0 || GROUPMATCH(CFLAG:ARG:직종, 48,49,50,51)
+	RETURN 
+전의직장 = CFLAG:ARG:직장
+
+SELECTCASE ARG
+ENDSELECT
+
+;직장 갱신
+SIF 전의직장 != CFLAG:ARG:직장
+	CFLAG:ARG:직장 = GET_JOBPLACE("일", ARG)
+
+
+;FileName_JOB.ERB ------------------------------- Rev1. 00
+;일나토리 이득
+;CALL		USER
+;ARG		VOID
+;RETURN		VOID
+;COMMENT	
+;-----------------------------------------------------------
+@GET_JOBNAME(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+ENDSELECT
+RETURNF LOCALS
+
+@SPECIALJOB(ARG)
+SELECTCASE ARG
+	CASE 1
+		PRINTFORML 오늘 %ARG는% 감옥저택 외부 치안 유지 일이 있다고 한다
+		INPUT
+		PRINTL [0]돕는다
+		PRINTL [1]열심히 해
+		IF RESULT == 0
+			IF ABL:MASTER:전투능력 < 2
+				PRINTL 방해가 되니까 오지마~ 라는 소리를 들었다…
+			ELSE
+				PRINTFORML %ARG는% 주저하면서도 동행을 허락해 주었다
+				PRINTFORML %STR:(CFLAG:ARG:직장 / 10 + 6000)%로 갑니다
+			ENDIF
+		ELSE
+			PRINTFORML %마스터는% %CALLNAME:ARG%에게 응원을 보냈다
+		ENDIF
+ENDSELECT
+
+;-----------------------------------------------------------
+;共通の仕事
+;-----------------------------------------------------------
+;誰が何と言おうと女子会
+@JOB_여자회(ARG)
+; 마노사바 애들이 술 마시는 일인가... 이게 얼마나 사용될지는 모르겠지만.
+MAXBASE:ARG:일량 = 600 * 3
+TCVAR:ARG:일개시 = CLOCK_TO_TIME(18, 0)
+TCVAR:ARG:일종료 = CLOCK_TO_TIME(20, 0)
+CFLAG:ARG:직장 = P32라운지
+CFLAG:ARG:직종 = JOB_술
+TCVAR:ARG:도울수없다 = 1
+
+@JOB_요정의놀이(ARG)
+; 우선 바꾸어 두었음. 노아랑 안안 위주로, 거기에 어울려 주는 애들도 해두면 되지 않을까?
+MAXBASE:ARG:일량 = 600 * 7
+TCVAR:ARG:일개시 = CLOCK_TO_TIME(13, 0)
+TCVAR:ARG:일종료 = CLOCK_TO_TIME(14, 0)
+
+; 기본은 오락실로 해두지만 때에 따라서, 혹은 아틀리에 개방에 따라서 아틀리에에서 놀도록.
+CFLAG:ARG:직장 = P71오락실
+
+
+;IF DAY % 4 == 0
+;	CFLAG:ARG:직장 = P32서니방
+;ELSEIF DAY % 4 == 1
+;	CFLAG:ARG:직장 = P25수호신의숲
+;ELSEIF DAY % 4 == 2
+;	CFLAG:ARG:직장 = P2경내
+;ELSE
+;	CFLAG:ARG:직장 = P27삼요정의집・객실
+;ENDIF
+
+
+CFLAG:ARG:직종 = JOB_놀이
+TCVAR:ARG:급료 = 0

@@ -1,0 +1,1209 @@
+﻿;--------------------------------------------------
+;지점명 변경 함수
+;--------------------------------------------------
+@EMAP_PLACENAME_0(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+	CASE P73아틀리에
+		IF FLAG:아틀리에개방
+			RETURNF "노아의 아틀리에"
+		ELSE
+			RETURNF "???"
+		ENDIF
+	CASE MINROOM() TO (MAXROOM - 1)
+		RETURNF STR:(ARG + 8000)
+	CASEELSE
+		RETURNF "불명"
+ENDSELECT
+
+
+;--------------------------------------------------
+;징벌방 구속 여부 확인
+;RETURNF 1=이동 가능, 0=이동 불가능
+;TFLAG:이동불능메시지   ↓の@MAP_CANNOT_WORD용 설정
+;--------------------------------------------------
+@ECHECK_GAMGUM()
+#FUNCTION
+FOR I, 1, 12
+    IF TALENT:I:징벌방구속
+        TFLAG:이동불능메시지 = I + 3
+		RETURNF 1
+    ENDIF
+NEXT
+RETURNF 0
+
+;--------------------------------------------------
+;장소 ARG가 어느 지역에 있는지
+;표시하는 맵의 번호와 연동 (TFLAG:맵변환)
+;ARG     장소ID
+;--------------------------------------------------
+@EMAP_AREASELECT_0(ARG)
+#FUNCTION
+SELECTCASE ARG
+	;지하 1층
+	CASE P1메루루방 TO P21징벌방8
+		RETURNF 1
+	;지상 1층 메인
+	CASE P22창고가는길 TO P46재판소
+		RETURNF 2
+	;지하실
+	CASE P47엘리베이터 TO P52처형대보관실
+		RETURNF 3
+	;호수
+	CASE P53호수앞 TO P55호수
+		RETURNF 4
+	;벽
+	CASE P56벽앞
+		RETURNF 5
+	;꽃밭
+	CASE  P57꽃밭앞, P58꽃밭
+		RETURNF 6	
+	;창고
+	CASE P59창고방1 TO P64창고앞
+		RETURNF 7
+	;게스트하우스
+	CASE P65샐러맨더의방 TO P68게스트하우스앞
+		RETURNF 8
+	;지상 2층 + 만년필
+	CASEELSE
+		RETURNF 9
+ENDSELECT
+
+
+
+
+;--------------------------------------------------
+;이동제한설정
+;ARG    장소ID
+;CHARA  이동하는 캐릭터ID
+;RETURNF 1=이동 가능, 0=이동 불가능
+;TFLAG:이동불능메시지   ↓の@MAP_CANNOT_WORD용 설정
+
+;이쪽에서는 기본적으로 1칸 움직임을 상정하고 만든다. 즉, 다른 NPC들의 행동을 제약하는 것.
+;정확히는 목적지로 삼는 경우에만 작동함. NPC들은 한 번에 한 칸만 움직이니 이게 여기서 먹히지만 MASTER는 SKIP을 쓰기 때문에, 여기서 제한 건 것을
+;SKIP_MOVE 가서 다시 막아줘야 함. 안 막아주면 중계지로 잘만 써먹어버림.
+
+;...인줄 알았으나 NPC도 SKIP을 쓰시네요. 시발놈들
+;걍 이거 완성하고 SKIP_MOVE 완전판 만들어야겠다 시발
+
+;--------------------------------------------------
+@EMAP_CAN_MOVE_0(ARG, CHARA)
+#FUNCTION
+#DIM CHARA
+SELECTCASE ARG
+	CASE P1메루루방
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;의무실에서 들어가려고 하는 경우 FLAG:의무실비밀통로개방 켜져 있어야 함
+		;ELSEIF !(FLAG:의무실비밀통로개방) && CFLAG:CHARA:현재위치 == P29의무실
+		;	RETURNF 0
+		;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+			IF CHARA == MASTER
+				TFLAG:이동불능메시지 = 2	
+				RETURNF 0
+			ELSE
+				RETURNF 0
+			ENDIF
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			IF CFLAG:[[메루루]]:동행
+				RETURNF 1
+			ELSEIF TALENT:[[메루루]]:연모
+				RETURNF 1
+			ELSEIF CFLAG:[[메루루]]:현재위치 == ARG
+				RETURNF 1
+			ELSE
+				TFLAG:이동불능메시지 = 1
+				RETURNF 0
+			ENDIF
+		;본인이나 마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF CHARA == [[메루루]] || TALENT:CHARA:마녀화
+			RETURNF 1
+		;그 외는 방 주인이 안에 있을 때만 들어갈 수 있다.
+		ELSEIF CFLAG:[[메루루]]:현재위치 == ARG
+			RETURNF 1
+		; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+		; 뭘 하려고 다른 애들 데리고 자길 좋아해주는 애의 방에 가는 걸까요... 귀축.
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && (TALENT:[[메루루]]:연모 || CFLAG:[[메루루]]:동행)
+			RETURNF 1
+		ELSE
+			RETURNF 0
+		ENDIF 
+	CASE P2코코・한나방
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+			IF CHARA == MASTER
+				TFLAG:이동불능메시지 = 2	
+				RETURNF 0
+			ELSE
+				RETURNF 0
+			ENDIF
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			IF CFLAG:[[코코]]:동행 || CFLAG:[[한나]]:동행
+				RETURNF 1
+			ELSEIF TALENT:[[코코]]:연모 || TALENT:[[한나]]:연모
+				RETURNF 1
+			ELSEIF CFLAG:[[코코]]:현재위치 == ARG || CFLAG:[[한나]]:현재위치 == ARG
+				RETURNF 1
+			ELSE
+				TFLAG:이동불능메시지 = 1
+				RETURNF 0
+			ENDIF
+		;본인이나 마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF CHARA == [[코코]] || CHARA == [[한나]] || TALENT:CHARA:마녀화
+			RETURNF 1
+		;그 외는 방 주인이 안에 있을 때만 들어갈 수 있다.
+		ELSEIF CFLAG:[[코코]]:현재위치 == ARG || CFLAG:[[한나]]:현재위치 == ARG
+			RETURNF 1
+		; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+		; 뭘 하려고 다른 애들 데리고 자길 좋아해주는 애의 방에 가는 걸까요... 귀축.
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && (TALENT:[[코코]]:연모 || CFLAG:[[코코]]:동행 || TALENT:[[한나]]:연모 || CFLAG:[[한나]]:동행)
+			RETURNF 1
+		ELSE
+			RETURNF 0
+		ENDIF 
+	CASE P3레이아・미리아방
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+			IF CHARA == MASTER
+				TFLAG:이동불능메시지 = 2	
+				RETURNF 0
+			ELSE
+				RETURNF 0
+			ENDIF
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			IF CFLAG:[[레이아]]:동행 || CFLAG:[[미리아]]:동행
+				RETURNF 1
+			ELSEIF TALENT:[[레이아]]:연모 || TALENT:[[미리아]]:연모
+				RETURNF 1
+			ELSEIF CFLAG:[[레이아]]:현재위치 == ARG || CFLAG:[[미리아]]:현재위치 == ARG
+				RETURNF 1
+			ELSE
+				TFLAG:이동불능메시지 = 1
+				RETURNF 0
+			ENDIF
+		;본인이나 마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF CHARA == [[레이아]] || CHARA == [[미리아]] || TALENT:CHARA:마녀화
+			RETURNF 1
+		;그 외는 방 주인이 안에 있을 때만 들어갈 수 있다.
+		ELSEIF CFLAG:[[레이아]]:현재위치 == ARG || CFLAG:[[미리아]]:현재위치 == ARG
+			RETURNF 1
+		; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+		; 뭘 하려고 다른 애들 데리고 자길 좋아해주는 애의 방에 가는 걸까요... 귀축.
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && (TALENT:[[레이아]]:연모 || CFLAG:[[레이아]]:동행 || TALENT:[[미리아]]:연모 || CFLAG:[[미리아]]:동행)
+			RETURNF 1
+		ELSE
+			RETURNF 0
+		ENDIF
+	CASE P4노아・안안방
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+			IF CHARA == MASTER
+				TFLAG:이동불능메시지 = 2	
+				RETURNF 0
+			ELSE
+				RETURNF 0
+			ENDIF
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			IF CFLAG:[[노아]]:동행 || CFLAG:[[안안]]:동행
+				RETURNF 1
+			ELSEIF TALENT:[[노아]]:연모 || TALENT:[[안안]]:연모
+				RETURNF 1
+			ELSEIF CFLAG:[[노아]]:현재위치 == ARG || CFLAG:[[안안]]:현재위치 == ARG
+				RETURNF 1
+			ELSE
+				TFLAG:이동불능메시지 = 1
+				RETURNF 0
+			ENDIF
+		;본인이나 마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF CHARA == [[노아]] || CHARA == [[안안]] || TALENT:CHARA:마녀화
+			RETURNF 1
+		;그 외는 방 주인이 안에 있을 때만 들어갈 수 있다.
+		ELSEIF CFLAG:[[노아]]:현재위치 == ARG || CFLAG:[[안안]]:현재위치 == ARG
+			RETURNF 1
+		; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+		; 뭘 하려고 다른 애들 데리고 자길 좋아해주는 애의 방에 가는 걸까요... 귀축.
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && (TALENT:[[노아]]:연모 || CFLAG:[[노아]]:동행 || TALENT:[[안안]]:연모 || CFLAG:[[안안]]:동행)
+			RETURNF 1
+		ELSE
+			RETURNF 0
+		ENDIF	
+	CASE P5에마・히로방
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+			IF CHARA == MASTER
+				;옥실열쇠가 있을 경우 스리슬쩍 들어갈 수 있다
+				IF TALENT:CHARA:옥실열쇠
+					RETURNF 1
+				ELSE
+					TFLAG:이동불능메시지 = 2
+					RETURNF 0
+				ENDIF	
+			ELSE
+				RETURNF 0
+			ENDIF
+		;자기 방임으로 이동하려는 게 히로일 시 기본적으로 자유롭게 통행 가능
+		ELSEIF CHARA == MASTER
+			RETURNF 1
+		;본인이나 마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF CHARA == [[에마]] || TALENT:CHARA:마녀화
+			RETURNF 1
+		;그 외는 방 주인이 안에 있을 때만 들어갈 수 있다.
+		ELSEIF CFLAG:[[히로]]:현재위치 == ARG || CFLAG:[[에마]]:현재위치 == ARG
+			RETURNF 1
+		; 히로의 방이니 NPC가 동행 상태라면 같이 입장 허용
+		; 히로 쨩, 방에 다른 애를 데려가는 건 무슨 이유일까나! 🌸✋
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행
+			RETURNF 1
+		ELSE
+			RETURNF 0
+		ENDIF
+	CASE P6마고・나노카방
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+			IF CHARA == MASTER
+				TFLAG:이동불능메시지 = 2	
+				RETURNF 0
+			ELSE
+				RETURNF 0
+			ENDIF
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			IF CFLAG:[[마고]]:동행 || CFLAG:[[나노카]]:동행
+				RETURNF 1
+			ELSEIF TALENT:[[마고]]:연모 || TALENT:[[나노카]]:연모
+				RETURNF 1
+			ELSEIF CFLAG:[[마고]]:현재위치 == ARG || CFLAG:[[나노카]]:현재위치 == ARG
+				RETURNF 1
+			ELSE
+				TFLAG:이동불능메시지 = 1
+				RETURNF 0
+			ENDIF
+		;본인이나 마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF CHARA == [[마고]] || CHARA == [[나노카]] || TALENT:CHARA:마녀화
+			RETURNF 1
+		;그 외는 방 주인이 안에 있을 때만 들어갈 수 있다.
+		ELSEIF CFLAG:[[마고]]:현재위치 == ARG || CFLAG:[[나노카]]:현재위치 == ARG
+			RETURNF 1
+		; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+		; 뭘 하려고 다른 애들 데리고 자길 좋아해주는 애의 방에 가는 걸까요... 귀축.
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && (TALENT:[[마고]]:연모 || CFLAG:[[마고]]:동행 || TALENT:[[나노카]]:연모 || CFLAG:[[나노카]]:동행)
+			RETURNF 1
+		ELSE
+			RETURNF 0
+		ENDIF
+	CASE P7셰리・아리사방
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;감옥 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+			IF CHARA == MASTER
+				TFLAG:이동불능메시지 = 2	
+				RETURNF 0
+			ELSE
+				RETURNF 0
+			ENDIF
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			IF CFLAG:[[셰리]]:동행 || CFLAG:[[아리사]]:동행
+				RETURNF 1
+			ELSEIF TALENT:[[셰리]]:연모 || TALENT:[[아리사]]:연모
+				RETURNF 1
+			ELSEIF CFLAG:[[셰리]]:현재위치 == ARG || CFLAG:[[아리사]]:현재위치 == ARG
+				RETURNF 1
+			ELSE
+				TFLAG:이동불능메시지 = 1
+				RETURNF 0
+			ENDIF
+		;본인이나 마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF CHARA == [[셰리]] || CHARA == [[아리사]] || TALENT:CHARA:마녀화
+			RETURNF 1
+		;그 외는 방 주인이 안에 있을 때만 들어갈 수 있다.
+		ELSEIF CFLAG:[[셰리]]:현재위치 == ARG || CFLAG:[[아리사]]:현재위치 == ARG
+			RETURNF 1
+		; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+		; 뭘 하려고 다른 애들 데리고 자길 좋아해주는 애의 방에 가는 걸까요... 귀축.
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && (TALENT:[[셰리]]:연모 || CFLAG:[[셰리]]:동행 || TALENT:[[아리사]]:연모 || CFLAG:[[아리사]]:동행)
+			RETURNF 1
+		ELSE
+			RETURNF 0
+		ENDIF
+
+	CASE P8감옥복도
+		;감옥 방 잠금 시간 : 0시 ~ 6시 / 10시 ~ 12시 / 15시 ~ 17시 / 22시 ~ 24시
+		IF INRANGE(TIME, 0, 360) || INRANGE(TIME, 600, 720) || INRANGE(TIME, 900, 1020) || INRANGE(TIME, 1320, 1440)
+			IF CFLAG:CHARA:현재위치 == P1메루루방
+				IF !FLAG:의무실비밀통로개방
+					IF CHARA == MASTER
+						TFLAG:이동불능메시지 = 24
+						RETURNF 0
+					ELSE 
+						RETURNF 0
+					ENDIF
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P2코코・한나방
+				IF CHARA == MASTER
+					TFLAG:이동불능메시지 = 24
+					RETURNF 0
+				ELSE 
+					RETURNF 0
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P3레이아・미리아방
+				IF CHARA == MASTER
+					TFLAG:이동불능메시지 = 24
+					RETURNF 0
+				ELSE 
+					RETURNF 0
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P4노아・안안방
+				IF CHARA == MASTER
+					TFLAG:이동불능메시지 = 24
+					RETURNF 0
+				ELSE 
+					RETURNF 0
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P5에마・히로방
+				IF CHARA == MASTER 
+					;히로가 옥실열쇠 가지고 있으면 나갈 수 있다.
+					IF TALENT:CHARA:옥실열쇠
+						RETURNF 1
+					ELSE
+						TFLAG:이동불능메시지 = 24
+						RETURNF 0
+					ENDIF
+				ELSE 
+					RETURNF 0
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P6마고・나노카방
+				IF CHARA == MASTER
+					TFLAG:이동불능메시지 = 24
+					RETURNF 0
+				ELSE 
+					RETURNF 0
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P7셰리・아리사방
+				IF CHARA == MASTER
+					TFLAG:이동불능메시지 = 24
+					RETURNF 0
+				ELSE 
+					RETURNF 0
+				ENDIF
+			ENDIF
+		ELSE 
+			;기본적으로는 개방
+			RETURNF 1
+		ENDIF
+
+
+
+
+	CASE P13징벌방복도
+		;기본 징벌방구속 상태일 때만 각 징벌방에서 못 나옴
+		IF TALENT:CHARA:징벌방구속
+			IF CFLAG:CHARA:현재위치 == P14징벌방1
+				;징벌방열쇠 있으면 자유롭게 나올 수 있음. 나오는 거기 때문에 세뇌로는... 어려운 거로.
+				IF TALENT:CHARA:징벌방열쇠
+					TALENT:CHARA:징벌방구속 = 0
+					RETURNF 1
+				ELSE
+					IF CHARA == MASTER 
+						TFLAG:이동불능메시지 = 25
+						RETURNF 0
+					ELSE 
+						;만약 히로가 징벌방열쇠가 있는 상태에서 동행해 나올 수 있다면 데리고 나올 수 있다.
+						IF CFLAG:CHARA:동행 && TALENT:MASTER:징벌방열쇠
+							TALENT:CHARA:징벌방구속 = 0
+							RETURNF 1
+						ELSE
+							RETURNF 0
+						ENDIF
+					ENDIF
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P15징벌방2
+				;징벌방열쇠 있으면 자유롭게 나올 수 있음. 나오는 거기 때문에 세뇌로는... 어려운 거로.
+				IF TALENT:CHARA:징벌방열쇠
+					TALENT:CHARA:징벌방구속 = 0
+					RETURNF 1
+				ELSE
+					IF CHARA == MASTER 
+						TFLAG:이동불능메시지 = 25
+						RETURNF 0
+					ELSE 
+						;만약 히로가 징벌방열쇠가 있는 상태에서 동행해 나올 수 있다면 데리고 나올 수 있다.
+						IF CFLAG:CHARA:동행 && TALENT:MASTER:징벌방열쇠
+							TALENT:CHARA:징벌방구속 = 0
+							RETURNF 1
+						ELSE
+							RETURNF 0
+						ENDIF
+					ENDIF
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P16징벌방3
+				;징벌방열쇠 있으면 자유롭게 나올 수 있음. 나오는 거기 때문에 세뇌로는... 어려운 거로.
+				IF TALENT:CHARA:징벌방열쇠
+					TALENT:CHARA:징벌방구속 = 0
+					RETURNF 1
+				ELSE
+					IF CHARA == MASTER 
+						TFLAG:이동불능메시지 = 25
+						RETURNF 0
+					ELSE 
+						;만약 히로가 징벌방열쇠가 있는 상태에서 동행해 나올 수 있다면 데리고 나올 수 있다.
+						IF CFLAG:CHARA:동행 && TALENT:MASTER:징벌방열쇠
+							TALENT:CHARA:징벌방구속 = 0
+							RETURNF 1
+						ELSE
+							RETURNF 0
+						ENDIF
+					ENDIF
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P17징벌방4
+				;징벌방열쇠 있으면 자유롭게 나올 수 있음. 나오는 거기 때문에 세뇌로는... 어려운 거로.
+				IF TALENT:CHARA:징벌방열쇠
+					TALENT:CHARA:징벌방구속 = 0
+					RETURNF 1
+				ELSE
+					IF CHARA == MASTER 
+						TFLAG:이동불능메시지 = 25
+						RETURNF 0
+					ELSE 
+						;만약 히로가 징벌방열쇠가 있는 상태에서 동행해 나올 수 있다면 데리고 나올 수 있다.
+						IF CFLAG:CHARA:동행 && TALENT:MASTER:징벌방열쇠
+							TALENT:CHARA:징벌방구속 = 0
+							RETURNF 1
+						ELSE
+							RETURNF 0
+						ENDIF
+					ENDIF
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P18징벌방5
+				;징벌방열쇠 있으면 자유롭게 나올 수 있음. 나오는 거기 때문에 세뇌로는... 어려운 거로.
+				IF TALENT:CHARA:징벌방열쇠
+					TALENT:CHARA:징벌방구속 = 0
+					RETURNF 1
+				ELSE
+					IF CHARA == MASTER 
+						TFLAG:이동불능메시지 = 25
+						RETURNF 0
+					ELSE 
+						;만약 히로가 징벌방열쇠가 있는 상태에서 동행해 나올 수 있다면 데리고 나올 수 있다.
+						IF CFLAG:CHARA:동행 && TALENT:MASTER:징벌방열쇠
+							TALENT:CHARA:징벌방구속 = 0
+							RETURNF 1
+						ELSE
+							RETURNF 0
+						ENDIF
+					ENDIF
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P19징벌방6
+				;징벌방열쇠 있으면 자유롭게 나올 수 있음. 나오는 거기 때문에 세뇌로는... 어려운 거로.
+				IF TALENT:CHARA:징벌방열쇠
+					TALENT:CHARA:징벌방구속 = 0
+					RETURNF 1
+				ELSE
+					IF CHARA == MASTER 
+						TFLAG:이동불능메시지 = 25
+						RETURNF 0
+					ELSE 
+						;만약 히로가 징벌방열쇠가 있는 상태에서 동행해 나올 수 있다면 데리고 나올 수 있다.
+						IF CFLAG:CHARA:동행 && TALENT:MASTER:징벌방열쇠
+							TALENT:CHARA:징벌방구속 = 0
+							RETURNF 1
+						ELSE
+							RETURNF 0
+						ENDIF
+					ENDIF
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P20징벌방7
+				;징벌방열쇠 있으면 자유롭게 나올 수 있음. 나오는 거기 때문에 세뇌로는... 어려운 거로.
+				IF TALENT:CHARA:징벌방열쇠
+					TALENT:CHARA:징벌방구속 = 0
+					RETURNF 1
+				ELSE
+					IF CHARA == MASTER 
+						TFLAG:이동불능메시지 = 25
+						RETURNF 0
+					ELSE 
+						;만약 히로가 징벌방열쇠가 있는 상태에서 동행해 나올 수 있다면 데리고 나올 수 있다.
+						IF CFLAG:CHARA:동행 && TALENT:MASTER:징벌방열쇠
+							TALENT:CHARA:징벌방구속 = 0
+							RETURNF 1
+						ELSE
+							RETURNF 0
+						ENDIF
+					ENDIF
+				ENDIF
+			ELSEIF CFLAG:CHARA:현재위치 == P21징벌방8
+				;징벌방열쇠 있으면 자유롭게 나올 수 있음. 나오는 거기 때문에 세뇌로는... 어려운 거로.
+				IF TALENT:CHARA:징벌방열쇠
+					TALENT:CHARA:징벌방구속 = 0
+					RETURNF 1
+				ELSE
+					IF CHARA == MASTER 
+						TFLAG:이동불능메시지 = 25
+						RETURNF 0
+					ELSE 
+						;만약 히로가 징벌방열쇠가 있는 상태에서 동행해 나올 수 있다면 데리고 나올 수 있다.
+						IF CFLAG:CHARA:동행 && TALENT:MASTER:징벌방열쇠
+							TALENT:CHARA:징벌방구속 = 0
+							RETURNF 1
+						ELSE
+							RETURNF 0
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+			
+
+	CASE P14징벌방1 TO P21징벌방8
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;징벌방열쇠 혹은 세뇌 능력 있으면 언제든 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:징벌방열쇠 || TALENT:CHARA:세뇌
+			RETURNF 1
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			;다른 캐릭터가 구속되어 있으면 그에 따른 반응을 해준다.
+			IF CHECK_GAMGUM() == 1
+				RETURNF 0
+			;징벌방열쇠 없으면 기본적으로 히로는 못 들어간다.
+			ELSE
+				TFLAG:이동불능메시지 = 3
+				RETURNF 0
+			ENDIF
+		ELSE
+			RETURNF 0	
+		ENDIF
+
+
+
+	CASE P28선룸
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:마녀화
+			RETURNF 1
+		;선룸이 개방되면 모두가 들어갈 수 있게 된다.
+		ELSEIF FLAG:선룸개방
+			RETURNF 1
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			;선룸이 개방되기 전에는 기본적으로 못 들어간다.
+			TFLAG:이동불능메시지 = 16
+			RETURNF 0
+		ELSE
+			RETURNF 0
+		ENDIF
+
+	CASE P43재판소앞통로
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:마녀화
+			RETURNF 1
+		;재판소에서 여기로 오려면 재판소가 개방되어 있어야 함. 거의 어렵겠지만 운디네 -> 지하실 -> 냉동고 -> 처형대조작 -> 재판소로 오는 경우도 있을테니...
+		ELSEIF CFLAG:CHARA:현재위치 == P46재판소
+			IF FLAG:재판소개방
+				RETURNF 1
+			ELSEIF !TALENT:CHARA:조작판사용가능
+				;이동하려는 게 히로일 시
+				IF CHARA == MASTER
+					TFLAG:이동불능메시지 = 26
+					RETURNF 0
+				ELSE
+					RETURNF 0
+				ENDIF
+			ENDIF
+		ELSE
+			;기본적으로 열린 곳
+			RETURNF 1
+		ENDIF
+
+	CASE P44주방
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:마녀화
+			RETURNF 1
+		;주방이 개방되면 모두가 들어갈 수 있게 된다.
+		ELSEIF FLAG:주방개방
+			RETURNF 1
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			;주방이 개방되기 전에는 기본적으로 못 들어간다.
+			TFLAG:이동불능메시지 = 17
+			RETURNF 0
+		ELSE
+			RETURNF 0
+		ENDIF
+	CASE P46재판소
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:마녀화
+			RETURNF 1
+						;TALENT 조작판사용가능 없으면 처형대보관실에서 재판소로 못 온다
+						;근데 생각해보니 P52에 가려면 조작판사용가능 해야 하네?
+						;ELSEIF !TALENT:CHARA:조작판사용가능 && CFLAG:CHARA:현재위치 == P52처형대보관실
+						;	IF CHARA == MASTER
+						;		TFLAG:이동불능메시지 = ???
+						;		RETURNF 0
+						;	ELSE	
+						;		RETURNF 0
+						;	ENDIF
+		;재판소 개방되면 재판소 앞 통로에서 모두가 들어갈 수 있게 된다.
+		; ELSEIF FLAG:재판소개방 && CFLAG:CHARA:현재위치 == P43재판소앞통로 인데 어차피 P52에 있을 수 있으려면 조작판사용가능하거나 흑막이거나니까. 
+		ELSEIF FLAG:재판소개방
+			RETURNF 1
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			;재판소가 개방되기 전에는 기본적으로 못 들어간다.
+			TFLAG:이동불능메시지 = 18
+			RETURNF 0
+		ELSE
+			RETURNF 0
+		ENDIF
+
+
+	;CASE P49조작실
+	;항시 개방
+	;환풍구 -> 조작실, 냉동고 -> 조작실이 문제
+	;근데 환풍구 직통 된다는 건 이미 냉동고 -> 환풍구 개방했다는 소리니까 따로 해줄 필요 없을듯
+	;냉동고 -> 조작실에 필요한 것은 냉동고개방과 냉동고비밀번호인듯.
+
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		;IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+		;	RETURNF 1
+		;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		;ELSEIF TALENT:CHARA:마녀화
+		;	RETURNF 1
+		;냉동고비밀번호도 모르고 냉동고개방도 안 된 상태에서 냉동고 -> 조작실 직통은 불가.
+		;ELSEIF !(TALENT:CHARA:냉동고비밀번호 || FLAG:냉동고개방) && CFLAG:CHARA:현재위치 == P51냉동고 && !TALENT:CHARA:조작판사용가능
+			;히로일 때 추가 대사
+		;	SIF CHARA == MASTER
+		;		TFLAG:이동불능메시지 = 27
+		;	RETURNF 0
+		;ELSE
+		;	RETURNF 1
+		;ENDIF
+
+
+	CASE P51냉동고
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:마녀화
+			RETURNF 1
+		;냉동고 비밀번호를 아는 캐릭터들은 자유롭게 들어갈 수 있다. 조작실에서도, 처형대보관실에서도.
+		ELSEIF TALENT:CHARA:냉동고비밀번호
+			RETURNF 1
+		;냉동고가 개방되면 모두가 들어갈 수 있게 된다. 조작실에서도, 처형대보관실에서도.
+		ELSEIF FLAG:냉동고개방
+			RETURNF 1
+		;환풍구가 개방되면 환풍구를 통해서 모두가 들어갈 수 있게 된다. 단, 처형대보관실 쪽에서는 안 돼.
+		ELSEIF FLAG:환풍구개방
+			RETURNF 1
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			;냉동고가 개방되기 전에는 기본적으로 못 들어간다.
+			;조작실에서도, 처형대보관실에서도.
+			TFLAG:이동불능메시지 = 19
+			RETURNF 0
+		ELSE
+			RETURNF 0
+		ENDIF
+
+	CASE P52처형대보관실
+		;TALENT 조작판사용가능 혹은 흑막 있으면 자유롭게 들어갈 수 있다.
+		IF TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막
+			RETURNF 1
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			;TALENT 조작판사용가능 혹은 흑막 없으면 못 들어간다.
+			TFLAG:이동불능메시지 = 20
+			RETURNF 0
+		ELSE
+			RETURNF 0
+		ENDIF
+
+
+
+	
+	CASE P63창고 ; 창고는 입구 하나라 들어가면 당연히 나갈 수 있는 능력 있음
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;마녀화된 캐릭터들은 자유롭게 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:마녀화
+			RETURNF 1
+		;TALENT:외부창고열쇠 OR TALENT:환시 있으면 언제든 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:외부창고열쇠 || TALENT:CHARA:환시
+			RETURNF 1
+		;이동하려는 게 히로일 시
+		ELSEIF CHARA == MASTER
+			TFLAG:이동불능메시지 = 21
+			RETURNF 0
+		ELSE
+			RETURNF 0	
+		ENDIF
+
+
+
+	CASE P65샐러맨더의방 TO P67노움의방 
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;게스트하우스열쇠 있으면 자유롭게 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:게스트하우스열쇠
+			RETURNF 1
+		; 만약 히로가 들어갈 수 있고, 해당 NPC가 동행 상태라면 같이 입장 허용
+		; 게스트하우스에 누군가를 데려간다라... 흠....
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && TALENT:MASTER:게스트하우스열쇠
+			RETURNF 1
+		;22:00 ~ 익일06:00 외출 금지 시간이라 잠금 걸림
+		;즉, 0시 ~ 6시 / 22시 ~ 24시
+		ELSEIF INRANGE(TIME, 0, 360) || INRANGE(TIME, 1320, 1440)
+			;이동하려는 게 히로일 시 대사 뱉고
+			IF CHARA == MASTER
+				TFLAG:이동불능메시지 = 22	
+				RETURNF 0
+			ENDIF	
+			;아니면 다른 캐릭터 모두 막힌다
+			RETURNF 0
+		;기본적으로는 저 시간만 아니면 열려있어요?
+		ELSE
+			RETURNF 1
+		ENDIF
+
+
+	CASE P68게스트하우스앞	; 운디네 통해서 나오는 방법이... 있을 수 있나? 
+		; 게스트하우스앞 - 운디네 - 지하엘베 인데
+		; 게스트하우스앞 -> 운디네 : 게스트하우스열쇠 필요
+		; 지하엘베 -> 운디네 지하실발견 필요
+		; 흠... 재판소개방 -> 조작판사용가능 -> 냉동고비밀번호/냉동고개방/환풍구개방 -> 지하실발견 인가...
+		; 사실상 언제나 열려있는 곳이니 저 나올 수 없는 시간에 열쇠 갖고 있냐 아니냐고 결정되는 거네
+
+		;간수, 고쿠쵸, 유키, 흑막은 언제든 자유롭게 들어갈 수 있다.
+		IF CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]] || TALENT:CHARA:흑막
+			RETURNF 1
+		;게스트하우스열쇠 있으면 세 게스트하우스에서 자유롭게 나올 수 있다.
+		ELSEIF TALENT:CHARA:게스트하우스열쇠
+			RETURNF 1
+		;만약 히로가 게스트하우스 열쇠를 가지고 있고, 해당 NPC가 동행 상태라면 같이 나오는 거 허용
+		ELSEIF CHARA != MASTER && CFLAG:CHARA:동행 && TALENT:MASTER:게스트하우스열쇠
+			RETURNF 1
+		;열쇠도 없는 상황에서 0시 ~ 6시 / 22시 ~ 24시에 게스트하우스에서 밖으로 나올 수 없음
+		ELSEIF (INRANGE(TIME, 0, 360) || INRANGE(TIME, 1320, 1440)) && (CFLAG:CHARA:현재위치 == P65샐러맨더의방 || (CFLAG:CHARA:현재위치 == P66운디네의방 && !FLAG:지하실발견) || CFLAG:CHARA:현재위치 == P67노움의방)
+			RETURNF 0
+			;이동하려는 게 히로일 시 대사 뱉고
+			SIF CHARA == MASTER
+				TFLAG:이동불능메시지 = 24
+		;기본적으로는 저 시간만 아니면 열려있어요?
+		ELSE
+			RETURNF 1
+		ENDIF
+
+
+
+
+
+	CASE P73아틀리에
+		;FLAG 아틀리에개방 OR FLAG 더스트슈트통로개방 있으면 누구나 자유롭게 들어갈 수 있다.
+		IF FLAG:아틀리에개방 || FLAG:더스트슈트통로개방
+			RETURNF 1
+		;TALENT 환시 있으면 무조건 더스트슈트통로 통해서 들어갈 수 있다.
+		ELSEIF TALENT:CHARA:환시
+			RETURNF 1		
+		;위 조건 충족 못하면 못 들어옴. 이동하려는 게 히로일 시 대사 뱉고
+		ELSEIF CHARA == MASTER
+			TFLAG:이동불능메시지 = 23
+			RETURNF 0	
+		;그 외 NPC들은 대사 없이 그냥 막히기
+		ELSE
+			RETURNF 0
+		ENDIF
+
+
+
+
+
+
+
+
+
+
+
+
+ENDSELECT
+RETURNF 1
+
+;--------------------------------------------------
+;이동불능시 표시되는 메시지
+;--------------------------------------------------
+@EMAP_CANNOT_WORD_0(ARG)
+SELECTCASE TFLAG:이동불능메시지
+	; 관계도 맺지 않은 상대방의 방을 들어가는 건 실례겠지.
+	CASE 1
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (……감옥이라고는 하나, 주인도 없는데 다른 사람의 방을 막 들어가는 건 역시 옳지 않다.)
+		RESETCOLOR
+		CLEARLINE 1
+	; 시간적으로 옥실 안에서 대기하고 있어야 할 때. 기본적으로 다른 애들의 방은 전부 이 시간대에는 이 말이 나오고, 에마히로 방의 경우에만 옥실열쇠가 있으면 자유롭게 출입 가능. 에마가 이상하게 생각하는 게 맞겠지만... 그걸 구현할 능력까지는 없다.
+	CASE 2
+		SETCOLOR 184, 38, 71
+		PRINTFORML (……규칙대로라면 지금은 옥실 안에서 대기하고 있어야 할 시간이지. 문이 잠긴 것도 당연한가.)
+		PRINTFORMW (지금은 몰래 빠져나와서 돌아다니고는 있지만…… 간수에게 들키기 전에 이동하지 않으면 안 되겠어.)
+		RESETCOLOR
+		CLEARLINE 2
+	; 징벌방 용, 잠겨 있어서 들어갈 수 없다.
+	CASE 3
+		PRINTFORMW 작은 창문 넘어 보이는 징벌방 내부는 험악한 물건들로 가득하다.
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (애초에 잠겨있기도 하고, 억지로 들어갈 이유는 없겠지.)
+		RESETCOLOR
+		CLEARLINE 3
+	CASE 4
+		SETCOLOR 255, 192, 203
+		PRINTFORML 「있지, 거기 아무도 없어? 응?!」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 에마가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 표정이 좋아 보이지 않는다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (……)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가나.)
+		RESETCOLOR
+		CLEARLINE 7
+	CASE 5
+		SETCOLOR 108, 113, 181
+		PRINTFORML 「시, 싫다. 이몸은 이렇게 구속되어 있는 게, 인형 같아서……」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 안안이 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 표정이 좋아 보이지 않는다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (구속되어 있는 건 확실히 유쾌한 기분이 아니겠지.)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠어.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 6
+		SETCOLOR 223, 233, 237
+		PRINTFORML 「우우. 노아, 이거 싫어…… 힘들어.」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 노아가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 표정이 좋아 보이지 않는다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (노아……)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠어.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 7
+		SETCOLOR 245, 222, 179
+		PRINTFORML 「하아, 하아, 하앗, 시, 싫어, 이런 좁, 은……」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 레이아가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 표정이 상당히 좋아 보이지 않는다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (레이아의 상태가 많이 안 좋아보인다. ……이건 좋지 않을지도 모르겠어.)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가나.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 8
+		SETCOLOR 222, 184, 135
+		PRINTFORML 「아저씨도 역시 이건 싫네…… 아니, 하지만 아무도 보지 않는다는 건……」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 미리아가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있을 터이나, 표정은 어째 미묘하다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (불편해보이지만 어딘가 편해보이는 것 같기도 한 표정인데.)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠어.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 9
+		SETCOLOR 186, 85, 211
+		PRINTFORML 「이건…… 확실히 즐거운 경험은 아니네.」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 마고가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 평소에 비해 표정에서 여유가 조금 사라진 느낌이다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (제아무리 마고라도 징벌은 싫겠지.)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠어.)
+		RESETCOLOR
+		CLEARLINE 7
+	CASE 10
+		SETCOLOR 152, 152, 152
+		PRINTFORML 「……언니.」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 나노카가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 표정이 좋아 보이지 않는다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (간수나 고쿠쵸에게 결국 잡힌 건가.)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠어.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 11
+		SETCOLOR 178, 34, 34
+		PRINTFORML 「빌어먹을, 여기서 꺼내라고! 야, 안들리냐!」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 아리사가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 표정에는 화가 가득하다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (어딘가 안심감마저 드는 반응이다.)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠어.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 12
+		SETCOLOR 176, 196, 222
+		PRINTFORML 「아ㅡ아. 심심하네요……」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 셰리가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 스트레스를 주고 있긴 한건지 아닌지, 판단하기 어려운 표정이다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (어느 쪽인가 하면 무표정에 가까운가……?)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠군.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 13
+		SETCOLOR 171, 214, 100
+		PRINTFORML 「이렇게 좁은 곳에 사람을 가두다니, 최악인 것이에요!」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 한나가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 표정이 좋아 보이지 않는다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (확실히 악취미적인 방이다. 이런 곳을 정부가 몰래 승인하고 있다니…… 옳지 않아.)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠군.)
+		RESETCOLOR	
+		CLEARLINE 7	
+	CASE 14
+		SETCOLOR 242, 119, 61
+		PRINTFORML 「아하하, 괜찮대두. 나는 괜찮으니까 걱정하진 말고…… 응?」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 코코가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 어딘가 울 것 같은 표정이다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (허공에 말을 걸고 있다……)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠어.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 15
+		SETCOLOR 183, 179, 189
+		PRINTFORML 「우우…… 역시 싫어요, 이런 건…… 하지만……」
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 메루루가 징벌방에서 징벌을 받고 있다.
+		PRINTFORMW 징벌이 상당한 스트레스를 주고 있는지, 표정이 좋아 보이지 않는다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (규칙을 어겼으니 징벌을 받는 건 당연하다는 건가? 확실히 어느 의미에서는 그게 옳을지도 모르지만……)
+		PRINTFORMW (지금은 들어가려고 해도, 문에 채워진 자물쇠 때문에 못 들어가겠어.)
+		RESETCOLOR	
+		CLEARLINE 7
+	CASE 16
+		PRINTFORML 히로는 힘차게 눈앞의 선룸의 문고리를 잡아 돌렸다.
+		PRINTFORMW ……만, 아무래도 잠겨 있는지 문은 열릴 기미가 보이지 않는다.
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (큭……! 단단히도 잠가 놓았어……!)
+		PRINTFORML (밖에서 봤을 땐 농기구들이 전부 저 안에 있는 거 같은데. 밭으로 쓸만한 땅도 준비되어 있고.)
+		PRINTFORMW (들어갈 수 있다면 작물을 기를 수 있을지도 모른다. 그럼 수확한 신선한 작물들로 맛있는 식사를 만들 수 있겠지.)
+		PRINTFORMW (……풀투성이의 식사가 되겠지만은.)
+		PRINTFORMW (여기를 열 수 있는 다른 방법이 없나?)
+		RESETCOLOR	
+		CLEARLINE 8
+	CASE 17
+		PRINTFORML 굳게 닫힌 문을 히로는 가만히 노려다보았다.
+		PRINTFORMW 스마트폰에 등록된 지도에 따르면 이 앞은 주방이지만……
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (마음대로 들어갈 순 없다…… 는 건가.)
+		PRINTFORML (규칙적인 식사 시간을 따라야 한다는 사실 자체에는 불만이 없지만, 제아무리 나라도 계속 저런 식사만 하는 건…… 싫다.)
+		PRINTFORMW (주방에 들어갈 수만 있다면 직접 음식을 조리할 수 있을 텐데.)
+		RESETCOLOR	
+		PRINTFORML 
+		PRINTFORMW 아쉬운 마음에 히로는 문고리를 몇 번 더 당겨보고서야 열려는 시도를 그만두었다.
+		CLEARLINE 8
+	CASE 18
+		PRINTFORMW 벽면 한 구석을 차지한 거대한 문은 굳게 닫힌 채 움직이지 않는다.
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORML (지도에 따르면 이 문 뒤는 재판소지만…… 감옥과 재판소가 같은 건물에 있다는 게 이상하군.)
+		PRINTFORML (보통은 재판소에서 형을 선고받은 죄수들은 다른 곳에 수감될 터……)
+		PRINTFORMW (여기는 대체 무슨 용도로 쓰였던 거지?)
+		RESETCOLOR	
+		PRINTFORML 
+		PRINTFORMW 재판소의 존재가 신경쓰이면서도, 히로는 잠긴 문을 어떻게 하지 못하고 재판소 앞을 떠났다.
+		CLEARLINE 7
+	CASE 19
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (추워!)
+		RESETCOLOR	
+		PRINTFORML 
+		PRINTFORMW 추위에 본능적으로 떨리는 이를 억누르며 히로는 눈앞의 문을 바라보았다. 
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (건너편에 무엇이 있는지는 모르겠지만 상당히 추운 곳일 것 같은데.)
+		PRINTFORML (열쇠구멍이 없는 문이라……)
+		PRINTFORMW (옆에 있는 저 장치에 비밀번호를 입력해서 여는 형식인가?)
+		RESETCOLOR	
+		PRINTFORML 
+		PRINTFORML 몇 번 숫자를 무작위로 눌러보던 히로는 이내 포기했다.
+		PRINTFORMW 지금으로선 들어갈 수 없을 듯하다.
+		CLEARLINE 10
+	CASE 20
+		PRINTFORMW 거인이라도 지나갈 수 있을 정도로 거대한 문은 굳게 닫힌 채 움직이지 않는다.
+		PRINTFORMW 작게 나 있는 쪽창을 통해 건너편을 바라본 히로는 눈에 들어온 광경에 작게 혀를 찼다.
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORML (수많은 고문기구들이 늘어져 있군. 아니, 처형대라고 하는 게 옳은가?)
+		PRINTFORMW (단두대, 십자가, 총살대, 수조, 아이언메이든……)
+		PRINTFORMW (……교수대.)
+		RESETCOLOR	
+		PRINTFORML 
+		PRINTFORMW 순간, 어디선가 줄이 조여오는 것 같은 소리가 들려왔다.
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORML (아니, 아니야. 이건 환청이야.)
+		RESETCOLOR	
+		PRINTFORML	
+		PRINTFORMW 조금 창백해진 낯으로 히로는 고개를 가로저었다.
+		CLEARLINE 12
+	CASE 21
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「창고…… 들어갈 수 있다면 좋겠는데.」
+		RESETCOLOR	
+		PRINTFORML 
+		PRINTFORML 당연하게도, 창고의 문은 닫혀있었다.
+		PRINTFORMW 아마 열쇠를 가지고 있는 건 이곳의 관리자일 간수나 고쿠쵸일 것이다.
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (……열쇠를 얻을 방법이 어떻게 없을까.)
+		RESETCOLOR
+		CLEARLINE 6
+	CASE 22
+		SETCOLOR 184, 38, 71
+		PRINTFORML (규칙대로라면 지금은 외출금지 시간이다. 그래서 간수가 문을 잠군건가.)
+		PRINTFORML (지금은 몰래 빠져나와서 돌아다니고는 있지만…… 간수에게 들키기 전에 이동하지 않으면 안 되겠어.)
+		PRINTFORMW (들켰다가는 징벌방으로 끌려갈테니까.)
+		RESETCOLOR
+		CLEARLINE 3
+	CASE 23
+		SETCOLOR 184, 38, 71
+		PRINTFORML (지도에서는 여기가 ???라고 뜨는데……)
+		PRINTFORML (아무리 둘러봐도 전부 벽으로 막혀있다. 대체 벽 뒤의 공간을 굳이 지도에 표시해둔 이유가 뭐지?)
+		PRINTFORMW (그것도 수상하게 ???라고 표시해두면서까지.)
+		RESETCOLOR
+		PRINTFORML 
+		PRINTFORMW 벌써 몇 바퀴 째 주변을 돌면서 관찰하고 있지만, 문제의 벽은 다른 벽들과 비교해 특별히 다른 것 같아보이지 않는다. 
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (……사실은 이곳이 숨겨진 비밀의 방이라던가?)
+		RESETCOLOR
+		PRINTFORML 
+		PRINTFORMW 스스로 말해놓고도 그 말에 어이가 없었는지 히로는 작게 헛웃음을 지었다.
+		CLEARLINE 9
+	CASE 24
+	; 감옥방에서 복도로 나가는 거 막는 거
+		SETCOLOR 184, 38, 71
+		PRINTFORML (규칙대로라면 지금은 외출금지 시간이다. 그래서 문이 잠긴건가.)
+		PRINTFORMW (……나갈 방법도 딱히 없으니 열릴 때까지 기다릴 수밖에.)
+		RESETCOLOR
+		CLEARLINE 2
+	CASE 25
+	; 징벌방에 구속되어 못 나간다면
+		SETCOLOR 184, 38, 71
+		PRINTFORML (큭……! 구속되어서 움직일 수도 없고……!)
+		PRINTFORML (풀어주는 건 아직인가? 방금 전 떨어진 물방울이 몇 번째였지?!)
+		PRINTFORMW (조급해지면 안 된다, 는 것 정도 머리로는 알지만……!)
+		RESETCOLOR
+		CLEARLINE 3
+	CASE 26
+	; 재판소에서 통로로
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (재판소 문이 잠겨있어서 이쪽으로는 통로로 못 나가겠어.)
+		RESETCOLOR
+		CLEARLINE 1
+	CASE 27
+	; 냉동고에서 조작실로
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「열려라, 열려라, 열려라……!」
+		RESETCOLOR	
+		PRINTFORML 
+		PRINTFORMW 히로는 냉동고의 강렬한 추위로 인해 떨리는 손을 억지로 움직여 패널에 비밀번호를 무작위로 입력해봤지만, 문은 열리지 않았다.
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW (안 돼. 이쪽은 가망이 없어……!)
+		PRINTFORMW (무의미하게 체온만 뺏기고 있다. 여기서 시간을 낭비하고 있는 건 올바르지 않은 선택이다!)
+		PRINTFORML 
+		PRINTFORMW 「왔던 길로 되돌아갈 수밖에……!」
+		RESETCOLOR	
+		CLEARLINE 8
+
+ENDSELECT
+REUSELASTLINE
+
+;-----------------------------------------
+;거점 전용의 정경묘사
+;WAIT는 걸리지 않도록
+;-----------------------------------------
+@EMAP_UNIQUEMESSAGE_0
+SELECTCASE CFLAG:MASTER:현재위치
+	CASEELSE
+ENDSELECT
+
+;--------------------------------------------------
+;맵의 소개문
+;--------------------------------------------------
+@EMAP소개_0
+;일단 3줄
+PRINTFORML 정부에 의해 마녀가 될 가능성이 있는 소녀들이 납치되어 감금된 곳.
+PRINTFORML 소녀들은 이곳에서 공동으로 생활하게 되며, 나가는 방법은 없다고 한다.
+PRINTFORML 주인공ㅡ 니카이도 히로는 이곳에서 눈을 뜨게 되어, 어떻게 하면 올바른 삶을 살 수 있을 지 고민하기 시작했다ㅡ

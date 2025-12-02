@@ -1,0 +1,391 @@
+﻿;-----------------------------------------------------------
+;거점 내에서 캐릭터의 거동을 처리하는 함수
+;             ARG   판정하는 캐릭터
+;        머물어비율   현재 위치 대비 이동률, 높을수록 머물며, 마이너스가 되면 이동하기가 쉬워진다
+;          이동처   이동 판정을 하는 지점ID
+;        이동결정   실제 이동하는 지점ID
+;      무차별이동   이동처가 침입가능이면 일단 이동한다
+;        강제이동   이동처로 무조건 이동한다（무차별 이동으로도 어디로도 이동 못하면 발동）
+;             END   종료 플래그
+;            N_ID   ARG의 현재위치
+;         G_POINT   일시적 인력점
+;          인력점   서서히 이동해 가는 목적지
+;가능한한움직이지않는다   1턴만 지속되는 무차별 이동을 하지 않는 이상 이동하지 않는 상태, 이동 직후나 특정한 조치를 취했을 때
+;-----------------------------------------------------------
+@캐릭터이동처리(ARG)
+#DIM 머물어비율
+#DIM 이동처
+#DIM 이동결정
+#DIM 무차별이동
+#DIM 강제이동
+#DIM END
+#DIM N_ID
+#DIM G_POINT
+VARSET LOCAL
+END = 0
+
+;초기화
+이동캐릭터 = 0
+
+;이동하려는 캐릭터가 누구인지 기록한다.
+이동캐릭터 = ARG
+
+;あなたの拠点物件にいるキャラのみが対象
+SIF !AT_HOME(ARG)
+	END = 1
+;行動不能
+SIF CFLAG:ARG:쇠약 || CFLAG:ARG:초대 || CFLAG:ARG:수면
+	END = 1
+;일, 데일리, 동침, 우후후, 동행중은 이동 처리 리셋
+SIF CFLAG:ARG:행동 == 5 || CFLAG:ARG:데일리 || CFLAG:ARG:동침중 || CFLAG:ARG:우후후 || CFLAG:ARG:동행
+	END = 1
+
+;終了処置
+IF END
+	TCVAR:ARG:가능한한움직이지않는다 = 0
+	RETURN
+ENDIF
+
+N_ID = CFLAG:ARG:현재위치
+
+;まずその場に留まり率を設定
+CALLFORM CHARAMOVE_DATA_{ARG}(4, N_ID)
+머물어비율 = RESULT
+;待機場所は固定
+IF N_ID == MAXROOM
+	머물어비율 = -10
+;引力点も固定
+;인력점에 있을 경우 움직이지 않을 가능성을 5에서 50로 10배 올리자. 너무 움직인다.
+ELSEIF N_ID == TCVAR:ARG:인력점
+	머물어비율 = 50
+ELSE
+	;머물기 어려운 장소
+	SIF N_ID == GET_ENTRANCE(MAIN_MAP) || ROOMDATA:(N_ID % 100) & 장소_머물지않는다
+		머물어비율 += -5
+	;당신과 동실이라면 태도로 머문다
+	SIF N_ID == CFLAG:MASTER:현재위치
+		머물어비율 += CFLAG:ARG:태도 * 2
+ENDIF
+
+무차별이동 = 0
+강제이동 = 0
+;お風呂にいる
+IF BATHROOM(N_ID)
+	;목욕탕
+	IF CFLAG:ARG:목욕탕
+		TCVAR:ARG:가능한한움직이지않는다 = 0
+		RETURN
+	;끝낸다
+	ELSE
+		무차별이동 = 1
+	ENDIF
+ENDIF
+;トイレは10分経過したら出てくる,利尿剤が効いてると出てこない
+IF IN_TOILET(N_ID) && TIME_PROGRESS(TIME:1) >= 10 && !TCVAR:ARG:이뇨제
+	IF TCVAR:ARG:이뇨제
+		TCVAR:ARG:가능한한움직이지않는다 = 1
+	ELSEIF TIME_PROGRESS(TIME:1) >= 10 && !TCVAR:ARG:이뇨제
+		무차별이동 = 1
+	ENDIF
+ENDIF
+;날씨 대미지가 아프다
+SIF 날씨에의한영향(ARG, N_ID) <= -3
+	무차별이동 = 1
+;現在位置の移動率を判定して、本来入らない場所（なおかつあなたが居ない）ならG_POINTを付けて無差別移動
+CALL 캐릭터이동율(ARG, N_ID)
+IF RESULT <= 0 && N_ID != CFLAG:MASTER:현재위치
+	무차별이동 = 1
+	;引力点が未設定ならとりあえず外に出ようとする
+	SIF !TCVAR:ARG:인력점
+		G_POINT = ENTRANCE
+ELSE
+	G_POINT = 0
+ENDIF
+;なるべく動かないなら終了
+IF TCVAR:ARG:가능한한움직이지않는다 && !무차별이동
+	TCVAR:ARG:가능한한움직이지않는다 = 0
+	RETURN
+ENDIF
+
+CALL FISHER_YATES_SHAFFLE(MAXROOM - MINROOM())
+이동결정 = 0
+WHILE 1
+	;引力点の設定を行う
+	TCVAR:ARG:인력점 = 0
+	CALLFORM CHARAMOVE_DATA_{ARG}(8)
+	CALL KOJO_MESSAGE_SEND("GRAVITY", 1, ARG)
+	;引力点または脱出用のG_POINTがある場合は引力点に向かって移動する,G_POINTは条件無し
+	IF 인력점발동가능(ARG) || G_POINT
+		;引力点かG_POINTを目指す
+		이동처 = TCVAR:ARG:인력점 ? TCVAR:ARG:인력점 # G_POINT
+		;スキップムーブでルート検索
+		WHILE !(CAN_MOVE(N_ID, 이동처) & 1)
+			TRYCALLFORM SKIP_MOVE_{MAIN_MAP}(이동처, N_ID)
+			;현재 이동할 수 없는 곳이면 못 가게 막아야지 뭐..
+			IF RESULT == 0
+				이동처 = 999
+				BREAK
+			ENDIF
+			이동처 = RESULT
+		WEND
+		;이동처가 당신 사실이고, 그 캐릭터의 사실이 아니고, 거기서 당신이 우후후중일 경우에는 들어올 수 없어
+		IF 이동처 == CFLAG:MASTER:초기위치 && 이동처 != CFLAG:ARG:초기위치 && 이동처 == CFLAG:MASTER:현재위치 && CFLAG:MASTER:우후후
+		;아마 이 경우는 갈 수 없는 상태인데 억지로 가려고 하는 거니까 못 가게 막기.
+		ELSEIF 이동처 == 999
+		ELSE
+			;고정률을 보정하여 움직이기 쉽게 한다(요조정, -100이면 거의 움직인다)
+			CALL 캐릭터이동율(ARG, 이동처, 머물어비율 - 100)
+			;이동판정
+			IF RESULT * TIME_PROGRESS(TIME:1) > RAND:700
+				이동결정 = 이동처
+			;무차별이동시 가급적 이동, 강제이동시 무조건 이동
+			ELSEIF (RESULT && 무차별이동) || 강제이동
+				이동결정 = 이동처
+			ENDIF
+		ENDIF
+	;通常の移動
+	ELSE
+		FOR LOCAL, 0, MAXROOM - MINROOM()
+			이동처 = SHAFFLE_ARRAY:LOCAL + MAIN_MAP * 100 + 1
+			;현재위치
+			SIF 이동처 == N_ID
+				CONTINUE
+			;이동할 수 없다
+			SIF !(CAN_MOVE(N_ID, 이동처) & 1)
+				CONTINUE
+			;移動できない２,ワンルーム制限等、移動に制限がある場所
+			SIF !MAP_CAN_MOVE(이동처, ARG)
+				CONTINUE
+			;移動先があなた私室であり、そのキャラの私室でなく、そこであなたがウフフ中の場合は入ってこれない
+			SIF 이동처 == CFLAG:MASTER:초기위치 && 이동처 != CFLAG:ARG:초기위치 && 이동처 == CFLAG:MASTER:현재위치 && CFLAG:MASTER:우후후
+				CONTINUE
+			;強制移動時は以下の条件はパスする
+			IF !강제이동
+				;天候が今いる場所より痛い
+				SIF 날씨에의한영향(ARG, 이동처) <= -3 && N_ID != MAXROOM && 날씨에의한영향(ARG, N_ID) >= -2
+					CONTINUE
+				;追い出された先
+				SIF 이동처 == TCVAR:ARG:쫒겨난장소
+					CONTINUE
+			ENDIF
+			;最初にヒットした移動先で判定してBREAKする（分岐が多いほど移動確率が上がらないようにするため）
+			CALL 캐릭터이동율(ARG, 이동처, 머물어비율)
+			;通常の移動判定
+			IF RESULT * TIME_PROGRESS(TIME:1) > RAND:700
+				이동결정 = 이동처
+			;無差別移動時はなるべく移動,強制移動時は無条件に移動
+			ELSEIF (RESULT && 무차별이동) || 강제이동
+				이동결정 = 이동처
+			;移動率が0%じゃないなら判定終了（マイナスでも終了）
+			ELSEIF RESULT
+				;ただし無差別移動時は強制移動を付けて再判定
+				IF 무차별이동 && !강제이동
+					강제이동 = 1
+				ELSE
+					TCVAR:ARG:가능한한움직이지않는다 = 0
+					RETURN
+				ENDIF
+			;0%なら再判定
+			ELSE
+				CONTINUE
+			ENDIF
+			BREAK
+		NEXT
+	ENDIF
+	;強制移動時は移動決定するまでループ
+	IF 강제이동 && !이동결정
+		CONTINUE
+	ELSEIF 이동결정
+		CALL 캐릭터이동처리２(ARG, 이동처, N_ID)
+		RETURN
+	ELSE
+		TCVAR:ARG:가능한한움직이지않는다 = 0
+		RETURN
+	ENDIF
+WEND
+
+;-----------------------------------------------------------
+;이동이 결정된 후의 처리
+;ARG     이동하는 캐릭터
+;이동처  이동하는 지점ID
+;N_ID    ARG의 현재위치
+;-----------------------------------------------------------
+@캐릭터이동처리２(ARG, 이동처, N_ID)
+#DIM 이동처
+#DIM N_ID
+#DIM 이동메시지
+#DIM 원룸인원수카운트
+#DIM SKIP
+이동메시지 = 0
+SKIP = 0
+SETCOLOR C_YELLOW
+IF CAN_SEE(ARG) && !CFLAG:MASTER:수면
+	IF N_ID == MAXROOM
+		PRINTFORML %ARG가%【%NAME_FROM_PLACE(이동처)%】에 왔다
+	ELSE
+		PRINTFORML %ARG는%【%NAME_FROM_PLACE(N_ID)%】에서【%NAME_FROM_PLACE(이동처)%】%조사만처리(NAME_FROM_PLACE(이동처),"로")% 이동했다
+	ENDIF
+	이동메시지 = 1
+ENDIF
+;ワンルーム処理
+IF ROOMDATA:(N_ID % 100) & 장소_원룸
+	;ワンルーム家主が外出する場合、相性が良くないキャラは一緒に外に出される
+	IF N_ID == CFLAG:ARG:초기위치
+		원룸인원수카운트 = 0
+		FOR LOCAL, 1, CHARANUM
+			IF CFLAG:LOCAL:현재위치 == N_ID && LOCAL != ARG
+				;別の同居しているキャラがまだいる場合は追い出しが発生しない
+				IF CFLAG:LOCAL:현재위치 == CFLAG:LOCAL:초기위치
+					SKIP = 1
+					BREAK
+				;相性の良いキャラは居ても良い
+				ELSEIF RELATION:ARG:LOCAL <= 100
+					원룸인원수카운트 ++
+					CFLAG:LOCAL:현재위치 = 이동처
+					TCVAR:LOCAL:가능한한움직이지않는다 = 1
+				ENDIF
+			ENDIF
+		NEXT
+		;あなたは恋慕ならオッケー,あなた＋相性のいいキャラが留守番、他のキャラが締め出しだとちょっと地の文と齟齬があるのは仕様
+		IF 이동메시지 && !SKIP
+			IF !TALENT:ARG:연모
+				PRINTFORML %CALLNAME:MASTER%\@ 원룸인원수카운트 ?  들 #  \@도, %CALLNAME:ARG%에게 촉구받아【%NAME_FROM_PLACE(N_ID)%】에서【%NAME_FROM_PLACE(이동처)%】%조사만처리(NAME_FROM_PLACE(이동처),"로")% 이동했다
+				CFLAG:MASTER:현재위치 = 이동처
+			ELSEIF 원룸인원수카운트
+				PRINTFORML %CALLNAME:ARG%에게 촉구받아, %CALLNAME:MASTER%이외는【%NAME_FROM_PLACE(N_ID)%】에서【%NAME_FROM_PLACE(이동처)%】%조사만처리(NAME_FROM_PLACE(이동처),"로")% 이동했다
+			ELSE
+				PRINTFORML %ARG는% %CALLNAME:MASTER%에게 빈집을 지켜달라 부탁하고 이동했다
+			ENDIF
+		ENDIF
+	ENDIF
+ENDIF
+RESETCOLOR
+SIF 이동메시지
+	WAIT
+;이동 처리
+CFLAG:ARG:현재위치 = 이동처
+TCVAR:ARG:가능한한움직이지않는다 = 1
+
+;--------------------------------------------------------
+;캐릭터(ARG)가 지점(이동처)에 이동하는 확률/분
+;머물어비율은 마이너스 보정
+;실수치는  10배가 된 것
+;식중 함수로 하고 싶었지만…
+;--------------------------------------------------------
+@캐릭터이동율(ARG, 이동처, 머물어비율)
+#DIM 이동율
+#DIM 머물어비율
+#DIM 이동처
+#DIM N_ID
+#DIM 욕실들어가고싶다
+#DIM 방주인
+;お風呂入りたい度を設定
+IF TALENT:ARG:빙정
+	욕실들어가고싶다 = 2000
+;목욕이 싫은 캐릭터(로리 듀오는 샤워가 싫으셔)
+ELSEIF GROUPMATCH(ARG, [[노아]], [[안안]])
+	욕실들어가고싶다 = 2000
+;목욕이 싫은 캐릭터(유키는... 냄새가 나)
+ELSEIF GROUPMATCH(ARG, [[유키]])
+	욕실들어가고싶다 = 4000
+;목욕이 싫은 캐릭터(고쿠쵸는 샤워실에 아무래도 들어오면 곤란하지)
+ELSEIF GROUPMATCH(ARG, [[고쿠쵸]])
+	욕실들어가고싶다 = 50000
+;간수도 솔직히 씻을 필요 없으니 샤워실로 덜 들어오게
+ELSEIF GROUPMATCH(ARG, [[간수]])
+	욕실들어가고싶다 = 1500
+;나노카는 밖에서 좀 싸돌아 다녀야 하니까 샤워실로 덜 들어오게
+ELSEIF GROUPMATCH(ARG, [[나노카]])
+	욕실들어가고싶다 = 1500
+ELSEIF TALENT:ARG:악취내성 == -2
+	욕실들어가고싶다 = 600
+ELSEIF TALENT:ARG:악취내성 == -1
+	욕실들어가고싶다 = 800
+ELSEIF TALENT:ARG:악취내성 == 0
+	욕실들어가고싶다 = 1000
+ELSEIF TALENT:ARG:악취내성 == 1
+	욕실들어가고싶다 = 1500
+ELSEIF TALENT:ARG:악취내성 == 2
+	욕실들어가고싶다 = 2000
+ENDIF
+
+N_ID = CFLAG:ARG:현재위치
+;기본 이동율, 4.5% / 분 = 90.0% / 20분
+이동율 = 45 + CFLAG:ARG:이동율보정
+;당신이 보이면 태도로 업
+SIF CFLAG:MASTER:현재위치 == 이동처 && CAN_MOVE(N_ID, 이동처) == 3
+	이동율 += CFLAG:ARG:태도 * 2
+;청소부는 청소중 더러움에 영향을 받는다
+SIF TALENT:ARG:청소부 && CFLAG:ARG:신사거주 && BETWEENTIME(720, 1080)
+	이동율 += YOGORE:이동처 / 300
+;キャラごとの移動率設定
+CALLFORM CHARAMOVE_DATA_{ARG}(4, 이동처)
+이동율 = 이동율 + RESULT
+
+;お風呂に入りたい時は入りに行く
+IF BATHCHECK(이동처) & 장소_목욕탕
+	IF CFLAG:ARG:목욕탕 >= 욕실들어가고싶다
+		이동율 = 이동율 * 10
+	ELSE
+		이동율 = 0
+	ENDIF
+ENDIF
+;은둔 형 외톨이 대책으로서 날씨 대미지가 없는 상황으로 옥내에 있는 경우 옥외에 가고 싶어하도록(듯이)
+SIF INROOM(N_ID) && !INROOM(이동처) && 날씨에의한영향(ARG, 이동처) >= 0 
+	이동율 += 15
+
+;－－－－－－－－－－－－－－－
+;이동절도(節度)에 의해 가지 않는 장소를 설정
+;MAP 거주자의 Private(사적인) 지점은 개별적으로 설정해 주세요
+ ;0이상 = 사적인 장소에는 들어가지 않는다
+;	 1=창고나 골목길 뒤, 지하실등 과소(過疎)지점에는 이동하지 않는다
+;	-1=Private(사적인)장소에서도 그다지 신경쓰지 않고 이동한다
+;	-2=온갖 곳으로 이동한다
+;－－－－－－－－－－－－－－－
+방주인 = PRIVATEROOM:(이동처 % 100)
+IF 이동처 != CFLAG:ARG:초기위치 && N_ID != MAXROOM
+	IF CFLAG:ARG:이동절도 >= 1
+		SIF ROOMDATA:(이동처 % 100) & 장소_과소
+			이동율 = 0
+	ENDIF
+	IF CFLAG:ARG:이동절도 >= 0 && !CFLAG:ARG:신사거주
+		SIF ROOMDATA:(이동처 % 100) & 장소_Private && RELATION:방주인:ARG <= 100
+			이동율 = 0
+	ENDIF
+	IF CFLAG:ARG:이동절도 >= -1
+		SIF ROOMDATA:(이동처 % 100) & 장소_Private && !CFLAG:ARG:신사거주 && RELATION:방주인:ARG <= 100
+			이동율 = 이동율 * 2 / 3
+		SIF 날씨에의한영향(ARG, 이동처) <= -1
+			이동율 = 이동율 * 1 / 3
+		SIF ROOMDATA:(이동처 % 100) & 장소_과소
+			이동율 = 이동율 * 1 / 3
+	ENDIF
+
+	;나노카는 고양이니까 좀 싸돌아 다녀도 괜찮지 않아?
+	SIF GROUPMATCH(ARG, [[나노카]])
+		이동율 = 이동율 * 2
+
+ENDIF
+;留まり率を差し引く
+이동율 = MAX(이동율 - 머물어비율, 0)
+RETURN 이동율
+
+;ARG  判定キャラ
+@인력점발동가능(ARG)
+#FUNCTION
+;引力点が無い
+SIF !TCVAR:ARG:인력점
+	RETURNF 0
+;現在位置と同じ
+SIF CFLAG:ARG:현재위치 == TCVAR:ARG:인력점
+	RETURNF 0
+;引力点が拠点の外
+SIF IN_HOME(TCVAR:ARG:인력점) != 1
+	RETURNF 0
+;現在位置が拠点の外
+SIF IN_HOME(CFLAG:ARG:현재위치) != 1
+	RETURNF 0
+;天候ダメージが痛い
+SIF 날씨에의한영향(ARG, TCVAR:ARG:인력점) < 0
+	RETURNF 0
+RETURNF 1

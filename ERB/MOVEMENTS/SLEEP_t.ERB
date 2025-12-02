@@ -1,0 +1,452 @@
+﻿;FileName_SLEEP.ERB ----------------------------- Rev1. 00
+;캐릭터 수면 처리
+;CALL		USER
+;ARG		0:캐릭터 NO, 1:MESSAGE 출력 필요와 불필요
+;RETURN		VOID
+;COMMENT	
+;-----------------------------------------------------------
+@CHARA_SLEEP(CHARA, 메시지표시)
+#DIM CHARA
+#DIM 메시지표시
+#DIM 굿나잇구상
+#DIM 굿나잇구상2
+#DIM 귀가구상
+#DIM 표시끝
+#DIM 인수
+SIF TALENT:CHARA:망상의산물
+	RETURN 0
+SIF TCVAR:CHARA:만취
+	RETURN 0
+
+굿나잇구상 = 0
+굿나잇구상2 = 0
+표시끝 = 0
+IF CFLAG:CHARA:현재위치 == CFLAG:MASTER:현재위치 && !CFLAG:CHARA:빡침 && 메시지표시
+	;寝る場所にいる
+	IF (IN_HOME(CFLAG:MASTER:현재위치) && CFLAG:CHARA:현재위치 == CFLAG:CHARA:초기위치) || CFLAG:MASTER:현재위치 == OMANEKIBEYA()
+		;寝ている
+		IF CFLAG:CHARA:수면
+			IF TALENT:CHARA:연모 && CFLAG:CHARA:동침중
+				PRINTDATA
+					DATAFORM %조사처리(CALLNAME:CHARA,"는")% 행복한 미소를 짓고 있다
+					DATAFORM %조사처리(CALLNAME:CHARA,"는")% %CALLNAME:MASTER%의 이름을 자그맣게 중얼거렸다
+					DATAFORM %조사처리(CALLNAME:CHARA,"는")% 새근새근 자고 있다
+					DATAFORM %조사처리(CALLNAME:CHARA,"는")% 무의식 중에 %마스터를% 껴안았다
+				ENDDATA
+				PRINTW
+			ELSE
+				PRINTFORML %조사처리(CALLNAME:CHARA,"는")% 자고 있다
+			ENDIF
+			;굿나잇구상,3,睡眠中
+			굿나잇구상 = 3
+		;동침중
+		ELSEIF TALENT:CHARA:연모 && CFLAG:CHARA:동침중
+			IF CFLAG:CHARA:데일리
+				PRINTDATA
+					DATAFORM %조사처리(CALLNAME:CHARA,"는")% 행복한 미소를 짓고 있다
+					DATAFORM %조사처리(CALLNAME:CHARA,"는")% 작게 하품했다
+					DATAFORM %조사처리(CALLNAME:CHARA,"는")% 볼을 붉히며 %마스터를% 바라보고 있다
+					DATAFORM %조사처리(CALLNAME:CHARA,"는")% 살며시 %CALLNAME:MASTER%에게 밀착했다
+				ENDDATA
+				PRINTW
+				;굿나잇구상,2,眠そうにしている
+				굿나잇구상 = 2
+				ELSE
+					PRINTFORMW %조사처리(CALLNAME:CHARA,"는")% 졸다가 결국 잠들었다…
+				;굿나잇구상,9,寝室に居る状態でその場で寝る
+				굿나잇구상 = 9
+			ENDIF
+		;자러갈 곳
+		ELSEIF CFLAG:CHARA:현재위치 == CFLAG:CHARA:전턴위치
+			IF CFLAG:CHARA:데일리
+				PRINTFORMW %조사처리(CALLNAME:CHARA,"는")% 졸린 눈치다
+				;굿나잇구상,2,眠そうにしている
+				굿나잇구상 = 2
+			ELSE
+				IF CFLAG:CHARA:쇠약
+					PRINTFORMW %조사처리(CALLNAME:CHARA,"는")% 피곤하다고 하고, 누웠다
+					;굿나잇구상,5,衰弱して寝る
+					굿나잇구상 = 5
+				ELSE
+					PRINTFORMW %조사처리(CALLNAME:CHARA,"는")% 졸음에 져서, 잠이 들었다…
+					;굿나잇구상,9,寝室に居る状態でその場で寝る
+					굿나잇구상 = 9
+				ENDIF			
+			ENDIF
+			SIF !침실허가(CHARA)
+				CALL 침실로부터내쫓아(CHARA)
+		ELSE
+			PRINTFORMW %조사처리(CALLNAME:CHARA,"는")% 졸린 눈치다
+			CALL 침실로부터내쫓아(CHARA)
+			;굿나잇구상,2,眠そうにしている
+			굿나잇구상 = 2
+		ENDIF
+		;은밀중 세트
+		SIF CFLAG:MASTER:현재위치 != CFLAG:MASTER:전턴위치
+			CALL SET_SNEAK(1, CHARA, 1)
+	;자지 않은 경우
+	ELSEIF 수면시간(CHARA) && CFLAG:MASTER:현재위치 == CFLAG:CHARA:현재위치 && CFLAG:CHARA:현재위치 == CFLAG:CHARA:전턴위치 && !TCVAR:CHARA:휴식중
+		IF CFLAG:CHARA:신사거주
+			CALL SLEEP_RESIDENT(CHARA)
+		ELSE
+			CALL SLEEP_VISITOR(CHARA)
+		ENDIF
+		표시끝 = 1
+	;상대가 자기 방에 돌아간다
+	ELSE
+		;굿나잇구상,1-0,自室に帰って寝る
+		굿나잇구상 = 1
+	ENDIF
+	;굿나잇구상or귀가구상
+	IF (CFLAG:MASTER:현재위치 == CFLAG:CHARA:현재위치 || (수면시간(CHARA) && CFLAG:CHARA:현재위치 == CFLAG:CHARA:신사거주)) && !표시끝
+		IF CFLAG:CHARA:신사거주 || CFLAG:MASTER:현재위치 == OMANEKIBEYA() || TCVAR:CHARA:휴식중
+			CALL KOJO_MESSAGE_SEND("EVENT", 3, CHARA, 굿나잇구상)
+		ELSE
+			귀가구상 = 1
+			SIF CHK_DATENOW(CFLAG:데이트중)
+				귀가구상 = 2
+			CALL KOJO_MESSAGE_SEND("EVENT", 20, CHARA, 귀가구상)
+		ENDIF
+	ENDIF
+	IF BASE:MASTER:잠복율 > 0
+		SIF CFLAG:CHARA:우후후
+			CALL ENDUFUFU_ALL
+	ELSEIF !CFLAG:CHARA:수면
+			CALL ENDUFUFU_ALL
+	ENDIF
+ENDIF
+
+;연회중에 잔 캐릭터는 연회 플래그가 빗나간다
+IF GROUPMATCH(CFLAG:CHARA:직종, 48, 49, 50, 51)
+	CFLAG:CHARA:연회참가 = 0
+	CFLAG:CHARA:직종 = 0
+	CFLAG:CHARA:행동 = 0
+	BASE:CHARA:일량 = 0
+ENDIF
+SIF BASE:CHARA:일량 <= 0 && CFLAG:CHARA:행동 == 5
+	CALL CHARA_JOBEND(CHARA)
+;업무중 쓰러지면 일종료
+IF CFLAG:CHARA:쇠약 && CFLAG:CHARA:행동 == 5
+	CFLAG:CHARA:행동 = 0
+	BASE:CHARA:일량 = 0
+ENDIF
+
+;자기 방에서 잘 수 있도록 돌아간다
+IF CFLAG:CHARA:현재위치 != CFLAG:CHARA:초기위치 && !CFLAG:CHARA:수면 && !CFLAG:CHARA:출금
+	IF CFLAG:MASTER:현재위치 == CFLAG:CHARA:초기위치
+		CFLAG:CHARA:현재위치 = CFLAG:CHARA:초기위치
+		PRINTFORML %조사처리(CALLNAME:CHARA,"가")% 방에 돌아왔다
+		IF 침실허가(CHARA)
+			;굿나잇구상,7-0,そのまま寝た
+			굿나잇구상2 = 0
+			IF CFLAG:MASTER:우후후
+				LOCAL = FINDCHARA(CFLAG:우후후, CFLAG:MASTER:우후후, 1)
+				IF BASE:MASTER:잠복율 > 0
+					SIF CFLAG:CHARA:우후후
+						CALL ENDUFUFU_ALL
+				ELSE
+					CALL ENDUFUFU_ALL
+				ENDIF
+				인수 = RESULT
+				PRINTFORML 입술을 삐죽이는 %CALLNAME:CHARA%에게 %마스터는% 마지못해 %CALLNAME:TARGET%\@ 인수 > 1 ?  멀리  #  \@떠났다
+				;굿나잇구상,7-2,他キャラとのＨを止めさせて寝た
+				굿나잇구상2 = 2
+			ENDIF
+			PRINTL 
+			CALL 자고일어나기갈아입음(CHARA)
+			CALL KOJO_MESSAGE_SEND("EVENT", 3, CHARA, 7, 굿나잇구상2)
+		ELSE
+			CALL 침실로부터내쫓아(CHARA)
+		ENDIF
+	ENDIF
+
+	;잠옷에 갈아 입을 옷
+	CALL CTRL_CLOTHES_SET(CHARA, "현재 의상의 변경_파자마")
+	CALL 속옷확인리셋(CHARA)
+	CALL CLOTHES_SETTING_TRAIN(CHARA)
+ENDIF
+
+;자기 방에서 잔다
+IF !TCVAR:CHARA:휴식중
+	CFLAG:CHARA:현재위치 = CFLAG:CHARA:초기위치
+	DEBUGPRINTFORML %CALLNAME:CHARA%(은)는 {TIME}에 {CFLAG:CHARA:초기위치}에서 잤다.
+ENDIF
+
+;施錠, 자물쇠를 채워 문을 잠금
+SIF GET_MAPID(CFLAG:CHARA:초기위치) == MAIN_MAP && CFLAG:MASTER:초기위치 != CFLAG:CHARA:초기위치
+	LOCK:(CFLAG:CHARA:초기위치) = 1
+CFLAG:CHARA:동행 = 0
+CALL SET_SLEEP(1,CHARA,0)
+SIF CFLAG:CHARA:수면
+	CALL SET_DERAY(99,CHARA)
+
+;FileName_SLEEP.ERB ----------------------------- Rev1. 00
+;캐릭터 기상 처리
+;CALL		USER
+;ARG		0:캐릭터 NO, 1:자물쇠를 채워 문을 잠금 해제 유무, 2:수면간으로부터의 기상인가 어떤가
+;기상장소 수치 1이라면 동거(同棲), 수치 0이라면 비동거(同棲)
+;RETURN		VOID
+;COMMENT	
+;-----------------------------------------------------------
+@CHARA_AWAKE, ARG,ARG:1,ARG:2
+#DIM 기상장소 
+기상장소 = 0
+IF CFLAG:ARG:수면 && CFLAG:ARG:현재위치 == CFLAG:MASTER:현재위치 && CFLAG:ARG:기상시간 <= TIME
+	SIF ARG > 0 && !CFLAG:MASTER:수면 && !ARG:2
+		PRINTFORMW %조사처리(CALLNAME:ARG,"가")% 깼다
+	TCVAR:ARG:수면심도 = 0
+	;수면간으로부터의 기상이라면 패스
+	IF !ARG:2
+		IF !IS_LOVER(ARG) && DAY > 2 
+			IF ARG == [[에마]] && !(FLAG:대마녀유키 || FLAG:에마와화해) && !FLAG:에마삭제
+				SETCOLOR 255, 192, 203
+				PRINTFORML 「히로 쨩…… 좋은 아침.」
+				RESETCOLOR
+				PRINTFORML 
+				SETCOLOR 184, 38, 71
+				PRINTFORML 「……」
+				RESETCOLOR
+				PRINTFORML 
+			ELSEIF ARG == [[에마]] && !FLAG:에마삭제
+				SETCOLOR 255, 192, 203
+				PRINTFORML 「히로 쨩, 좋은 아침이야.」
+				RESETCOLOR
+				PRINTFORML 
+				SETCOLOR 184, 38, 71
+				PRINTFORML 「아아. 좋은 아침.」
+				RESETCOLOR
+				PRINTFORML 
+			ELSE
+				PRINTFORML %마스터는% %조사처리(CALLNAME:ARG,"가")% 옷을 다 갈아입을 때까지 일단 뒤돌아보고 있었다.
+			ENDIF
+			;안녕 말
+			IF !CFLAG:ARG:안면
+				CALL KOJO_MESSAGE_SEND("ENCOUNTER",0,ARG,2,0)
+			ELSEIF !ARG:1 && !CFLAG:MASTER:수면
+				CALL KOJO_MESSAGE_SEND("EVENT",2,ARG,4,0)
+			ENDIF
+		ELSE
+			SIF CFLAG:MASTER:초기위치 == CFLAG:ARG:초기위치
+				기상장소 = 1
+			;안녕 말
+			IF !CFLAG:ARG:안면
+				CALL KOJO_MESSAGE_SEND("ENCOUNTER",0,ARG,2,0)
+			ELSEIF !ARG:1 && !CFLAG:MASTER:수면
+				CALL KOJO_MESSAGE_SEND("EVENT",2,ARG,4,기상장소)
+			ENDIF
+			IF GETBIT(CFLAG:ARG:갈아입음실행, 1) && !CFLAG:MASTER:수면
+				CALL 자고일어나기갈아입음(ARG)
+			ENDIF
+		ENDIF
+		;修正前。
+		;CALL CTRL_CLOTHES_SET(ARG, "現在衣装の変更_普段着")
+		;CALL 下着確認リセット(ARG)
+		;CALL CLOTHES_SETTING_TRAIN(ARG)
+	ENDIF
+ENDIF
+;memo 開発者向けメモ
+;上の処理は、同時刻でプレイヤーとキャラクターが一緒にいたときの対処のため
+;上記の書き方だと、もともと寝ていたけど起床したパターンでの服の着替え（具体的にはバニー）は対処できなかったものと思われる
+;見た限り、起床時に着替える処理は他で似たような処理はやっていないように見受けられたため、IF文の外に出して対処。
+;ただ、着替えの処理は他でもやっているため、コレで良いかはちょっと判断がつかないです。
+;とりあえず、バグらそうなことだけは確認しています。
+IF SPECIAL_OUTFIT(ARG)
+	CALL CTRL_CLOTHES_SET(ARG, "현재 의상의 변경_의상세트", SPECIAL_OUTFIT(ARG))
+	[IF_DEBUG]
+	PRINTFORML %ARG는% 평소와 다른 옷으로 갈아입었습니다
+	[ENDIF]
+	TCVAR:ARG:어나더_평상복 = 1
+ELSE
+	CALL CTRL_CLOTHES_SET(ARG, "현재 의상의 변경_평상복")
+ENDIF
+CALL 속옷확인리셋(ARG)
+CALL CLOTHES_SETTING_TRAIN(ARG)
+
+;데일리 SET
+IF CFLAG:ARG:수면
+	CALL SET_DERAY(2,ARG)
+ENDIF
+
+CALL SET_SLEEP(0,ARG,0)
+
+;각 플래그 OFF
+CALL SET_PRANK(0,ARG,2)
+CALL SET_SNEAK(0,ARG,2)
+;CALL SET_TOGETHER(0,ARG,0)
+;자물쇠를 채워 문을 잠금
+SIF ARG:1 == 0 && GET_MAPID(CFLAG:ARG:초기위치) == MAIN_MAP
+	LOCK:(CFLAG:ARG:초기위치) = 0
+
+
+;-----------------------------------------
+;거점 캐릭터가 자는 처리
+;-----------------------------------------
+@SLEEP_RESIDENT(ARG)
+IF CHK_DATENOW(CFLAG:ARG:데이트중)
+	PRINTFORML %조사처리(CALLNAME:ARG,"가")% 졸린 눈치라 귀가합니다
+	CALL SET_DATE(99, ARG)
+	CALL 귀가의시간경과
+	CFLAG:ARG:현재위치 = CFLAG:ARG:신사거주
+	TCVAR:ARG:휴식중 = 1
+	IF TALENT:ARG:연모 && MAP_CAN_MOVE(CFLAG:ARG:신사거주, MASTER)
+		CFLAG:MASTER:현재위치 = CFLAG:ARG:신사거주
+	ELSE
+		CFLAG:MASTER:현재위치 = CFLAG:MASTER:초기위치
+	ENDIF
+	;굿나잇구상,1-1,デート中に帰って寝る
+	CALL KOJO_MESSAGE_SEND("EVENT", 3, ARG, 1, 1)
+ELSEIF AT_HOME(MASTER) && CFLAG:ARG:쇠약 && CFLAG:MASTER:현재위치 == CFLAG:ARG:현재위치
+	PRINTFORM %ARG를% 
+	PRINTFORMS NAME_FROM_PLACE(CFLAG:ARG:현재위치)
+	PRINT 에서 
+	PRINTFORMS NAME_FROM_PLACE(CFLAG:ARG:초기위치)
+	PRINTW 로 옮겼습니다
+	CFLAG:ARG:현재위치 = CFLAG:ARG:신사거주
+	IF 침실허가(ARG) && MAP_CAN_MOVE(CFLAG:ARG:신사거주, MASTER)
+		CFLAG:MASTER:현재위치 = CFLAG:ARG:신사거주
+	ELSE
+		CFLAG:MASTER:현재위치 = CFLAG:MASTER:초기위치
+	ENDIF
+	TCVAR:ARG:휴식중 = 1
+	;굿나잇구상,5,衰弱して寝る
+	CALL KOJO_MESSAGE_SEND("EVENT", 3, ARG, 5)
+ELSEIF CFLAG:ARG:현재위치 != CFLAG:ARG:초기위치
+	PRINTFORM %조사처리(CALLNAME:ARG,"는")% 
+	PRINTFORMS NAME_FROM_PLACE(CFLAG:ARG:현재위치)
+	PRINT 에서
+	PRINTFORMS NAME_FROM_PLACE(CFLAG:ARG:초기위치)
+	PRINTW 로 돌아왔습니다
+	CFLAG:ARG:현재위치 = CFLAG:ARG:신사거주
+	TCVAR:ARG:휴식중 = 1
+	;굿나잇구상,1-0,自室に帰って寝る
+	CALL KOJO_MESSAGE_SEND("EVENT", 3, ARG, 1, 0)
+ENDIF
+
+;-----------------------------------------
+;내방 캐릭터가 자는 처리
+;-----------------------------------------
+@SLEEP_VISITOR(ARG)
+IF CHK_DATENOW(CFLAG:ARG:데이트중) && CFLAG:MASTER:현재위치 != OMANEKIBEYA()
+	PRINTFORMW %조사처리(CALLNAME:ARG,"는")% \@ CFLAG:ARG:쇠약 ? 지쳤다 # 졸리다 \@며 돌아갔습니다
+	CFLAG:MASTER:동행 = 0
+	CFLAG:ARG:동행 = 0
+	FLAG:데이트상대 = 0
+	TFLAG:데이트전호감도 = 0
+	;일상 ON
+	TFLAG:102 = 1
+	;삽입해제
+	TFLAG:MASTER의P삽입중 = 0
+	;귀가구상,2,デート中帰宅
+	CALL KOJO_MESSAGE_SEND("EVENT", 20, ARG, 2)
+ELSEIF TALENT:ARG:연모 && AT_HOME(MASTER) && CFLAG:MASTER:현재위치 == CFLAG:ARG:현재위치
+	;眠い
+	IF 수면시간(ARG) && !CFLAG:ARG:쇠약
+		;귀가구상,1,通常帰宅
+		CALL KOJO_MESSAGE_SEND("EVENT", 20, ARG, 1)
+	;疲れた
+	ELSE
+		PRINTFORML %조사처리(CALLNAME:ARG,"는")% 녹초가 되었다…
+		CALL ASK_YN(@"%NAME_FROM_PLACE(GET_ENTRANCE(MAIN_MAP))%까지 바래다줄게","잠깐 쉬다 가")
+			IF RESULT == 0
+				CFLAG:MASTER:현재위치 = GET_ENTRANCE(MAIN_MAP)
+					CALL 거점에서돌아간다(ARG)
+			ELSE
+				PRINTFORM %CALLNAME:ARG%를 
+				PRINTFORMW %NAME_FROM_PLACE(Default초기위치)%로 옮겼습니다
+				CFLAG:ARG:현재위치 = Default초기위치
+				TCVAR:ARG:휴식중 = 1
+				CFLAG:MASTER:현재위치 = Default초기위치
+			ENDIF
+	ENDIF
+ELSEIF CFLAG:MASTER:현재위치 == OMANEKIBEYA()
+	IF CFLAG:MASTER:장난 == 2
+		PRINTFORMW %CALLNAME:ARG%에게 너무 무리한 것 같으니, 눈을 뜨기 전에 철수하자
+	ELSE
+		PRINTFORMW %조사처리(CALLNAME:ARG,"는")% 지쳤다며 드러누웠습니다
+	ENDIF
+	TCVAR:ARG:휴식중 = 1
+	;굿나잇구상,5,疲れたと言って、横になりました
+	CALL KOJO_MESSAGE_SEND("EVENT", 3, ARG, 5)
+ELSE
+	CALL 거점에서돌아간다(ARG)
+ENDIF
+
+;-----------------------------------------
+;방문 캐릭터가 거점에서 돌아와 자는 처리
+;-----------------------------------------
+@거점에서돌아간다(ARG)
+IF IN_HOME(CFLAG:ARG:현재위치)
+	PRINTFORMW 피곤해진 %조사처리(CALLNAME:ARG,"는")% 돌아갔습니다
+	;귀가구상,10,疲れて帰宅
+	CALL KOJO_MESSAGE_SEND("EVENT", 20, ARG, 10)
+	CFLAG:ARG:거점내방 = 0
+ELSE
+	PRINTFORMW 졸린 %조사처리(CALLNAME:ARG,"는")% 자기 방으로 돌아갔습니다
+	;おやすみ口上,10,拠点外のキャラが自宅前で帰って寝る
+	CALL KOJO_MESSAGE_SEND("EVENT", 3, ARG, 10)
+ENDIF
+CFLAG:ARG:현재위치 = CFLAG:ARG:초기위치
+
+;-----------------------------------------
+;침실에 들어갈수 있는지
+;쫓겨나지않는다 = 쫓겨나지 않는지 여부
+;-----------------------------------------
+@침실허가(ARG, 쫓겨나지않는다)
+#DIM 쫓겨나지않는다
+#FUNCTION
+;에마랑은 동거라서 히로를 쫒아내지 않는다.
+SIF ARG == [[에마]]
+	RETURNF 1
+;ブチギレ中は許可を貰えない
+SIF CFLAG:ARG:빡침
+	RETURNF 0
+;恋慕or愛欲
+SIF IS_LOVER(ARG)
+	RETURNF 1
+;開発済み
+SIF EXP:ARG:수면간경험 > 300
+	RETURNF 1
+;複数のキャラが寝室を使ってる
+SIF 공통침실(ARG)
+	RETURNF 1
+IF 쫓겨나지않는다
+	;縛られてる(強制）
+	SIF TEQUIP:ARG:밧줄
+		RETURNF 1
+	;うふふ中
+	SIF CFLAG:ARG:우후후 == 1
+		RETURNF 1
+	;イタズラ中
+	SIF CFLAG:ARG:장난
+		RETURNF 1
+	;一時滞在中
+	SIF FLAG:일시체재 == ARG
+		RETURNF 1
+	;夜這い侵入成功中
+	SIF GETBIT(CFLAG:ARG:요바이, 8)
+		RETURNF 1
+	;お招き部屋の中
+	SIF CFLAG:ARG:현재위치 == OMANEKIBEYA()
+		RETURNF 1
+ENDIF
+
+;-----------------------------------------
+; 1개의 방을 여러 캐릭터가 침실로 사용하는 경우
+;그 중 어떤 캐릭터가 연모 or 애욕이라면 침실의 허가를 얻을 수 있다.
+;릴리 W&B, 아키자매, 청아와 요시카가 해당 (구영몽의 방 처리)
+;-----------------------------------------
+@공통침실(ARG)
+#FUNCTION
+SIF CFLAG:ARG:초기위치 == 99
+	RETURNF 0
+SIF CFLAG:ARG:초기위치 == SUKIMA()
+	RETURNF 0
+
+FOR LOCAL, 1, CHARANUM
+	SIF LOCAL == ARG
+		CONTINUE
+	IF CFLAG:LOCAL:초기위치 == CFLAG:ARG:초기위치
+		SIF IS_LOVER(LOCAL)
+			RETURNF 1
+	ENDIF
+NEXT

@@ -1,0 +1,488 @@
+﻿;-----------------------------------------------------------
+;지점의 연결 설정
+;ARG    기준지점
+;ARG:1  대상지점
+;RETURNF 0=이동할 수 없다, 보이지 않는다
+;        1=이동할 수 있다, 보이지 않는다
+;        2=이동할 수 없다, 보인다
+;        3=이동할 수 있다, 보인다 (직통)
+;이동캐릭터  이동하는 캐릭터ID
+;-----------------------------------------------------------
+@CAN_MOVE_0(ARG, ARG:1)
+#FUNCTION
+#DIM CHARA
+
+CHARA = (이동캐릭터)
+
+
+[IF_DEBUG]
+;SIF CHARA == MASTER
+;	PRINTFORML CAN MOVE 함수에서 들어온 ARG 값은 {ARG}, ARG:1 값은 {ARG:1}이었어.
+[ENDIF]
+
+
+SELECTCASE ARG
+	; 의무실과 연결. 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용. FLAG 의무실비밀통로개방 있으면 모두에게 열림
+	CASE P1메루루방
+		SIF GROUPMATCH(ARG:1, P8감옥복도)
+			RETURNF 3
+		IF FLAG:의무실비밀통로개방
+			SIF GROUPMATCH(ARG:1, P29의무실) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P29의무실) && (TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]])
+			RETURNF 1
+		ENDIF
+	CASE P2코코・한나방
+		SIF GROUPMATCH(ARG:1, P8감옥복도)
+			RETURNF 3
+	CASE P3레이아・미리아방
+		SIF GROUPMATCH(ARG:1, P8감옥복도)
+			RETURNF 3
+	CASE P4노아・안안방
+		SIF GROUPMATCH(ARG:1, P8감옥복도)
+			RETURNF 3
+	CASE P5에마・히로방
+		SIF GROUPMATCH(ARG:1, P8감옥복도)
+			RETURNF 3
+	CASE P6마고・나노카방
+		SIF GROUPMATCH(ARG:1, P8감옥복도)
+			RETURNF 3	
+	CASE P7셰리・아리사방
+		SIF GROUPMATCH(ARG:1, P8감옥복도)
+			RETURNF 3
+	CASE P8감옥복도
+		SIF GROUPMATCH(ARG:1, P1메루루방, P2코코・한나방, P3레이아・미리아방, P4노아・안안방, P5에마・히로방, P6마고・나노카방, P7셰리・아리사방)
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P9지하1층계단)
+			RETURNF 1			
+	CASE P9지하1층계단
+		SIF GROUPMATCH(ARG:1, P8감옥복도, P10소각로통로, P12징벌방통로, P42지상1층계단2)
+			RETURNF 1
+	CASE P10소각로통로
+		SIF GROUPMATCH(ARG:1, P9지하1층계단, P11소각로)
+			RETURNF 1
+	; 샤워실 아틀리에 연결. TALENT 환시 있으면 이동 가능. FLAG 더스트슈트통로개방 있으면 다 열림
+	CASE P11소각로
+		SIF GROUPMATCH(ARG:1, P10소각로통로)
+			RETURNF 1
+		IF FLAG:더스트슈트통로개방
+			SIF GROUPMATCH(ARG:1, P35샤워실, P73아틀리에) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P35샤워실, P73아틀리에) && TALENT:CHARA:환시
+			RETURNF 1
+		ENDIF
+	CASE P12징벌방통로
+		SIF GROUPMATCH(ARG:1, P9지하1층계단, P13징벌방복도)
+			RETURNF 1
+	CASE P13징벌방복도
+		SIF GROUPMATCH(ARG:1, P12징벌방통로)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P14징벌방1, P15징벌방2, P16징벌방3, P17징벌방4, P18징벌방5, P19징벌방6, P20징벌방7, P21징벌방8)
+			RETURNF 3
+	CASE P14징벌방1
+		SIF GROUPMATCH(ARG:1, P13징벌방복도)
+			RETURNF 1
+	CASE P15징벌방2
+		SIF GROUPMATCH(ARG:1, P13징벌방복도)
+			RETURNF 1
+	CASE P16징벌방3
+		SIF GROUPMATCH(ARG:1, P13징벌방복도)
+			RETURNF 1
+	CASE P17징벌방4
+		SIF GROUPMATCH(ARG:1, P13징벌방복도)
+			RETURNF 1
+	CASE P18징벌방5
+		SIF GROUPMATCH(ARG:1, P13징벌방복도)
+			RETURNF 1
+	CASE P19징벌방6
+		SIF GROUPMATCH(ARG:1, P13징벌방복도)
+			RETURNF 1
+	CASE P20징벌방7
+		SIF GROUPMATCH(ARG:1, P13징벌방복도)
+			RETURNF 1
+	CASE P21징벌방8
+		SIF GROUPMATCH(ARG:1, P13징벌방복도)
+			RETURNF 1
+
+
+
+	CASE P22창고가는길
+		SIF GROUPMATCH(ARG:1, P23벽가는길, P27게스트하우스가는길, P28선룸, P29의무실)
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P64창고앞)
+			RETURNF 1
+	CASE P23벽가는길
+		SIF GROUPMATCH(ARG:1, P22창고가는길, P24호수가는길)
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P29의무실, P56벽앞)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P34복도2)
+			RETURNF 2
+	CASE P24호수가는길
+		SIF GROUPMATCH(ARG:1, P23벽가는길, P25꽃밭가는길)
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P53호수앞)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P34복도2)
+			RETURNF 2
+	CASE P25꽃밭가는길
+		SIF GROUPMATCH(ARG:1, P24호수가는길, P26감옥저택앞)
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P57꽃밭앞)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P34복도2)
+			RETURNF 2
+	CASE P26감옥저택앞
+		SIF GROUPMATCH(ARG:1, P25꽃밭가는길, P41감옥저택입구)
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P34복도2, P43재판소앞통로)
+			RETURNF 2
+	CASE P27게스트하우스가는길
+		SIF GROUPMATCH(ARG:1, P22창고가는길, P28선룸)
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P44주방)
+			RETURNF 2
+		SIF GROUPMATCH(ARG:1, P68게스트하우스앞)
+			RETURNF 1
+	CASE P28선룸
+		SIF GROUPMATCH(ARG:1, P22창고가는길, P27게스트하우스가는길)
+			RETURNF 3
+	CASE P29의무실
+		SIF GROUPMATCH(ARG:1, P22창고가는길, P33복도1)
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P23벽가는길)
+			RETURNF 1
+		; 메루루 방과 연결. 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용. FLAG 의무실비밀통로개방 있으면 모두에게 열림
+		IF FLAG:의무실비밀통로개방
+			SIF GROUPMATCH(ARG:1, P1메루루방) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P1메루루방) && (TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]])
+			RETURNF 1
+		ENDIF
+	CASE P30창고1층
+		SIF GROUPMATCH(ARG:1, P33복도1)
+			RETURNF 1
+	CASE P31화장실
+		SIF GROUPMATCH(ARG:1, P33복도1)
+			RETURNF 1
+	CASE P32라운지
+		SIF GROUPMATCH(ARG:1, P33복도1, P40현관홀)
+			RETURNF 1
+	CASE P33복도1
+		SIF GROUPMATCH(ARG:1, P30창고1층, P31화장실, P32라운지, P34복도2, P35샤워실, P36안뜰)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P29의무실)
+			RETURNF 3
+	CASE P34복도2
+		SIF GROUPMATCH(ARG:1, P33복도1, P40현관홀)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P23벽가는길, P24호수가는길, P25꽃밭가는길, P26감옥저택앞, P38응접실)
+			RETURNF 2
+	CASE P35샤워실
+		SIF GROUPMATCH(ARG:1, P33복도1)
+			RETURNF 1
+		; 소각로 아틀리에 연결. TALENT 환시 있으면 이동 가능. FLAG 더스트슈트통로개방 있으면 다 열림
+		IF FLAG:더스트슈트통로개방
+			SIF GROUPMATCH(ARG:1, P11소각로, P73아틀리에) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P11소각로, P73아틀리에) && TALENT:CHARA:환시
+			RETURNF 1
+		ENDIF
+	CASE P36안뜰
+		SIF GROUPMATCH(ARG:1, P33복도1)
+			RETURNF 1
+	CASE P37저수조
+		; 호수와 연결. 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용. FLAG 저수조개방 있어야 열림
+		IF FLAG:저수조개방
+			SIF GROUPMATCH(ARG:1, P55호수) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P55호수) && (TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]])
+			RETURNF 1
+		ENDIF
+	CASE P38응접실
+		SIF GROUPMATCH(ARG:1, P40현관홀)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P34복도2)
+			RETURNF 2
+	; 2층가는 계단
+	CASE P39지상1층계단1
+		SIF GROUPMATCH(ARG:1, P40현관홀, P75지상2층계단)
+			RETURNF 1
+	CASE P40현관홀
+		SIF GROUPMATCH(ARG:1, P32라운지, P34복도2, P38응접실, P39지상1층계단1, P41감옥저택입구, P43재판소앞통로)
+			RETURNF 1
+	CASE P41감옥저택입구
+		SIF GROUPMATCH(ARG:1, P40현관홀)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P26감옥저택앞)
+			RETURNF 3
+	; 밑으로 내려가는 계단		
+	CASE P42지상1층계단2
+		SIF GROUPMATCH(ARG:1, P9지하1층계단, P43재판소앞통로)
+			RETURNF 1
+	CASE P43재판소앞통로
+		SIF GROUPMATCH(ARG:1, P40현관홀, P42지상1층계단2, P46재판소)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P26감옥저택앞)
+			RETURNF 2
+		SIF GROUPMATCH(ARG:1, P45식당)
+			RETURNF 3
+	CASE P44주방
+		SIF GROUPMATCH(ARG:1, P45식당)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P27게스트하우스가는길)
+			RETURNF 2
+	CASE P45식당
+		SIF GROUPMATCH(ARG:1, P44주방)
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P43재판소앞통로)
+			RETURNF 3
+	CASE P46재판소
+		SIF GROUPMATCH(ARG:1, P43재판소앞통로)
+			RETURNF 1
+		; 지하2F의 처형대 보관실과 연결, TALENT 조작판사용가능 혹은 흑막 있어야 이용가능
+		IF TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막
+			SIF GROUPMATCH(ARG:1, P52처형대보관실) 
+				RETURNF 1
+		ENDIF
+
+
+
+	CASE P47엘리베이터
+		SIF GROUPMATCH(ARG:1, P48엘리베이터대기실)
+			RETURNF 1
+		; 운디네 방와 연결. 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용. FLAG:지하실발견 있어야 열림
+		IF FLAG:지하실발견
+			SIF GROUPMATCH(ARG:1, P66운디네의방) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P66운디네의방) && (TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]])
+			RETURNF 1
+		ENDIF		
+	CASE P48엘리베이터대기실
+		SIF GROUPMATCH(ARG:1, P47엘리베이터, P49조작실)
+			RETURNF 1
+	CASE P49조작실
+		SIF GROUPMATCH(ARG:1, P48엘리베이터대기실, P51냉동고) 
+			RETURNF 1	
+		; 환풍기통로와 연결. FLAG:환풍구개방 있어야 열림
+		IF FLAG:환풍구개방
+			SIF GROUPMATCH(ARG:1, P50환풍기통로) 
+				RETURNF 1
+		ENDIF
+	CASE P50환풍기통로
+		; 조작실, 냉동고와 연결. FLAG:환풍구개방 있어야 열림
+		IF FLAG:환풍구개방
+			SIF GROUPMATCH(ARG:1, P49조작실, P51냉동고) 
+				RETURNF 1		
+		ENDIF	
+	CASE P51냉동고
+		SIF GROUPMATCH(ARG:1, P52처형대보관실) 
+			RETURNF 3
+		; 조작실와 연결. 
+		IF GROUPMATCH(ARG:1, P49조작실)
+			; FLAG:냉동고개방 있어야 열림
+			IF FLAG:냉동고개방	
+				RETURNF 1
+			; 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용.
+			ELSEIF TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]]
+				RETURNF 1
+			; TALENT:CHARA:냉동고비밀번호 있으면 이동 가능
+			ELSEIF TALENT:CHARA:냉동고비밀번호
+				RETURNF 1
+			ENDIF
+		; 환풍구통로와 연결
+		ELSEIF FLAG:환풍구개방
+			SIF GROUPMATCH(ARG:1, P50환풍기통로) 
+				RETURNF 1	
+		ENDIF
+	CASE P52처형대보관실
+		SIF GROUPMATCH(ARG:1, P51냉동고) 
+			RETURNF 3
+		; 재판소와 연결, TALENT 조작판사용가능 혹은 흑막 있어야 이용가능
+		IF TALENT:CHARA:조작판사용가능 || TALENT:CHARA:흑막
+			SIF GROUPMATCH(ARG:1, P46재판소) 
+				RETURNF 1
+		ENDIF
+
+
+
+	CASE P53호수앞
+		SIF GROUPMATCH(ARG:1, P24호수가는길, P54호숫가) 
+			RETURNF 1
+	CASE P54호숫가
+		SIF GROUPMATCH(ARG:1, P53호수앞, P55호수) 
+			RETURNF 1
+	CASE P55호수
+		SIF GROUPMATCH(ARG:1, P54호숫가) 
+			RETURNF 1
+		; 저수조와 연결. 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용. FLAG 저수조개방 있어야 열림
+		IF FLAG:저수조개방
+			SIF GROUPMATCH(ARG:1, P37저수조) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P37저수조) && (TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]])
+			RETURNF 1
+		ENDIF
+
+
+
+	CASE P56벽앞
+		SIF GROUPMATCH(ARG:1, P23벽가는길) 
+			RETURNF 1
+
+
+
+	CASE P57꽃밭앞
+		SIF GROUPMATCH(ARG:1, P25꽃밭가는길, P58꽃밭) 
+			RETURNF 1	
+	CASE P58꽃밭
+		SIF GROUPMATCH(ARG:1, P57꽃밭앞) 
+			RETURNF 1
+			
+
+
+	CASE P59창고방1
+		SIF GROUPMATCH(ARG:1, P63창고) 
+			RETURNF 1	
+	CASE P60창고방2
+		SIF GROUPMATCH(ARG:1, P63창고) 
+			RETURNF 1
+	CASE P61창고방3
+		SIF GROUPMATCH(ARG:1, P63창고) 
+			RETURNF 1
+	CASE P62창고방4
+		SIF GROUPMATCH(ARG:1, P63창고) 
+			RETURNF 1
+	CASE P63창고
+		SIF GROUPMATCH(ARG:1, P59창고방1, P60창고방2, P61창고방3, P62창고방4) 
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P64창고앞) 
+			RETURNF 3
+	CASE P64창고앞
+		SIF GROUPMATCH(ARG:1, P22창고가는길) 
+			RETURNF 1
+		SIF GROUPMATCH(ARG:1, P63창고) 
+			RETURNF 3
+
+
+
+	CASE P65샐러맨더의방
+		SIF GROUPMATCH(ARG:1, P68게스트하우스앞) 
+			RETURNF 3
+	CASE P66운디네의방
+		SIF GROUPMATCH(ARG:1, P68게스트하우스앞) 
+			RETURNF 3
+		; 엘리베이터와 연결. 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용. FLAG:지하실발견 있어야 열림
+		IF FLAG:지하실발견
+			SIF GROUPMATCH(ARG:1, P47엘리베이터) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P47엘리베이터) && (TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]])
+			RETURNF 1
+		ENDIF		
+	CASE P67노움의방
+		SIF GROUPMATCH(ARG:1, P68게스트하우스앞) 
+			RETURNF 3
+	CASE P68게스트하우스앞
+		SIF GROUPMATCH(ARG:1, P65샐러맨더의방, P66운디네의방, P67노움의방) 
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P27게스트하우스가는길) 
+			RETURNF 1
+
+
+
+	CASE P69복도1
+		SIF GROUPMATCH(ARG:1, P71오락실) 
+			RETURNF 3
+		SIF GROUPMATCH(ARG:1, P70복도2, P74복도3) 
+			RETURNF 1
+	CASE P70복도2
+		SIF GROUPMATCH(ARG:1, P69복도1, P74복도3) 
+			RETURNF 1
+		; 작은 창고와 연결, FLAG:작은창고개방 있어야만 열림
+		IF FLAG:작은창고개방
+			SIF GROUPMATCH(ARG:1, P72작은창고) 
+				RETURNF 1
+		ENDIF
+	CASE P71오락실
+		SIF GROUPMATCH(ARG:1, P69복도1) 
+			RETURNF 3
+	CASE P72작은창고
+		; 복도 2와 연결, FLAG:작은창고개방 있어야만 열림
+		IF FLAG:작은창고개방
+			SIF GROUPMATCH(ARG:1, P70복도2) 
+				RETURNF 1
+		ENDIF
+	CASE P73아틀리에
+		; 환시가 있는데 아틀리에개방이 안 되었다면 더스트슈트통로를 써서만 움직이도록 막아둔다.
+		; MAP_COMM_00_t.ERB 파일과 함께 동작하게 나눠놨음. 대사 뱉게 하고 싶어서...
+		IF GROUPMATCH(ARG:1, P74복도3) 
+			IF FLAG:아틀리에개방
+				RETURNF 1
+			ELSE
+				RETURNF 0	
+			ENDIF
+		ENDIF			
+		; 소각로 샤워실 연결. TALENT 환시 있으면 이동 가능. FLAG 더스트슈트통로개방 있으면 다 열림
+		IF FLAG:더스트슈트통로개방
+			SIF GROUPMATCH(ARG:1, P11소각로, P35샤워실) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P11소각로, P35샤워실) && TALENT:CHARA:환시
+			RETURNF 1
+		ENDIF
+	CASE P74복도3
+		SIF GROUPMATCH(ARG:1, P69복도1, P70복도2, P75지상2층계단, P76도서관) 
+			RETURNF 1
+		; MAP_COMM_00_t.ERB 파일과 함께 동작하게 나눠놨음. 대사 뱉게 하고 싶어서...
+		IF GROUPMATCH(ARG:1, P73아틀리에) 
+			IF FLAG:아틀리에개방
+				RETURNF 1
+			ELSE
+				RETURNF 0	
+			ENDIF
+		ENDIF			
+	CASE P75지상2층계단
+		SIF GROUPMATCH(ARG:1, P39지상1층계단1, P74복도3) 
+			RETURNF 1
+	CASE P76도서관
+		SIF GROUPMATCH(ARG:1, P74복도3) 
+			RETURNF 1
+		; 자료실 연결. 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용. FLAG 대마녀유키 있어야 열림
+		IF FLAG:대마녀유키
+			SIF GROUPMATCH(ARG:1, P77자료실) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P77자료실) && (TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]])
+			RETURNF 1
+		ENDIF
+	CASE P77자료실
+		SIF GROUPMATCH(ARG:1, P78대마녀화장실, P79대마녀방) 
+			RETURNF 1
+		; 도서관 연결. 흑막 / 유키 / 고쿠쵸 / 간수 자유 사용. FLAG 대마녀유키 있어야 열림
+		IF FLAG:대마녀유키
+			SIF GROUPMATCH(ARG:1, P76도서관) 
+				RETURNF 1
+		ELSEIF GROUPMATCH(ARG:1, P76도서관) && (TALENT:CHARA:흑막 || CHARA == [[간수]] || CHARA == [[고쿠쵸]] || CHARA == [[유키]])
+			RETURNF 1
+		ENDIF
+	CASE P78대마녀화장실
+		SIF GROUPMATCH(ARG:1, P77자료실) 
+			RETURNF 1
+	CASE P79대마녀방
+		; 약간 세이프하우스 같은 느낌으로 만들까?
+		; 간수나 고쿠쵸는 못들어오게 하자.
+		IF GROUPMATCH(ARG:1, P77자료실) && (CHARA == [[간수]] || CHARA == [[고쿠쵸]])
+			RETURNF 0
+		ELSEIF GROUPMATCH(ARG:1, P77자료실) 
+			RETURNF 1
+		ENDIF
+
+	CASE P80만년필
+
+
+
+
+
+
+
+
+
+ENDSELECT
+RETURNF 0

@@ -1,0 +1,457 @@
+﻿;-----------------------------------------------------------
+;방에 있는 인원수 취득
+;ARG            방NO
+;RETURNF        인원수
+;-----------------------------------------------------------
+@IN_ROOM_NUMBER(ARG)
+#FUNCTION
+RETURNF CMATCH(CFLAG:현재위치, ARG)
+
+;-----------------------------------------------------------
+;방최소수참조
+;RETURN        최소 방번호
+;-----------------------------------------------------------
+@MINROOM()
+#FUNCTION
+RETURNF MAIN_MAP * 100 + 1
+
+;-----------------------------------------------------------
+;어디에도 없는 캐릭터가 보내지는 장소
+;RETURNF        스키마공간
+;-----------------------------------------------------------
+@SUKIMA()
+#FUNCTION
+RETURNF 99 + MAIN_MAP * 100
+
+;-----------------------------------------------------------
+;초대방
+;RETURNF        초대방
+;-----------------------------------------------------------
+@OMANEKIBEYA()
+#FUNCTION
+RETURNF 98 + MAIN_MAP * 100
+
+;-----------------------------------------------------------
+;데이트도중
+;ARG            MAPID
+;RETURNF        데이트도중
+;-----------------------------------------------------------
+@ROAD_TO(ARG)
+#FUNCTION
+RETURNF 97 + ARG * 100
+
+;-----------------------------------------------------------
+;옥내판정
+;RETURNF 1=실내(일본식 방), 2=실내(서양식), 0=실외
+;厳密な使い分けはされていないが、屋外だけど屋根のある場所はINROOMにもOUTROOFにも引っかからない
+;現状、靴を脱ぐかどうかのためだけに洋室判定がある
+;-----------------------------------------------------------
+@INROOM(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	IF ROOMDATA:(ARG % 100) & 장소_서양식
+		RETURNF 2
+	ELSEIF ROOMDATA:(ARG % 100) & 장소_옥내
+		RETURNF 1
+	ENDIF
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 1
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;옥외판정
+;RETURNF 1=옥외（지붕이 없음）,0=지붕이 있음
+;-----------------------------------------------------------
+@OUTROOF(ARG) 
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_옥내
+		RETURNF 0
+	SIF ROOMDATA:(ARG % 100) & 장소_지붕
+		RETURNF 0
+	RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+ELSEIF ARG == ROAD_TO(GET_MAPID(ARG))
+	RETURNF 1
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;전망(見通し)이 좋은 장소
+;RETURNF	1=넓은 실내, 2=넓은 야외, 0=넓지 않음
+;-----------------------------------------------------------
+@OPENPLACE(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	IF ROOMDATA:(ARG % 100) & 장소_넓은
+		IF INROOM(ARG)
+			RETURNF 1
+		ELSE
+			RETURNF 2
+		ENDIF
+	ENDIF
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+ELSEIF ARG == ROAD_TO(GET_MAPID(ARG))
+	RETURNF 1
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;달구경포인트
+;RETURNF	1=달이 보인다, 0=달이 보이지 않는다
+;실질적으로 하늘이 보이는지의 판정
+;-----------------------------------------------------------
+@MOON_WATCH_POINT(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_달구경
+		RETURNF 1
+	SIF OUTROOF(ARG)
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA() || ARG == ROAD_TO(GET_MAPID(ARG))
+	;地底と月はダメ
+	SIF GROUPMATCH(GET_MAPID(ARG), 9, 10)
+		RETURNF 0
+	RETURNF 1
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;이불이 있는 방
+;ARG가 없어도 기능한다
+;RETURNF	1=이불이 있음, 0=이불이 없음
+;-----------------------------------------------------------
+@BEDROOM(ARG)
+#FUNCTION
+SIF !ARG
+	ARG = CFLAG:MASTER:현재위치
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_이불
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 1
+
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;휴식할 수 있는 장소(명령어 휴식) 休憩可
+;RETURNF	1=휴식 가능, 0=휴식 불가능
+;-----------------------------------------------------------
+@휴식가능(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_휴식
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 1
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;목욕탕이 있는 장소
+;RETURNF	1=목욕탕, 0=목욕탕이 아니다
+;-----------------------------------------------------------
+@BATHCHECK(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_목욕탕
+		RETURNF 1
+	SIF ARG == P35샤워실 && INRANGE(TIME, 1020, 1260)
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA() && TFLAG:거품목욕
+	RETURNF 1
+
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;왜인지 두 개가 있는 목욕 함수
+;인수ARG가 없어도 기능한다고 할까, 그렇게밖에 사용하지 않는 모양
+;이쪽은 거점내의 목욕탕뿐
+;-----------------------------------------------------------
+@BATHROOM(ARG)
+#FUNCTION
+SIF !ARG
+	ARG = CFLAG:MASTER:현재위치
+SIF !IN_HOME(ARG)
+	RETURNF 0
+RETURNF BATHCHECK(ARG)
+
+;-----------------------------------------------------------
+;화장실이 있는 방
+;RETURNF	1=화장실, 0=화장실이 아니다
+;-----------------------------------------------------------
+@IN_TOILET(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_화장실
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+ELSE
+	RETURNF 0
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;요리가 가능한 장소
+;RETURNF	1=요리 가능, 0=요리 불가능
+;-----------------------------------------------------------
+@KITCHEN(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_주방
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 1
+
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;전투훈련이 가능한 장소 戦闘訓練可
+;탄막승부 등도 겸하고 있드
+;RETURNF	1=훈련 가능, 0=훈련 불가능
+;-----------------------------------------------------------
+@전투훈련가능(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_훈련
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;공부가 가능한 장소 勉強可
+;RETURNF	1=공부 가능, 0=공부 불가능
+;-----------------------------------------------------------
+@공부가능(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_공부
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 1
+
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;하늘의소리가 들리는 곳 天の声可
+;RETURNF	1=하늘의소리가 들린다, 0=하늘의소리가 들리지 않는다
+;-----------------------------------------------------------
+@하늘의소리가능(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_하늘의소리
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;텃밭이 가능한 장소 家庭菜園可
+;RETURNF	1=텃밭이 가능, 0=텃밭이 불가능
+;-----------------------------------------------------------
+@텃밭가능(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_텃밭
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+ELSE
+	RETURNF 0
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;신체측정이 가능한 장소 판정
+;RETURNF	1=가능, 0=불가능
+;-----------------------------------------------------------
+@MEASUREMENTCHECK(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_신체측정
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;물긷기가 가능한 장소 水汲み可
+;RETURNF	1=물긷기 가능, 0=물긷기 불가능
+;-----------------------------------------------------------
+@물긷기가능(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_물긷기
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;빨래장대 物干し可
+;RETURNF	1=빨래너는곳 가능, 0=빨래너는곳 불가능
+;빨래 묘사를 위해서만 있다
+;-----------------------------------------------------------
+@빨래너는곳가능(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_빨래너는곳
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+ELSE
+	RETURNF 0
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;푹쉼장소 憩いスペース
+;RETURNF	1=음식(飲食)가능, 0=음식 불가능
+;자유행동의 식사나 저녁반주 등으로 사용한다
+;거실(居間)・거실(リビング)・툇마루・휴게소 등
+;-----------------------------------------------------------
+@푹쉼장소(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_음식
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+ELSE
+	RETURNF 0
+ENDIF
+RETURNF 0
+
+
+
+
+;-----------------------------------------------------------
+;배급장소
+;RETURNF	1=음식이 배급됨, 0=배급 없음
+;감옥에서 특정 시간마다 나오는 밥
+;식당에서만 가능
+;-----------------------------------------------------------
+@배급장소(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+    IF ARG == P45식당 && (INRANGE(TIME, 360, 540) || INRANGE(TIME, 720, 840) || INRANGE(TIME, 1020, 1260))
+        RETURNF 1
+	ENDIF
+ELSE
+	RETURNF 0
+ENDIF
+RETURNF 0
+
+
+
+
+
+
+
+;-----------------------------------------------------------
+;집어먹기스팟 つまみ食いスポット
+;RETURNF	1=집어먹기 가능 ,0=집어먹기 불가능
+;자유행동 집어먹기 위해서만 있다
+;부엌・식량창고・밭 등
+;-----------------------------------------------------------
+@집어먹기스팟(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_집어먹기
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+ELSE
+	RETURNF 0
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;코타츠가 있는 장소 炬燵のある場所
+;RETURNF	1=코타츠가 있음, 0=코타츠가 없음
+;자유행동에 사용
+;憩いスペースからさらに居間・リビングに限定したもの
+;-----------------------------------------------------------
+@코타츠가있는장소(ARG)
+#FUNCTION
+IF IN_HOME(ARG)
+	SIF ROOMDATA:(ARG % 100) & 장소_코타츠
+		RETURNF 1
+ELSEIF ARG == OMANEKIBEYA()
+	RETURNF 0
+ELSE
+	RETURNF 0
+ENDIF
+RETURNF 0
+
+;-----------------------------------------------------------
+;목욕탕에서 쫓겨났을 때의 추방처
+;-----------------------------------------------------------
+@KICKOUT(ARG)
+#FUNCTION
+SIF !ARG
+	ARG = CFLAG:MASTER:현재위치
+FOR LOCAL, MINROOM(), MAXROOM
+	SIF CAN_MOVE(ARG, LOCAL) & 1
+		RETURNF LOCAL
+NEXT
+RETURNF CFLAG:MASTER:전턴위치
+
+;-----------------------------------------------------------
+;캐릭터 ARG의 현재 위치 명칭을 반환하는 함수
+;ARG  캐릭터ID
+;-----------------------------------------------------------
+@PLACE_NAME(ARG)
+#FUNCTIONS
+IF !IN_HOME(CFLAG:ARG:현재위치) && CFLAG:ARG:현재위치 != OMANEKIBEYA()
+	LOCALS = %DATENAME_SPOT()%
+ELSEIF CHK_DATENOW(CFLAG:MASTER:데이트중) && CFLAG:MASTER:현재위치 != OMANEKIBEYA()
+	LOCALS = %DATENAME_PLACE()%의 %DATENAME_SPOT()%
+ELSE
+	LOCALS = %NAME_FROM_PLACE(CFLAG:ARG:현재위치)%
+ENDIF
+RETURNF LOCALS
+
+;-----------------------------------------------------------
+;거점 거주자를 체크하는 함수
+;ARG    MAPID
+;CHARA  판정하는 캐릭터
+;-----------------------------------------------------------
+@MAP_거주자(ARG, CHARA)
+#FUNCTION
+#DIM CHARA
+;CSVの初期位置を取得
+LOCAL = CSVCFLAG(CHARA, GETNUM(CFLAG, "초기위치"))
+SIF LOCAL == 99 || !LOCAL
+	RETURNF 0
+SIF LOCAL / 100 == ARG
+	RETURNF 1
+
+;-----------------------------------------------------------
+;캐릭터 ARG가 당신에게 보이는 위치에 있는가
+;ARG  캐릭터ID
+;-----------------------------------------------------------
+@CAN_SEE(ARG)
+#FUNCTION
+SIF CFLAG:MASTER:현재위치 == CFLAG:ARG:현재위치
+	RETURNF 1
+SIF GETBIT(CAN_MOVE(CFLAG:MASTER:현재위치, CFLAG:ARG:현재위치), 1)
+	RETURNF 1
+RETURNF 0
