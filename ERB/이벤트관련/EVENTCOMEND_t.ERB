@@ -1,0 +1,420 @@
+﻿;FileName_EVENTCOMEND.ERB -------------------------- Rev1. 00
+;턴 종료의 처리
+;CALL		SYSTEM
+;ARG		VOID
+;RETURN		VOID
+;COMMENT	
+;-----------------------------------------------------------
+@EVENTCOMEND
+#DIM 장비부위
+;일동작의 에러 체크
+;FOR LOCAL, 0, CHARANUM
+;	SIF CFLAG:LOCAL:326 == 0 && CFLAG:LOCAL:행동 == 5
+;		PRINTFORMW ### COM_END 326ERROR %CALLNAME:LOCAL% ### CHARA_NO:{LOCAL}
+;	SIF CFLAG:LOCAL:현재위치 == 0
+;		PRINTFORMW ### COM_END LOCATION ERROR %CALLNAME:LOCAL% 의 현재위치가 이상합니다 ### CHARA_NO:{LOCAL}
+;NEXT
+;턴 종료 공통 처리
+CALL TURN_RESET
+
+SIF FLAG:연회개최플래그 > 0
+	CALL ENKAI_SINKOU
+
+SIF TFLAG:102 < 2 && TARGET && SHIRAHU(TARGET)
+	CALL 봇슈트
+
+IF BASE:MASTER:술기운 >= MAXBASE:MASTER:술기운
+
+	;AT_HOME 보는 것만으로도 좋을지도 모른다
+	IF !AT_HOME(MASTER) && GET_MAPID(CFLAG:MASTER:현재위치) != MAIN_MAP
+		CALL 데이트종료타임업처리
+	ELSE
+		PRINTFORMW 한계까지 계속 마신 %마스터는%, 그대로 풀썩 쓰러져 버렸다……
+	ENDIF
+
+	CALL SET_SLEEP(1, MASTER, 0)
+	CFLAG:MASTER:취침시간 = DAY * 1440 + TIME
+
+	;외박 할 수 있는 상태라면 그대로 잔다(연모 전제)
+	IF CFLAG:MASTER:현재위치 == OMANEKIBEYA() && !TCVAR:(CFLAG:MASTER:초대):연속숙박금지
+		IF CFLAG:(CFLAG:MASTER:초대):데이트중
+			PRINTFORMW 오늘은 %조사처리(CALLNAME:(CFLAG:MASTER:초대),"가")% 묵게 해 주는 것 같다
+			FLAG:기절중단 = 0
+		;발정 없이 방에 들어설 경우
+		ELSE
+			PRINTFORML 슬슬 %CALLNAME:(CFLAG:MASTER:초대)%도 제정신으로 돌아올 시간이겠지, 적당한 때인 것 같다…
+			IF TFLAG:102 >= 2
+				PRINTFORMW 매달리는 %조사처리(CALLNAME:(CFLAG:MASTER:초대),"를")% 어떻게든 떼어내고, %조사처리(GET_MAPNAME(MAIN_MAP),"로")% 돌아왔다…
+			ELSE
+				PRINTFORMW 촉촉하게 열을 띠고 있는 %CALLNAME:(CFLAG:MASTER:초대)%의 시선에서 벗어나기 위해, %조사처리(GET_MAPNAME(MAIN_MAP),"로")% 돌아왔다…
+			ENDIF
+			;部屋の汚れを保存しておく
+			IF YOGORE:(OMANEKIBEYA()) > 0
+				TCVAR:(CFLAG:MASTER:초대):초대방의더러움 = YOGORE:(OMANEKIBEYA())
+			ELSE
+				;０以下にした場合は識別するために１残す
+				TCVAR:(CFLAG:MASTER:초대):초대방의더러움 = 1
+			ENDIF
+			;초대フラグに0を代入
+			CFLAG:TARGET:초대 = 0
+			CFLAG:MASTER:초대 = 0
+			FLAG:기절중단 = 0
+			CFLAG:MASTER:현재위치 = ENTRANCE
+			PRINTW 
+		ENDIF
+	ELSEIF TFLAG:거품목욕 && CFLAG:우후후
+		PRINTFORMW 
+		CALL 泡風呂終了判定("あなた限界")
+		IF MAIN_MAP != 9
+			PRINTFORMW %CALLNAME:MASTER%は最後の力を振り絞って、%GET_MAPNAME(MAIN_MAP)%まで戻ってきた
+			FLAG:기절중단 = 100 + CFLAG:MASTER:현재위치 / 100
+			CFLAG:MASTER:현재위치 = ENTRANCE
+		ELSE
+			PRINTFORMW %CALLNAME:MASTER%はふらつく足取りで、私室へと戻った
+			CFLAG:MASTER:현재위치 = CFLAG:MASTER:311
+			FLAG:기절중단 = 0
+		ENDIF
+	ELSEIF TARGET > 0 && TALENT:TARGET:연모 && BASE:TARGET:체력 >= 500 && !CFLAG:TARGET:수면 && !CFLAG:MASTER:동침중 && ((CFLAG:TARGET:동행 && CHK_DATENOW(CFLAG:MASTER:데이트중)) || !CHK_DATENOW(CFLAG:MASTER:데이트중))
+		IF CHK_DATENOW(CFLAG:MASTER:데이트중)
+			PRINTFORMW %CALLNAME:TARGET%에게 업혀서 %마스터는% %GET_MAPNAME(MAIN_MAP)%까지 돌아왔다
+		ENDIF
+		IF CFLAG:MASTER:현재위치 != CFLAG:MASTER:초기위치
+			PRINTFORMW %타겟이% %마스터를% 사실로 옮겨 주었다…
+			CFLAG:MASTER:현재위치 = CFLAG:MASTER:311
+			;おやすみ口上,6-0,MASTERがダウン（部屋に運ばれる）
+			CALL KOJO_MESSAGE_SEND("EVENT", 3, TARGET, 6, 0)
+		ELSE
+			PRINTFORMW %타겟이% %마스터를% \@ INROOM(CFLAG:MASTER:현재위치) == 2 ? 침대 # 이불 \@로 옮겨 주었다…
+			;おやすみ口上,6-1,MASTERがダウン（自室）
+			CALL KOJO_MESSAGE_SEND("EVENT", 3, TARGET, 6, 1)
+		ENDIF
+		CFLAG:MASTER:데이트중 = MAIN_MAP
+		FLAG:기절중단 = 0
+	ELSEIF CHK_DATENOW(CFLAG:MASTER:데이트중)
+		PRINTFORMW %마스터는% 마지막 힘을 쥐어짜서, %GET_MAPNAME(MAIN_MAP)%까지 돌아왔다
+		FLAG:기절중단 = 100 + CFLAG:MASTER:현재위치 / 100
+		CFLAG:MASTER:현재위치 = ENTRANCE
+		PRINTFORMW 
+	ELSE
+		PRINTFORMW %마스터는% 휘청거리는 발걸음으로, 사실로 돌아왔다
+		CFLAG:MASTER:현재위치 = CFLAG:MASTER:311
+		FLAG:기절중단 = 0
+	ENDIF
+	FOR LOCAL, 0, CHARANUM
+		SIF CFLAG:LOCAL:출금
+			CONTINUE
+		CALL ENDUFUFU(LOCAL)
+		CALL SET_PRANK(0, LOCAL)
+		CFLAG:LOCAL:데이트중 = MAIN_MAP
+		CFLAG:LOCAL:동행 = 0
+		FLAG:데이트상대 = 0
+		TFLAG:데이트전호감도 = 0
+		SIF !BATHCHECK(CFLAG:LOCAL:현재위치) && TEQUIP:LOCAL:목욕탕플레이
+			TEQUIP:LOCAL:목욕탕플레이 = 0
+	NEXT
+;	수치 변수가 소수점 이하를 잘라 버리는 특성을 악용 한 것이 이쪽, 다른 변수를 사용하지 않는 분 이쪽 쪽이 좋은 것인지도?
+	CFLAG:MASTER:데이트중 = CFLAG:MASTER:현재위치 / 100
+	TFLAG:106 = 0
+	BEGIN AFTERTRAIN
+ENDIF
+
+
+;체력이 0이하로 떨어짐, 게임오버!
+IF BASE:MASTER:체력 <= 0
+	CALL MANOSABA_END_HP0
+ELSEIF BASE:MASTER:체력 > 500 && TFLAG:무리함
+	TFLAG:무리함 = 0
+ELSEIF BASE:MASTER:체력 <= 500 && ITEM:리버스페더
+	FONTSTYLE 1
+	PRINTFORML 리버스 페더가 빛을 발하며　조용히 불타올랐다！
+	FONTREGULAR
+	CALL RECOVER_PERMIL(MASTER, 300, "체력", 0, "리버스페더에 의한 회복")
+	CALL RECOVER_PERMIL(MASTER, 200, "기력", 0, "리버스페더에 의한 회복")
+	ITEM:리버스페더 --
+ELSEIF (BASE:MASTER:체력 <= 500 && !TCVAR:TARGET:마음대로해 && !TFLAG:무리함)
+
+	IF !TFLAG:무리함
+		PRINTFORML
+		SETCOLOR 184, 38, 71
+		PRINTFORML (체력적으로, 슬슬 힘들지도 모르겠어……)
+		RESETCOLOR
+		PRINTFORML
+		PRINTFORML 속이 메슥거리고 심장 소리가 귓가에 울리는 등, 평소에 비해 확연히 좋지 않은 몸상태에 히로는 관자놀이를 지긋이 눌렀다.
+		PRINTFORML 중요한 일이 아니라면 멈추고 휴식을 취할 필요가 있을지도 모른다……
+		PRINTFORML
+		TFLAG:무리함 = 1
+	ENDIF
+	
+	;발정 없이 방에 들어갈 경우or 뉴 플랜 에는 선택지를 내놓지 않는다.
+	IF CFLAG:MASTER:현재위치 == OMANEKIBEYA() && (!TALENT:TARGET:연모)
+
+	ELSE
+		;밀어넘어뜨려지고 안이라면 분기
+		IF TFLAG:102 == 3 && BASE:MASTER:체력 > 0 && !TCVAR:TARGET:마음대로해
+			CALL ASK_YN("마음대로 하게 한다.", "풀어달라고 한다.")
+			IF !RESULT
+				TCVAR:TARGET:마음대로해 = 1
+				BASE:MASTER:체력 -= 150
+				GOTO SUKINISITE
+			ENDIF
+		ENDIF
+	ENDIF
+
+	;밀어넘어뜨려지고 안이라면 TARGET에 기학 경험
+	IF TFLAG:102 == 3
+		IF BASE:MASTER:체력 <= 0
+			EXP:가학쾌락경험 += 10
+			PRINTL 
+			PRINTFORMW 가학쾌락경험 +10(%CALLNAME%)
+			PRINTL 
+		ELSE
+			EXP:가학쾌락경험 += 2
+			PRINTL 
+			PRINTFORMW 가학쾌락경험 +2(%CALLNAME%)
+			PRINTL 
+		ENDIF
+	ENDIF
+ENDIF
+
+IF TARGET && TFLAG:키스마크 == TARGET && TFLAG:붕대 && !RAND:2
+	PRINTFORMW %CALLNAME:MASTER%의 목덜미를 가리고 있는 것을 알아차린 %타겟은%, 붕대를 풀어버렸다
+	TFLAG:붕대 = 0
+	BASE:분노 += 500
+ENDIF
+$SUKINISITE
+IF TARGET && CFLAG:언짢음
+	IF TALENT:TARGET:담력 < 0
+		PRINTFORMW %타겟을% 울려 버렸다…
+		CALL KOJO_MESSAGE_SEND("EVENT", 29, TARGET, 2,0)
+	ELSE
+		PRINTFORMW %타겟을% 화나게 해 버렸다…
+		CALL KOJO_MESSAGE_SEND("EVENT", 29, TARGET, 1,0)
+	ENDIF
+	
+	IF !TCVAR:억지로 
+		FOR LOCAL, 0, CHARANUM
+			CALL ENDUFUFU(LOCAL)
+		NEXT
+		TFLAG:106 = 0
+	ELSEIF CFLAG:우후후 && TFLAG:거품목욕
+		CALL 泡風呂終了判定("女の子フキゲン")
+	ENDIF
+ENDIF
+
+IF TARGET && BASE:체력 < 500
+	IF TFLAG:거품목욕
+		CALL 泡風呂終了判定("体力限界")
+	ELSE
+		IF !CFLAG:쇠약
+			PRINTFORMW (%CALLNAME:TARGET%의 체력이 한계에 다다랐습니다)
+			CFLAG:쇠약 = 360
+			;(天候パッチ)時刻・天候に応じて背景色を変更
+			CALL SET_MAP_WEATHER_BGCOLOR
+		ENDIF
+		CALL CHARA_SLEEP, TARGET, 1
+		FOR LOCAL, 0, CHARANUM
+			CALL ENDUFUFU(LOCAL)
+			CALL SET_PRANK(0, LOCAL, 1)
+			SIF LOCAL
+				CFLAG:LOCAL:데이트중 = MAIN_MAP
+			CFLAG:LOCAL:동행 = 0
+		NEXT
+		FLAG:데이트상대 = 0
+		TFLAG:데이트전호감도 = 0
+		TFLAG:106 = 0
+	ENDIF
+ENDIF
+
+
+IF TARGET
+	IF TALENT:TARGET:동물귀 && CFLAG:TARGET:900 == 7 && !TCVAR:TARGET:발정 && PALAM:TARGET:욕정 >= PALAMLV:5 && !TALENT:TARGET:임신
+		PRINTFORML %타겟은% 뺨을 상기시키고, 숨을 거칠게 쉬고 있다…
+		PRINTFORML 위험일에 극도로 흥분한 %타겟은% [발정]해 버린 것 같다
+		TCVAR:TARGET:발정 = 1
+	ENDIF
+ENDIF
+
+FOR LOCAL,0, CHARANUM
+	SIF TIME > TCVAR:LOCAL:쫒겨난시각 + 30
+		TCVAR:LOCAL:쫒겨난장소 = 0
+	;IF !CFLAG:LOCAL:우후후
+		FOR LOCAL:2, 101,109
+			SIF TEQUIP:LOCAL:(LOCAL:2) != TEQUIP:LOCAL:(LOCAL:2 + 10)
+				TEQUIP:LOCAL:(LOCAL:2) = 0
+		NEXT
+	;ENDIF
+	;일기의 기입 판정
+	CALL KOJO_MESSAGE_SEND("DIARY", 0, LOCAL, 0, 0, "BEFORE_CHECK")
+	SIF CFLAG:LOCAL:현재위치 == SUKIMA()
+		CONTINUE
+[SKIPSTART]
+	;오늘의 인사를 안 한 경우 조우시 인사 말을 내
+	IF LOCAL > 0 && !TCVAR:LOCAL:오늘만났는지 && CFLAG:MASTER:현재위치 == CFLAG:LOCAL:현재위치 
+		IF CFLAG:LOCAL:안면 == 0
+			CALL SYOTAIMEN(LOCAL)
+		ELSEIF CHK_DATENOW(CFLAG:MASTER:데이트중)
+			CALL KOJO_MESSAGE_SEND("EVENT",1,LOCAL,9,FLAG:데이트상대)
+		ELSE
+			CALL KOJO_MESSAGE_SEND("EVENT",1,LOCAL,8,0)
+		ENDIF
+		CALL FirstMeetToday(LOCAL)
+	ENDIF
+[SKIPEND]
+	;의상의 갈아입음 수선은@SHOW_STATUS에 이동
+	[SKIPSTART]
+	LOCAL:1 = 0
+	FOR 장비부위, 0, 23
+		SIF (!수면시간(LOCAL) && EQUIP:LOCAL:장비부위 != CFLAG:LOCAL:(200 + 장비부위)) || (수면시간(LOCAL) && EQUIP:LOCAL:장비부위 != CFLAG:LOCAL:(240 + 장비부위))
+			LOCAL:1 ++
+		SIF 장비부위 == 6 && CFLAG:LOCAL:노팬티 && ((!수면시간(LOCAL) && EQUIP:LOCAL:장비부위 != CFLAG:LOCAL:(200 + 장비부위)) || (수면시간(LOCAL) && EQUIP:LOCAL:장비부위 != CFLAG:LOCAL:(240 + 장비부위)))
+			LOCAL:1 --
+	NEXT
+	IF !CFLAG:LOCAL:우후후 && CFLAG:LOCAL:현재위치 != BATHROOM(CFLAG:LOCAL:현재위치) && LOCAL:1
+		IF 수면시간(LOCAL)
+			;파자마 세트
+			CALL CTRL_CLOTHES_SET(LOCAL, "현재 의상의 변경_파자마")
+			CFLAG:LOCAL:파자마 = 1
+		ELSE
+			;평상복 세트
+			CALL CTRL_CLOTHES_SET(LOCAL, "현재 의상의 변경_평상복")
+			CFLAG:LOCAL:파자마 = 0
+		ENDIF
+		SIF !수면시간(LOCAL) && CFLAG:LOCAL:면간발각
+			CFLAG:LOCAL:면간발각 = 0
+		CALL CLOTHES_SETTING_TRAIN(LOCAL)
+	ENDIF
+	[SKIPEND]
+	;일단 CLOTHES_SETTING_TRAIN는 해 손해는 없을 것이다
+		SIF !수면시간(LOCAL) && CFLAG:LOCAL:면간발각
+			CFLAG:LOCAL:면간발각 = 0
+		CALL CLOTHES_SETTING_TRAIN(LOCAL)
+NEXT
+;강제적으로 WAIT가 추가되는 것을 회피하기 위해서 TWAIT를 가르친다
+;이것으로 입력 회수가 1회줄어든다
+IF CFLAG:MASTER:현재위치 == 99
+	SETCOLOR C_RED
+	PRINTFORMW ### COM_END LOCATION ERROR! %마스터는% 존재하지 않는 장소에 있다! ###
+	PRINTW 강제로 하루를 종료합니다. 로그를 뽑아서 Gitgud에 버그 보고를 부탁드립니다.
+	RESETCOLOR
+	CFLAG:MASTER:현재위치 = CFLAG:MASTER:311
+	CALL SET_SLEEP(1, MASTER, 0)
+	TFLAG:106 = 0
+	BEGIN AFTERTRAIN
+ENDIF
+	;CFLAG:MASTER:취침시간 = DAY * 1440 + TIME
+SIF SELECTCOM == 400
+	TWAIT 100,0
+
+
+
+
+
+
+
+
+
+
+; 좆같은 코딩을 해보자.
+; 배급장소(CFLAG:MASTER:현재위치) = 1 이면 
+; DISH_NAME == "맛없는식사" 로 만들어서 밥을 먹게 하자
+; 식당을 벗어나면 "맛없는식사"는 사라지게 된다
+; 06:00~09:00 , 12:00~14:00, 17:00~21:00 에만 밥 제공하고, 시간 벗어나면 뺏는다.
+
+IF 배급장소(CFLAG:MASTER:현재위치) == 1 && (INRANGE(TIME, 360, 540) || INRANGE(TIME, 720, 840) || INRANGE(TIME, 1020, 1260))
+    ; 식당 안이고, 식사시간인데 아직 음식이 없는 경우만 지급
+    IF DISH_NAME == ""
+        DISH_NAME = 맛없는식사
+		EX_DISH_NAME = 맛없는식사
+		DISH_TASTE = 야취/수수께끼 요리/검소/뭉근뭉근/미지의맛
+		DISH_TIME = 30
+	ENDIF
+ELSE
+    ; 식당 밖 혹은 식사시간 외에 맛없는식사를 들고 있다면 회수
+    IF DISH_NAME == "맛없는식사"
+		[IF DEBUG]
+		PRINTFORML 맛없는 식사 버리기 + 리셋
+		[ENDIF]
+        DISH_NAME = ""
+		EX_DISH_NAME = "" 
+		DISH_TASTE = ""
+		DISH_TIME = 0
+		CALL RESET_DISH
+	ENDIF 
+ENDIF
+
+
+;각 장소 개방 이벤트
+SIF !FLAG:노아삭제 && CFLAG:3:동행 && !FLAG:아틀리에대사 && CFLAG:MASTER:현재위치 == P73아틀리에
+	CALL MANOSABA_ATELIER_FOUND
+
+
+
+
+
+
+
+
+
+
+	
+@ENKAI_SINKOU
+SIF FLAG:연회개최플래그 == 0 || TFLAG:연회상태 == 101
+	RETURN
+
+;宴会の参加人数をセット
+CALL 연회참가인원수재계산()
+
+;天気が悪いと中止になる宴会もある
+
+IF TIME:5 >= 4 && FLAG:36 > 0 && DAY >= FLAG:개시일 && TIME >= FLAG:33
+	PRINTL  
+	PRINTFORMW 유감스럽게도, \@ CFLAG:MASTER:현재위치 == TFLAG:연회장 ? 날씨가 안 좋아서 연회는 취소되었습니다 # 악천후로 연회는 취소된 것 같습니다\@
+	CALL ENKAI_STOP
+;연회의 도중에 내리기 시작했을 경우
+ELSEIF TFLAG:연회상태 >= 98 && TIME:5 >= 4 && FLAG:36 > 0
+	PRINTL  
+	PRINTFORMW 유감스럽게도, \@ CFLAG:MASTER:현재위치 == TFLAG:연회장 ? 날씨가 안 좋아서 연회는 취소되었습니다 # 악천후로 연회는 취소된 것 같습니다\@
+	CALL ENKAI_STOP
+;연회 개시
+ELSEIF 연회개시일판정() && TIME >= FLAG:33
+	IF CFLAG:MASTER:현재위치 == TFLAG:연회장
+		PRINTFORML 
+		IF FLAG:참가인수 < 2
+			PRINTW 조용한 분위기 속에서, 연회가 시작되었습니다…
+		ELSEIF FLAG:참가인수 >= 8
+			PRINTW 떠들썩한 분위기 속에서, 연회가 시작되었습니다…
+		ELSE
+			PRINTW 화기애애한 분위기 속에서, 연회가 시작되었습니다…
+		ENDIF
+		PRINTFORML 
+		TFLAG:연회상태 = 99
+	ELSE
+		TFLAG:연회상태 = 98
+	ENDIF
+ELSEIF TFLAG:연회상태 == 98 && DAY >= FLAG:개시일 && TIME >= FLAG:33
+	IF CFLAG:MASTER:현재위치 == TFLAG:연회장
+		PRINTL  
+		PRINTW 이미 연회는 시작된 것 같습니다…
+		PRINTL  
+		TFLAG:연회상태 = 99
+	ENDIF
+	;주최자측은 아직 연회준비 플래그 인 채의 모아 두어 플래그를 억지로 진행한다
+	FOR LOCAL,0,CHARANUM
+		SIF CFLAG:LOCAL:20 == 2
+			CALL ENKAI_WORK(LOCAL)
+	NEXT
+ELSEIF 연회개최중판정() && FLAG:참가인수 == 0
+	IF CFLAG:MASTER:현재위치 == TFLAG:연회장
+		PRINTL
+		PRINTW 연회가 열릴 것 같습니다…
+		PRINTL
+		TFLAG:연회상태 = 101
+	ELSE
+		TFLAG:연회상태 = 100
+	ENDIF
+ELSEIF TFLAG:연회상태 == 100 && CFLAG:MASTER:현재위치 == TFLAG:연회장
+	PRINTL
+	PRINTW 벌써 연회는 끝난 것 같습니다…
+	PRINTL
+	TFLAG:연회상태 = 101
+ENDIF

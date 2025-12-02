@@ -1,0 +1,766 @@
+﻿
+@PRINT_STATE_JUEL(선택중캐릭터ID)
+#DIM 선택중캐릭터ID
+#DIM 표시항목수
+
+PRINTL
+PRINTL □ 보주 □---------------------------------------------------------------------------
+표시항목수 = 0
+FOR LOCAL, 0, 22
+	;PALAM.CSV에 명칭이 등록되지 않았으면 CONTINUE
+	SIF !STRLENS(PALAMNAME:LOCAL)
+		CONTINUE
+	;1000, 1000000, 단위로 구분짓는다
+	LOCALS = {JUEL:선택중캐릭터ID:LOCAL}
+	SIF JUEL:선택중캐릭터ID:LOCAL > 1000000
+		LOCALS = {JUEL:선택중캐릭터ID:LOCAL / 1000}k
+	SIF JUEL:선택중캐릭터ID:LOCAL > 1000000000
+		LOCALS = {JUEL:선택중캐릭터ID:LOCAL / 1000000}m
+	PRINTFORM %PALAMNAME:LOCAL,6%의 구슬:%LOCALS, 7, LEFT%
+	표시항목수 += 1
+	;개행 or표시 위치 열려라
+	SIF 표시항목수 % 4 == 0
+		PRINTL 
+NEXT
+;부정의 구슬
+LOCALS = {JUEL:선택중캐릭터ID:100}
+SIF JUEL:선택중캐릭터ID:100 > 1000000
+	LOCALS = {JUEL:선택중캐릭터ID:100 / 1000}k
+PRINTFORM %PALAMNAME:100,6%의 구슬:%LOCALS, 7, LEFT%
+
+@PRINT_STATE_EX(선택중캐릭터ID)
+#DIM 선택중캐릭터ID
+#DIM 표시항목수
+
+SIF EX:선택중캐릭터ID:C절정 + EX:선택중캐릭터ID:V절정 + EX:선택중캐릭터ID:A절정 + EX:선택중캐릭터ID:B절정 + EX:선택중캐릭터ID:M절정 + EX:선택중캐릭터ID:분유 == 0
+	RETURN 0
+표시항목수 = 0
+PRINTL
+PRINTL □ 절정회수 □-----------------------------------------------------------------------
+FOR LOCAL, 0, VARSIZE("EX")
+	SIF !EX:선택중캐릭터ID:LOCAL
+		CONTINUE
+	SIF !GROUPMATCH(EXNAME:LOCAL, "C절정", "V절정", "A절정", "B절정", "M절정", "분유", "방뇨")
+		CONTINUE
+	PRINTFORM %EXNAME:LOCAL,12%:{EX:선택중캐릭터ID:LOCAL, 5, LEFT} 
+	표시항목수 ++
+	SIF 표시항목수 % 4 == 0
+		PRINTL
+NEXT
+
+
+@PRINT_STATE_PERSONAL(선택중캐릭터ID)
+#DIM 선택중캐릭터ID
+#DIMS KARADAMEATE
+PRINTL
+PRINT □ 
+CALL PRINTBUTTON_EX("개인정보 ",169,TFLAG:169)
+PRINTL □-----------------------------------------------------------------------
+PRINTL  
+IF !TFLAG:169
+	;개인 임의수정, PRINTL 주석처리 및 마스터인 경우 성격 미표시
+	; PRINTL  
+	SIF 선택중캐릭터ID != MASTER
+		PRINTFORML 성격：%PERSONALITY_TYPE(선택중캐릭터ID)%
+	IF 선택중캐릭터ID == MASTER
+		IF CFLAG:MASTER:수면
+			PRINTFORML 어제의 취침시각：%시각표시(CFLAG:MASTER:취침시간 - DAY * 1440)%
+		ELSE
+			PRINTFORML 어제의 취침시각：%시각표시(CFLAG:MASTER:취침시간 + 1440 - DAY * 1440)%
+		ENDIF
+		PRINTFORML 기상시각：%시각표시(TIME:3)%
+		
+		IF TRAP_POINT:1 || TRAP_POINT:2 || TRAP_POINT:3
+			PRINTL 
+			PRINTFORML ◆덫의 설치현황
+			FOR LOCAL, 1, 4
+				IF TRAP_POINT:LOCAL
+					PRINTFORML 　덫{LOCAL}의 설치 장소：%猟場名(TRAP_POINT:LOCAL)%
+					PRINTFORML 　　 　　설치일：%PRINT_DATE_F(TRAP_SETUPDATA:LOCAL)%
+				ENDIF
+			NEXT
+		ENDIF
+
+	ELSE
+		PRINT 활동시간대：
+		IF CFLAG:선택중캐릭터ID:신사거주 || CFLAG:MASTER:현재위치 == OMANEKIBEYA()
+			CALL 기상시간표시(선택중캐릭터ID)
+		ELSE
+			CALL 체류시간표시(선택중캐릭터ID)
+		ENDIF
+		IF CFLAG:선택중캐릭터ID:자주가는지역 >= 0
+			PRINTFORML 자주 가는 지역 : %GET_MAPNAME(CFLAG:선택중캐릭터ID:자주가는지역)%
+		ENDIF
+		IF CFLAG:선택중캐릭터ID:자택위치 >= 10 && !CFLAG:선택중캐릭터ID:신사거주
+			PRINT 자택 위치：
+			LOCAL = CFLAG:선택중캐릭터ID:자택위치 / 100 + 5000
+			PRINTFORM %STR:LOCAL% 
+			LOCAL = CFLAG:선택중캐릭터ID:자택위치 / 10 + 6000
+			;만년필일 때만 가리도록
+			IF LOCAL != 6080
+				PRINTFORML 【 %STR:LOCAL% 】
+			ELSE
+				PRINTFORML 【 ■■■■■ 】
+			ENDIF
+		ELSEIF CFLAG:선택중캐릭터ID:신사거주
+			PRINT 자택 위치：
+			LOCAL = CFLAG:선택중캐릭터ID:자택위치 / 100 + 5000
+			PRINTFORM %STR:LOCAL% 
+			LOCAL = CFLAG:선택중캐릭터ID:자택위치 + 8000
+			;만년필일 때만 가리도록
+			IF LOCAL != 8080
+				PRINTFORML 【 %STR:LOCAL% 】
+			ELSE
+				PRINTFORML 【 ■■■■■ 】
+			ENDIF
+		ELSE
+			PRINTL 자택 위치：■■■■■ 【 ■■■■■ 】
+		ENDIF
+		PRINT 업무 정보：
+		PRINTFORML %CSTR:선택중캐릭터ID:일정보%
+
+		PRINT 　 직장　：
+		PRINTFORML %CSVCSTR(선택중캐릭터ID, 2)%
+
+	ENDIF
+ENDIF
+PRINTL 　
+IF CSVCSTR(선택중캐릭터ID, 10) != ""
+	PRINTL □ 캐릭터 소개 □--------------------------------------------------------------------
+	PRINTL 
+	;캐릭터 소개문을 말의 전개에 의해 개변하고 싶은 경우 「@CHARA_INFO_KOJO_KX」를 사용한다
+	RESULTS =
+	;구상의 존재판정 and RESULTS에 문자열 대입
+	IF CFLAG:선택중캐릭터ID:구상셀렉터
+		TRYCALLFORM M_KOJO_K{선택중캐릭터ID}_{CFLAG:선택중캐릭터ID:구상셀렉터}
+	ELSE
+		TRYCALLFORM M_KOJO_K{선택중캐릭터ID}
+	ENDIF
+	RESULT = 0
+	TRYCALLFORM CHARA_INFO_KOJO%RESULTS%_K{선택중캐릭터ID}
+	IF !RESULT
+		FOR LOCAL,10,20
+			SIF CSVCSTR(선택중캐릭터ID, LOCAL) != ""
+				PRINTFORML %CSVCSTR(선택중캐릭터ID, LOCAL, )%
+		NEXT
+	ENDIF
+ENDIF
+SETCOLOR C_YELLOW
+IF 선택중캐릭터ID == MASTER && FLAG:생활능력무
+	PRINTFORML 답이 없는 무능력자다
+	PRINTFORML 
+ENDIF
+SETCOLOR C_PINK
+IF CFLAG:선택중캐릭터ID:인계
+	SIF GETBIT (CFLAG:선택중캐릭터ID:인계, 0)
+		PRINTFORML %마스터와% 묘한 인연이 있다
+	SIF GETBIT (CFLAG:선택중캐릭터ID:인계, 1)
+		PRINTFORML %마스터와% 끈끈한 인연이 있다
+	SIF GETBIT (CFLAG:선택중캐릭터ID:인계, 7) ;KR판 오리지날
+		PRINTL 이전 회차에서 아내가 되었던 적이 있다
+ENDIF
+IF 선택중캐릭터ID == MASTER
+	IF HOW_아내() ;KR판 오리지날 아내
+		LOCAL:3 = 1
+		FOR LOCAL:1, 1, CHARANUM
+			IF IS_아내(LOCAL:1)
+				SIF !(LOCAL:3 % 15)
+					PRINTL 
+				LOCAL:3 ++
+				PRINTFORM ［%CALLNAME:(LOCAL:1)%］
+			ENDIF
+		NEXT
+		PRINTFORML 와 부부 사이다
+	ENDIF
+	IF TALENT:선택중캐릭터ID:연인
+		LOCAL:3 = 1
+		FOR LOCAL:1, 1, CHARANUM
+			IF TALENT:(LOCAL:1):연인 && !IS_아내(LOCAL:1)
+				SIF !(LOCAL:3 % 15)
+					PRINTL 
+				LOCAL:3 ++
+				PRINTFORM ［%CALLNAME:(LOCAL:1)%］
+			ENDIF
+		NEXT
+		PRINTFORML 와 사랑하는 사이다
+	ENDIF
+ENDIF
+SIF CFLAG:선택중캐릭터ID:깨끗한교제
+	PRINTFORML 깨끗한 교제를 거쳐 %마스터와% 사랑하는 사이가 되었다
+SIF CFLAG:선택중캐릭터ID:기정사실 & 합의_키스
+	PRINTFORML %CALLNAME:MASTER%에 입술을 허락하고 있다
+IF CFLAG:선택중캐릭터ID:기정사실 & 합의_우후후
+	PRINTFORML %CALLNAME:MASTER%에 몸을 허락하고 있다
+ELSEIF CFLAG:선택중캐릭터ID:대주고말았다
+	PRINTFORML 분위기 타서 행위에 이른 적은 있지만, %CALLNAME:MASTER%에게 몸을 허락할 마음은 없다
+ENDIF
+SIF TALENT:선택중캐릭터ID:처녀 && TALENT:선택중캐릭터ID:걸레
+	PRINTFORML 일단 처녀지만, 요구받으면 간단하게 몸을 내줄 것이다
+IF CFLAG:선택중캐릭터ID:몸목적
+	IF TALENT:선택중캐릭터ID:체형 == -2
+		KARADAMEATE = 그 어린 
+	ELSEIF TALENT:선택중캐릭터ID:가슴사이즈 > 0
+		KARADAMEATE = 그 풍만한 
+	ELSEIF TALENT:선택중캐릭터ID:처녀 > 0
+		KARADAMEATE = 그 때묻지 않은 
+	ELSE
+		KARADAMEATE = 그 싱그러운 
+	ENDIF
+	PRINTFORML %CALLNAME:MASTER%에게 %KARADAMEATE%몸을 노림받고 있다
+ENDIF
+RESETCOLOR
+IF TALENT:선택중캐릭터ID:연모
+	IF TALENT:선택중캐릭터ID:무지
+		PRINTFORML %CALLNAME:선택중캐릭터ID%는 %CALLNAME:MASTER%의 색시가 되겠다고 남몰래 마음먹고 있다
+	ELSEIF !CFLAG:선택중캐릭터ID:기정사실 & 합의_우후후
+		IF TALENT:선택중캐릭터ID:정조 > 0
+			PRINTFORML 육체 관계는 행실이 좋지 못한 짓이라고 여김에도 불구하고, %CALLNAME:선택중캐릭터ID%는 마음속으론 %마스터와% 몸을 섞고 싶다고 생각 중이다
+		ELSE
+			PRINTFORML %마스터가% 아직도 손을 대지 않는 데에 짜증과 불안을 느끼고 있다
+		ENDIF
+	ENDIF
+ENDIF
+
+CALL Valentine_History(선택중캐릭터ID)
+PRINTFORML 
+
+@체류시간표시(선택중캐릭터ID)
+#DIM 선택중캐릭터ID
+
+IF CFLAG:선택중캐릭터ID:내방시간 < CFLAG:선택중캐릭터ID:귀가시간
+	PRINTFORML {CFLAG:선택중캐릭터ID:내방시간 / 60}시～{CFLAG:선택중캐릭터ID:귀가시간 / 60}시
+ELSE
+	PRINTFORML {CFLAG:선택중캐릭터ID:내방시간 / 60}시～다음 {CFLAG:선택중캐릭터ID:귀가시간 / 60}시
+ENDIF
+
+
+@기상시간표시(선택중캐릭터ID)
+#DIM 선택중캐릭터ID
+
+IF CFLAG:선택중캐릭터ID:기상시간 < CFLAG:선택중캐릭터ID:취침시간
+	PRINTFORML {CFLAG:선택중캐릭터ID:기상시간 / 60}시～{CFLAG:선택중캐릭터ID:취침시간 / 60}시
+ELSE
+	PRINTFORML {CFLAG:선택중캐릭터ID:기상시간 / 60}시～다음 {CFLAG:선택중캐릭터ID:취침시간 / 60}시
+ENDIF
+
+
+
+@육체정보(선택중캐릭터ID)
+#DIM 선택중캐릭터ID
+VARSET LOCALS
+VARSET LOCAL
+PRINTL
+PRINTL □ 육체 정보 □-----------------------------------------------------------------------
+PRINTL 
+PRINTL 【입】　
+PRINTFORM 첫키스 이력：
+;IF !EXP:선택중캐릭터ID:키스경험
+IF TALENT:선택중캐릭터ID:키스미경험
+	SELECTCASE CFLAG:선택중캐릭터ID:첫키스상실대상
+		CASE 0
+			CALL COLORMESSAGE(@"아직 누구에게도 입술을 허락하지 않았다", C_YELLOW, 1)
+		CASE 1
+			CALL COLORMESSAGE(@"%CSTR:선택중캐릭터ID:첫키스상실이력%", C_PINK, 1)
+		CASE 2
+			CALL COLORMESSAGE(@"아직 누구에게도 입술을 허락하지 않았다", C_YELLOW, 1)
+			PRINTFORM 고 알고 있지만, 사실은 
+			CALL COLORMESSAGE(@"%CSTR:선택중캐릭터ID:첫키스상실이력%", C_PINK, 1)
+	ENDSELECT
+ELSEIF CFLAG:선택중캐릭터ID:첫키스상실기념일
+	IF STRFIND(CSTR:선택중캐릭터ID:첫키스상실이력, "\BR") > 0
+		LOCAL = RESULT
+		SPLIT CSTR:선택중캐릭터ID:첫키스상실이력, "\BR", LOCALS
+		CALL COLORMESSAGE(@"%LOCALS:0%", C_PINK, 1)
+		PRINTFORM 고 생각하고 있지만, 사실은 
+		CALL COLORMESSAGE(@"%LOCALS:1%", C_PINK, 1)
+		RESULT = LOCAL
+		VARSET LOCALS
+	ELSE
+		CALL COLORMESSAGE(@"%CSTR:선택중캐릭터ID:첫키스상실이력%", C_PINK, 1)
+	ENDIF
+ELSE
+	CALL COLORMESSAGE(@"%마스터를% 만나기 전에 잃었다", C_AQUA, 1)
+	;라고 생각하는데…
+ENDIF
+
+
+SIF EXP:선택중캐릭터ID:키스경험
+	PRINTFORML 지금까지 {EXP:선택중캐릭터ID:키스경험}회의 입맞춤을 경험했다
+
+SIF GETBIT (CFLAG:선택중캐릭터ID:인계, 6)
+	PRINTFORML 어떡해야 느끼는지 %CALLNAME:MASTER%에게 속속들이 파악당했다
+IF 선택중캐릭터ID == MASTER
+	IF ABL:선택중캐릭터ID:혀 >= 5
+		PRINTFORML 탁월한 혀 기술로 소녀를 사로잡는다
+	ELSEIF ABL:선택중캐릭터ID:혀 >= 3
+		PRINTFORML 교묘한 혀놀림으로 소녀에게 기쁨을 준다
+	ENDIF
+ELSEIF EXP:선택중캐릭터ID:키스경험 ;KR판 오리지날 또는 구잔재
+	SELECTCASE ABL:선택중캐릭터ID:M감각
+		CASE IS >= 10
+			PRINTL 감도 발군 입만 맞추어도 성욕에 지배당할지 모른다
+		CASE IS >= 5
+			PRINTL 감도 양호 혀를 넣으면 저항하지 못한다
+	ENDSELECT
+ENDIF
+PRINTL 
+PRINTL 【가슴】
+SELECTCASE ABL:선택중캐릭터ID:B감각
+	CASE IS >= 10
+		PRINTL 감도 발군　
+	CASE IS >= 5
+		PRINTL 감도 양호　
+ENDSELECT
+IF TALENT:선택중캐릭터ID:음유
+	PRINT 완전히 조교가 끝난 
+	IF TALENT:선택중캐릭터ID:가슴사이즈 < 0
+		PRINT 가슴
+	ELSE
+		PRINT 유방
+	ENDIF
+	PRINTFORML 은 한 번 어루만지기만 해도 몸을 가누지 못할 수준이다
+ENDIF
+
+SIF GETBIT (CFLAG:선택중캐릭터ID:인계, 5)
+	PRINTFORML 어떡해야 느끼는지 %CALLNAME:MASTER%에게 속속들이 파악당한 상태다 상태다
+
+IF TALENT:선택중캐릭터ID:모유체질
+	;PRINTFORML \@ ABL:선택중캐릭터ID:분유중독 >= 3 ? 단맛 나는 젖이 듬뿍 담겨 있다# 자극해주면 단맛 나는 젖이 배어나올 것이다\@
+	PRINTFORML 자극해주면 단맛 나는 젖이 배어나올 것이다
+ENDIF
+SELECTCASE ABL:선택중캐릭터ID:가슴 ;KR판 구잔재 또는 오리지날. 일판은 공란임.
+	CASE IS >= 5
+		IF TALENT:선택중캐릭터ID:가슴사이즈 < 0
+			PRINTFORML 그 가슴은, 이제 성기를 자극하기 위해 존재한다
+		ELSE
+			PRINTFORML 그 유방은, 이제 성기로 변하고 말았다
+		ENDIF
+	CASE IS >= 3
+		IF TALENT:선택중캐릭터ID:가슴사이즈 < 0
+			PRINTFORML 그 가슴은, 상대를 흥분시키는 방법을 알고 있다
+		ELSE
+			PRINTFORML 그 유방은, 상대를 발정시키는 방법을 단단히 익히고 있다
+		ENDIF
+ENDSELECT
+PRINTL
+
+PRINTL 【손가락】
+SELECTCASE ABL:선택중캐릭터ID:손가락
+	CASE IS >= 5
+		PRINT 흉기　
+	CASE IS >= 3
+		PRINT 달인　
+ENDSELECT
+IF 선택중캐릭터ID == MASTER
+	IF ABL:선택중캐릭터ID:손가락 >= 5
+		PRINTFORML 낭창한 손가락의 애무는 금방 소녀를 황홀경에 빠트린다
+	ELSEIF ABL:선택중캐릭터ID:손가락 >= 3
+		PRINTFORML 교묘한 손가락질로 소녀에게 기쁨을 준다
+	ENDIF
+ENDIF
+PRINTL
+PRINTL 【애널】
+PRINTFORM 애널처녀상실이력：
+IF CSTR:선택중캐릭터ID:애널처녀상실이력 != ""
+	CALL COLORMESSAGE(@"%CSTR:선택중캐릭터ID:애널처녀상실이력%", C_PINK, 1)
+ELSEIF !EXP:선택중캐릭터ID:A성교경험
+	CALL COLORMESSAGE(@"아직 아무도 받아들이지 않았다", C_YELLOW, 1)
+ELSE
+	CALL COLORMESSAGE(@"%마스터를% 만나기 전에 잃었다", C_AQUA, 1)
+ENDIF
+SELECTCASE ABL:선택중캐릭터ID:A감각
+	CASE IS >= 10
+		PRINT 감도 발군　
+	CASE IS >= 5
+		PRINT 감도 양호　
+ENDSELECT
+SIF GETBIT (CFLAG:선택중캐릭터ID:인계, 4)
+	PRINTFORML 어떡해야 느끼는지 %CALLNAME:MASTER%에게 속속들이 파악당한 상태다 
+IF 선택중캐릭터ID
+	SELECTCASE 삽입불가(선택중캐릭터ID)
+		CASE 3
+			PRINTFORML 도저히 무언가를 받아들일 만한 사이즈가 아니다
+			LOCAL:6 ++
+		CASE 2
+			IF EXP:선택중캐릭터ID:A경험 < 50 && TALENT:MASTER:금단의지식
+				PRINTFORML 좀 더 풀어놓지 않으면 아무것도 들어가지 않을 것이다
+				LOCAL:6 ++
+			ELSEIF !TALENT:MASTER:금단의지식
+				PRINTFORML 무언가를 삽입하는 짓은 가혹할 것이다
+				LOCAL:6 ++
+			ENDIF
+		CASE 1
+			IF EXP:선택중캐릭터ID:A경험 < 50 || !TALENT:MASTER:금단의지식
+				PRINTFORML 좀 더 풀어놓지 않으면 아무것도 들어가지 않을 것이다
+				LOCAL:6 ++
+			ENDIF
+		CASE -1
+			IF ABL:선택중캐릭터ID:애널 < 2
+				PRINTFORML 뭘 넣기에는 다소 사이즈가 맞지 않는다
+				LOCAL:6 ++
+			ENDIF
+		CASE -2
+			IF ABL:선택중캐릭터ID:애널 < 3
+				PRINTFORML 엄청 벌어져 있다…
+				LOCAL:6 ++
+			ENDIF
+	ENDSELECT
+	SELECTCASE ABL:선택중캐릭터ID:애널
+		CASE IS >= 5
+			PRINTL 극상 명기
+			PRINTFORML 완전히 %CALLNAME:MASTER%가 바라는대로 다시 만들어진 애널은 살주름을 벌름거리며 엉겨든다
+		CASE IS >= 3
+			PRINTL 명기
+			PRINTFORML 자주 쓴 보람이 있어 매우 박음직한 구멍이 되었다
+		CASE 2
+			PRINTFORML %마스터를% 받아들이는 데에 익숙해져버렸다
+		CASE 1
+			PRINTL 풀어지기 시작해 박을 맛이 나기 시작했다
+		CASE 0
+			IF !CFLAG:선택중캐릭터ID:애널처녀상실기념일
+;				PRINTL 미개통
+			ELSEIF EXP:선택중캐릭터ID:A경험 < 20
+					PRINTL 아직 이물을 받아들이는 데에 익숙해지지 않았다
+			ENDIF
+	ENDSELECT
+ENDIF
+
+
+IF ABL:선택중캐릭터ID:A감각 >= 10 && CFLAG:선택중캐릭터ID:욕구불만도 > 800 && 선택중캐릭터ID
+	;KR판 구잔재
+	PRINTFORML %CALLNAME:MASTER%에 안기는 것을 상상해 항문이 실룩실룩 개폐하고 있다
+ELSEIF ABL:선택중캐릭터ID:A감각 >= 5 && CFLAG:선택중캐릭터ID:욕구불만도 > 300 && 선택중캐릭터ID
+	PRINTFORML %CALLNAME:MASTER%에 안기고 싶어서 근질근질하고 있다
+ENDIF
+
+
+PRINTL
+IF TALENT:선택중캐릭터ID:2 & 1
+	PRINTL 【질】
+	PRINTFORM 처녀상실이력：
+	IF CFLAG:선택중캐릭터ID:처녀상실기념일
+		CALL COLORMESSAGE(@"%CSTR:선택중캐릭터ID:처녀상실이력%", C_PINK, 1)
+	ELSEIF !CSVTALENT(선택중캐릭터ID, GETNUM(TALENT, "처녀")) && TALENT:선택중캐릭터ID:처녀 == 1
+		CALL COLORMESSAGE(@"세계선이 바뀌고 아무도 받아들이지 않았다", C_YELLOW, 1)
+	ELSEIF !CSVTALENT(선택중캐릭터ID, GETNUM(TALENT, "처녀"))
+		CALL COLORMESSAGE(@"%마스터를% 만나기 전에 잃었다", C_AQUA, 1)
+	ELSE
+		IF TALENT:선택중캐릭터ID:처녀 == 1
+			SIF ABL:선택중캐릭터ID:V감각 >= 10 & (TALENT:LOCAL:150 || TALENT:LOCAL:151) && !TALENT:LOCAL:초경 ;KR판 구잔재
+				LOCALS:0 = 데도 불구하고, 자궁은 완전하게 암컷으로서 음란에 꽃 열려 있다
+			SIF ABL:선택중캐릭터ID:V감각 >= 5
+				LOCALS:0 = 데도 불구하고, 자극이 주어지면 용이하게 절정 할 만큼 추잡하게 개발되고 있다
+			CALL COLORMESSAGE(@"아직 한 명도 받아들인 적이 없는 %LOCALS:0%", C_YELLOW, 1)
+		ELSEIF TALENT:선택중캐릭터ID:처녀 == -1
+			CALL COLORMESSAGE(@"벌써 처녀를 빼앗긴 사실을 깨닫지 못한", C_PINK, 1)
+		ENDIF
+	ENDIF
+
+	SELECTCASE ABL:선택중캐릭터ID:V감각
+		CASE IS >= 10
+			PRINT 감도 발군　
+		CASE IS >= 5
+			PRINT 감도 양호　
+	ENDSELECT
+	SIF GETBIT (CFLAG:선택중캐릭터ID:인계, 3)
+	PRINTFORML 어떡해야 느끼는지 %CALLNAME:MASTER%에게 속속들이 파악당한 상태다 
+	IF 선택중캐릭터ID
+		SELECTCASE 삽입불가(선택중캐릭터ID)
+			CASE 3
+				PRINTFORML 도저히 무언가를 받아들일 만한 사이즈가 아니다
+				LOCAL:5 ++
+			CASE 2
+				IF EXP:선택중캐릭터ID:V경험 < 50 && TALENT:MASTER:금단의지식
+					PRINTFORML 좀 더 풀어놓지 않으면 아무것도 들어가지 않을 것이다
+					LOCAL:5 ++
+				ELSEIF !TALENT:MASTER:금단의지식
+					PRINTFORML 무언가를 삽입하는 짓은 가혹할 것이다
+					LOCAL:5 ++
+				ENDIF
+			CASE 1
+				IF EXP:선택중캐릭터ID:V경험 < 50 || !TALENT:MASTER:금단의지식
+					PRINTFORML 좀 더 풀어놓지 않으면 아무것도 들어가지 않을 것이다
+					LOCAL:5 ++
+				ENDIF
+			CASE -1
+				IF ABL:선택중캐릭터ID:질 < 2
+					PRINTFORML 뭘 넣기에는 다소 사이즈가 맞지 않는다
+					LOCAL:5 ++
+				ENDIF
+			CASE -2
+				IF ABL:선택중캐릭터ID:질 < 3
+					PRINTFORML 엄청 벌어져 있다…
+					LOCAL:5 ++
+				ENDIF
+		ENDSELECT
+		IF ABL:선택중캐릭터ID:V감각 >= 10 && CFLAG:선택중캐릭터ID:욕구불만도 > 800 && 선택중캐릭터ID ;KR판 구잔재
+			PRINTFORML %CALLNAME:MASTER%에 관철해지는 것을 상상해 자궁이 큥큥하고 쑤시고 있다
+		ELSEIF ABL:선택중캐릭터ID:V감각 >= 5 && CFLAG:선택중캐릭터ID:욕구불만도 > 300 && 선택중캐릭터ID ;KR판 구잔재
+			PRINTFORML %CALLNAME:MASTER%에 안기고 싶어서 근질근질하고 있다
+		ENDIF
+		IF !LOCAL:5
+			SELECTCASE ABL:선택중캐릭터ID:질
+				CASE IS >= 5
+					PRINTL 극상 명기
+					IF TALENT:선택중캐릭터ID:처녀 == -1
+						PRINTFORML 당사자는 알지도 못하는 채, %마스터를% 기쁘게 하기 위할 뿐인 구멍으로 변했다
+					ELSE
+						PRINTFORML 완전하게 %CALLNAME:MASTER%가 바라는 대로 다시 만들어진 질내는 고기주름을 벌름거리며 붙어온다
+					ENDIF
+				CASE IS >= 3
+					PRINTL 명기
+					IF TALENT:선택중캐릭터ID:처녀 == -1
+						PRINTFORML 알지 못하는 새에 %마스터를% 기분 좋게 만들기 위한 구멍으로 재구성되었다
+					ELSE
+						PRINTFORML 사용한 보람이 있어 매우 맛 좋은 구멍이 되었다
+					ENDIF
+				CASE 2
+					PRINTFORML %마스터를% 받아들이는 것에 익숙해져 있다
+				CASE 1
+					PRINTL 조금씩 긴장이 풀려가는 모양이다
+				CASE 0
+					;IF EXP:선택중캐릭터ID:V경험
+					IF TALENT:선택중캐릭터ID:처녀 == 1
+						PRINTL 성을 모르는 미사용의 질
+					ELSEIF EXP:선택중캐릭터ID:V경험 < 10
+						PRINTL 성을 알아 어른의 계단을 조심조심 오르기 시작한지 얼마 안된 질은 강하게 매달려 온다
+					ELSEIF EXP:선택중캐릭터ID:V경험 < 20
+						PRINTL 미사용에 가까운 질은 아직 딱딱함을 남기고 있다
+					ENDIF
+			ENDSELECT
+		ENDIF
+	ENDIF
+	
+
+	SIF ABL:선택중캐릭터ID:V감각 >= 5 && CFLAG:선택중캐릭터ID:욕구불만도 > 300 && 선택중캐릭터ID
+			PRINTFORML %CALLNAME:MASTER%에 안기고 싶어서 근질근질하고 있다
+	PRINTFORML
+	SIF TALENT:선택중캐릭터ID:포르치오성감 ;KR판 구잔재
+		PRINTFORML 자궁을 찔리면 절정하기까지 개발되고 있다
+	SIF CFLAG:선택중캐릭터ID:수면간 == 1
+		PRINTFORML %CALLNAME:MASTER%에 자고 있는 동안에 장난 되었던 적이 있다
+	SIF CFLAG:선택중캐릭터ID:수면간 == 2
+		PRINTFORML %CALLNAME:MASTER%에 자고 있는 동안에 범해졌던 적이 있다
+	IF CFLAG:선택중캐릭터ID:만취간 == 2
+		PRINTFORML %CALLNAME:MASTER%에 취해 부서지고 있는 곳(중)을 범해졌던 적이 있다
+	ELSEIF CFLAG:선택중캐릭터ID:만취간 == 1
+		PRINTFORML %CALLNAME:MASTER%에 취해 부서지고 있는 곳(중)을 범해졌던 적이 있지만 눈치채지 않았다
+	ENDIF
+
+
+ENDIF
+
+
+@예정
+#DIM 의뢰번호
+
+PRINTL □ 예정 □---------------------------------------------------------------------------
+PRINTL 
+SELECTCASE FLAG:포부
+	CASE 1
+		LOCALS = 자위 장려
+	CASE 2
+		LOCALS = 동성애 추진
+	CASE 3
+		LOCALS = 암컷 구멍 개척
+	CASE 4
+		LOCALS = 항문개발
+	CASE 5
+		LOCALS = 유협진흥
+ENDSELECT
+IF FLAG:포부
+	PRINTFORML 올해의 포부: %LOCALS%
+	PRINTL
+ENDIF
+IF FLAG:연회개최플래그
+	IF FLAG:개시일 - DAY <= 0
+		PRINT 오늘
+	ELSE
+		PRINTFORM {FLAG:개시일 - DAY}일 후
+	ENDIF
+	CALL 연회예정표시
+	PRINTL 
+	PRINT 연회규모：
+		SELECTCASE FLAG:연회규모
+			CASE IS >= 5000
+				PRINT 특대
+			CASE IS >= 2500
+				PRINT 대
+			CASE IS >= 1500
+				PRINT 중
+			CASEELSE
+				PRINT 소
+		ENDSELECT
+
+	SIF FLAG:36 > 0
+		PRINTL 　우천 중지
+ENDIF
+PRINTL
+IF FLAG:대본반환기한 >= 2
+	FOR LOCAL, 1, BookTitles + 1
+		SIF ITEM:(100 + LOCAL)
+			PRINTFORML 빌린 책：%ITEMNAME:(100 + LOCAL)%
+	NEXT
+	PRINTL 
+	IF  FLAG:대본반환기한 == 2
+		PRINTFORML 빌린 책 반환일：오늘
+	ELSE
+		PRINTFORML 빌린 책 반환일：{FLAG:대본반환기한 - 2}일 후
+	ENDIF
+PRINTL
+ENDIF
+
+CALL SHOW_ALL_IRAI_SLOT
+
+
+@팬티수집상황(선택중캐릭터ID)
+#DIM 선택중캐릭터ID
+PRINTL □ 팬티 수집 상황 □-----------------------------------------------------------------
+IF FLAG:팬티수집상황타입B == 0
+	CALL DISPLAY_COLLECTION(선택중캐릭터ID)
+	; 개인 임의수정, 개행추가
+	PRINTL
+	PRINTFORML 　총수：{RESULT:0, 4}장　　종별：{RESULT:1, 2}종　　중복：{RESULT:0 - RESULT:1, 4}장
+ELSE
+	CALL DISPLAY_COLLECTION_B(선택중캐릭터ID)
+	; 개인 임의수정, 개행추가
+	PRINTL
+	PRINTFORML 　총수：{RESULT:0, 4}장　　종별：{RESULT:1, 2}/{RESULT:2}종　　중복：{RESULT:0 - RESULT:1, 4}장
+ENDIF
+
+@바람기파악상황(C_ID)
+#DIM C_ID
+#DIM LINE_BREAK
+LINE_BREAK = 0
+PRINT □ 
+CALL PRINTBUTTON_EX(@"%조사처리(CALLNAME:C_ID,"가")% 파악 중인 %CALLNAME:MASTER%의 육체 관계 (노란색은 공인)", 168, TFLAG:168)
+PRINTL  □------------------------------------------------------------
+IF !TFLAG:바람기력표시
+	PRINTFORML 
+	FOR LOCAL, 1, CHARANUM
+		SIF LOCAL == C_ID
+			CONTINUE
+		IF GET_UWAKI_HISTORY(C_ID, LOCAL)
+			SIF GET_UWAKI_HISTORY(C_ID, LOCAL) == 2
+				SETCOLOR C_YELLOW
+			SIF LINEISEMPTY()
+				PRINT 　
+			PRINTFORMLC %CALLNAME:LOCAL%
+			LINE_BREAK ++
+			SIF LINE_BREAK % (PRINTCPERLINE() - 1) == 0
+				PRINTL 
+		ENDIF
+		RESETCOLOR
+	NEXT
+	SIF LINE_BREAK % (PRINTCPERLINE() - 1) != 0
+		PRINTL 
+ENDIF
+
+@PRINT_STATE_PREFERENCE(선택중캐릭터ID)
+#DIM 선택중캐릭터ID
+PRINTL □ 취향기호 □-----------------------------------------------------------------------
+PRINTL 좋아함：
+CALL SHOW_TASTE(GET_STR(, "캐릭터데이터", 선택중캐릭터ID, "감성：좋아함"), "POSITIVE", ABL:선택중캐릭터ID:친밀 < 5)
+PRINTFORML 
+PRINTL 싫어함：
+CALL SHOW_TASTE(GET_STR(, "캐릭터데이터", 선택중캐릭터ID, "감성：싫어함"), "NEGATIVE", ABL:선택중캐릭터ID:친밀 < 5)
+DRAWLINE
+PRINTL 좋아하는 맛：
+CALL SHOW_TASTE(GET_STR(, "캐릭터데이터", 선택중캐릭터ID, "요리：좋아하는 맛"))
+PRINTL 싫어하는 맛：
+CALL SHOW_TASTE(GET_STR(, "캐릭터데이터", 선택중캐릭터ID, "요리：싫어하는 맛"))
+PRINTL 조수 효과：
+CALL DISH_TASTE_FROM_CHARA(선택중캐릭터ID, "OUTPUT")
+CALL SHOW_TASTE(RESULTS, "ASSIDATA")
+IF 선택중캐릭터ID == MASTER && EX_DISH_NAME != ""
+	PRINTFORML ＜%EX_DISH_NAME%＞
+	CALL SHOW_TASTE(DISH_TASTE, "DISH_DATA")
+ENDIF
+DRAWLINE
+IF CFLAG:선택중캐릭터ID:좋아하는체위
+	PRINT 약점：
+	SELECTCASE CFLAG:선택중캐릭터ID:좋아하는체위
+	CASE 1
+		PRINTL 정상위
+	CASE 2 
+		PRINTL 후배위
+	CASE 3 
+		PRINTL 기승위
+	CASE 4 
+		PRINTL 대면좌위 
+	CASE 5 
+		PRINTL 배면좌위
+	CASE 6
+		PRINTL 정상위 애널
+	CASE 7 
+		PRINTL 후배위 애널
+	CASE 8 
+		PRINTL 기승위 애널
+	CASE 9 
+		PRINTL 대면좌위 애널
+	CASE 10 
+		PRINTL 배면좌위 애널
+	ENDSELECT
+	PRINTL 　
+ENDIF
+
+@PRINT_STATE_GIFTDATA(선택중캐릭터ID, 最大表示行数)
+#DIM 선택중캐릭터ID
+#DIM 最大表示行数
+#DIM 表示開始
+SIF !GIFT_GOT:선택중캐릭터ID:1
+	RETURN
+
+SIF !最大表示行数
+	最大表示行数 = 100
+
+FOR LOCAL, 0, 100
+	;フラグ0番が100を兼ねているのでこの形に
+	IF !GIFT_GOT:선택중캐릭터ID:((LOCAL + 1) % 100)
+		表示開始 = MAX(LOCAL + 1 - 最大表示行数, 1)
+		BREAK
+	ENDIF
+NEXT
+
+PRINTL □ 당신이 준 선물 □-----------------------------------------------------------
+;お気に入りを先頭に持ってくる
+SIF CFLAG:선택중캐릭터ID:받은선물
+	CALL PRINT_GIFTDATA(CFLAG:선택중캐릭터ID:받은선물, 선택중캐릭터ID, "캐릭터의")
+FOR LOCAL, 表示開始, 表示開始 + 最大表示行数 + 1
+	SIF GIFT_GOT:선택중캐릭터ID:LOCAL && GIFT_GOT:선택중캐릭터ID:LOCAL != CFLAG:선택중캐릭터ID:받은선물
+		CALL PRINT_GIFTDATA(GIFT_GOT:선택중캐릭터ID:LOCAL, 선택중캐릭터ID, "캐릭터의")
+NEXT
+
+@Valentine_History(ARG)
+IF CFLAG:ARG:발렌타인
+	PRINTFORML 발렌타인에 %조사처리(Valentine_Chocolate(ARG),"를")% 주었다 \@ CFLAG:ARG:발렌타인 > 100?  (답례 완료)# \@
+ENDIF
+
+@Valentine_Chocolate(ARG)
+#FUNCTIONS
+SELECTCASE CFLAG:ARG:발렌타인 % 100
+	CASE 1
+		LOCALS = 블랙썬더를
+	CASE 2
+		LOCALS = 평범한 초콜릿을
+	CASE 3
+		LOCALS = 고급 초콜릿을
+	CASE 4
+		LOCALS = 수제 초콜릿을
+ENDSELECT
+RETURNF LOCALS
+
+@PERSONALITY_TYPE(ARG)
+#FUNCTIONS
+SELECTCASE CFLAG:ARG:성격경향
+	CASE 1
+		RETURNF "심약"
+	CASE 2
+		RETURNF "강경"
+	CASE 3
+		RETURNF "솔직"
+	CASE 4
+		RETURNF "성실"
+	CASE 5
+		RETURNF "그외"
+ENDSELECT

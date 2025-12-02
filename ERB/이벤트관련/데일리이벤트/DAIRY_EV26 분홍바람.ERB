@@ -1,0 +1,17 @@
+﻿@DAILY_CONDITION_EV26
+#DIM 발생율
+발생율 = 25
+SIF FLAG:획득팬티총수 >= 4
+	발생율 += SQRT(FLAG:획득팬티총수) / 2
+발생율 += FLAG:독신 * 5
+IF 발생율 < RAND:1000 || FLAG:이상기상
+	RETURN -1
+ENDIF
+CALL DAILY_EV26
+RETURN 1
+
+@DAILY_EV26
+FLAG:독신 = 0
+PRINTFORMW 선배 중 하나가 남긴【올바르지 않은 날씨 마법】이 발동한 거 같다……！
+CALL COLORMESSAGE(@"분홍빛 바람이 불게 되었다",C_PINK,2,1)
+FLAG:이상기상 = 8

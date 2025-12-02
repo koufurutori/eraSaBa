@@ -1,0 +1,178 @@
+﻿;FileName_아틀리에_발견.ERB ------------------------------ Rev1. 00
+;COMMENT 노아와의 약속을 지켰다.
+;-----------------------------------------------------------
+
+@MANOSABA_ATELIER_FOUND
+
+;MAP_COMM_00_t.ERB에서 FLAG:아틀리에개방 을 열어주고,
+;EVENTCOMEND_t 에서 대사를 뱉게 직접 거기서 CALL 해준다. 그러면 잘 작동함.
+
+;-------------------------------------------------
+;노아의 아틀리에 발견(노아의 생존 및 동행 상황, 싸우고 있으면 안 됨)
+;------------------------------------------------- 
+
+DRAWLINE
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW (역시 이 근처가 신경 쓰이는걸.)
+PRINTFORMW (아무것도 없는 벽 뒤의 공간을 굳이 지도에 ???라고 표시해둘 이유도 없고.)
+RESETCOLOR
+PRINTFORML
+PRINT 히로와 노아는 
+SIF FLAG:노아와약속
+    PRINT 그림 그릴 공간을 찾아 
+PRINTFORMW 2층 복도를 돌아다니고 있었다.
+PRINTFORMW 그러던 도중 히로의 눈은 저택에서 눈을 뜬 이후 계속해서 신경 쓰이던 벽을 향했다.
+PRINTFORML 교도관 측으로부터 받은 지도에는 이 벽 뒤에 어떠한 공간이 있는 것처럼【???】라고 표기되어 있으나,
+PRINTFORMW 정작 지도를 봐도 실제로 벽을 둘러봐도 입구는 없는 수상한 곳이었다.
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW 「그저 질 나쁜 장난인가……」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 223, 233, 237
+PRINTFORMW 「응~? 히로 쨩, 그 벽이 신경 쓰이는 거야?」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW 「아아.」
+RESETCOLOR
+PRINTFORML
+PRINTFORMW 미간을 찌푸린 채 벽을 주먹으로 통통 두들기는 히로의 모습을 보고 노아가 말을 걸었다.
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW 「여기에 어떤 공간이 있는 것 같은데, 문이 없어서.」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 223, 233, 237
+PRINTFORMW 「그럼 문을 그리면 되지 않을까?」
+PRINTFORMW 「노아가 그려볼게!」
+RESETCOLOR
+PRINTFORML
+PRINTFORMW 곧바로 콧노래를 흥얼거리면서 팔레트와 붓을 꺼내 그림을 그리기 시작한 노아를 히로는 별 제지하지 않으면서 가만히 지켜보았다.
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW (벽에 문을 그리면 진짜로 열리는 공간이라니 만화같은 발상이다……)
+PRINTFORMW (하지만 뭐, 여기에 조금 그림을 그리는 정도면 다른 사람들에게도 폐가 되지 않ㅡㅡ)
+RESETCOLOR
+PRINTFORML
+SETCOLOR 223, 233, 237
+PRINTFORMW 「아! 진짜로 문이 되었어!」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW 「뭐?」
+RESETCOLOR
+PRINTFORML
+PRINTFORMW 자랑스럽게 말을 꺼낸 노아의 뒤에는 아까 전까지 없었던 문이 하나 있었다.
+PRINTFORMW 그림이 아닌, 진짜 문이었다.
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW 「설마 정말로 문을 그리면 열리는 곳일 줄이야……」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 223, 233, 237
+PRINTFORMW 「히로 쨩, 히로 쨩. 들어가보자!」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW 「그래. 위험할지도 모르니 뛰진 말고.」
+RESETCOLOR
+PRINTFORML
+DRAWLINE
+PRINTFORMW 
+SETCOLOR 223, 233, 237
+PRINTFORMW 「와아ㅡ!」
+RESETCOLOR
+PRINTFORML
+PRINTFORMW 내부에는 수많은 미술 용품으로 가득차 있었다.
+PRINTFORMW 석고상, 종이, 캔버스 이젤에 작업대까지.
+PRINTFORML 나름대로 널찍한 내부공간에 안뜰이 보이는 베란다에서 불어오는 선선한 공기는 비단 예술 활동장소만이 아닌,
+PRINTFORMW 일상적인 소녀들의 휴식공간으로도 사랑받을 곳으로 보였다.
+PRINTFORML
+SETCOLOR 223, 233, 237
+PRINTFORMW 「대단해, 대단해! 노아, 이런 작업 장소가 있으면 했어!」
+PRINTFORMW 「와ㅡ이! 와ㅡㅡ이!」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW 「그러네. 이렇게 멋진 곳이 숨겨져 있었을 줄이야.」
+PRINTFORMW 「노아의 마법이 아니었다면 찾지 못했겠어.」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 223, 233, 237
+PRINTFORMW 「응! 정했습니다!」
+PRINTFORMW 「지금부터 이곳은 노아가【노아의 아틀리에】라고 명명하겠습니다!」
+RESETCOLOR
+PRINTFORML
+SETCOLOR 184, 38, 71
+PRINTFORMW (딱히 노아만의 장소는 아니지만…… 뭐 됐나, 이름 정도는.)
+PRINTFORMW (아무도 신경 안 쓸 것 같고……)
+RESETCOLOR
+PRINTFORML
+PRINTFORMW 신나하는 노아의 모습에 히로도 조금이나마 속에 응어리져있던 스트레스가 풀리는 기분이었다. 
+PRINTFORMW 노아와 히로가 새로운 장소를 찾았다는 소식은 순식간에 소녀들 사이에서 퍼져, 곧 2층의 숨겨진 방은 정식으로【노아의 아틀리에】라고 불리게 되었다.
+IF !FLAG:레이아삭제 && FLAG:노아와약속
+    PRINTFORMW
+    PRINTFORML
+    SETCOLOR 245, 222, 179
+    PRINTFORMW 「……」
+    PRINTFORMW 「히로 군은 의외로 꽤 상냥하네.」
+    RESETCOLOR
+    PRINTFORML
+    PRINTFORMW 노아와 함께 다니면서 그림 그릴 장소를 찾던 히로의 모습을 뒤에서 지켜보던 레이아가 말을 걸었다.
+    PRINTFORML
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「상냥해? 내가?」
+    PRINTFORMW 「아니. 나는 이게 올바르니까 그렇게 하고 있을 뿐이다.」
+    RESETCOLOR
+    PRINTFORML
+    SETCOLOR 245, 222, 179
+    PRINTFORMW 「……아니, 응. 그렇네.」
+    PRINTFORMW 「내가 멋대로 착각하고 있던 모양이야!」
+    RESETCOLOR
+    PRINTFORML
+    PRINTFORMW 그 말을 끝으로 어딘가 기쁘다는 표정으로 레이아는 미소지었다.
+
+    ;레이아 현재 아틀리에
+    ;레이아 노아 히로 호감도 변화
+    ;FLAG:레이아신뢰 = 1
+    ;레이아 스트레스 - 3000
+
+    CFLAG:4:현재위치 = P73아틀리에
+    RELATION:4:0 = 150
+    RELATION:4:3 = 0
+    FLAG:레이아신뢰 = 1
+    IF BASE:4:스트레스 < 3000
+        BASE:4:스트레스 = 0
+    ELSE
+        BASE:4:스트레스 -= 3000
+    ENDIF
+ENDIF
+
+PRINTFORML
+DRAWLINE
+PRINTFORML 
+PRINTFORMW 2층의 아틀리에가 개방되었다.
+PRINTFORMW 
+
+;히로, 노아 스트레스 - 1000 / -3000
+;히로, 노아 현재 아틀리에
+;FLAG:노아와약속 = 0
+;FLAG:아틀리에대사 = 1 뱉었음으로 확인시키기
+
+IF BASE:0:스트레스 < 1000
+    BASE:0:스트레스 = 0
+ELSE
+    BASE:0:스트레스 -= 1000
+ENDIF
+IF BASE:3:스트레스 < 3000
+    BASE:3:스트레스 = 0
+ELSE
+    BASE:3:스트레스 -= 3000
+ENDIF
+CFLAG:0:현재위치 = P73아틀리에
+CFLAG:3:현재위치 = P73아틀리에
+FLAG:노아와약속 = 0
+FLAG:아틀리에대사 = 1
+

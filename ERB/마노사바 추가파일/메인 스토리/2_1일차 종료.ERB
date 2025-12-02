@@ -1,0 +1,122 @@
+﻿;FileName_MANOSABA_하루시작전함수.ERB ------------------------------ Rev1. 00
+;COMMENT 1일차 끝에 나오는 것.
+;-----------------------------------------------------------
+
+@MANOSABA_DAY1ENDING
+
+;-------------------------------------------------
+;다회차 + 유키의 진실을 암
+;-------------------------------------------------
+IF FLAG:주회수 >= 1 && FLAG:대마녀유키
+    PRINTFORML 흐익 유키를 알아버린 N회차 고인물이다!
+;-------------------------------------------------
+;다회차
+;-------------------------------------------------
+ELSEIF FLAG:주회수 >= 1
+    PRINTFORML 흐익 N회차 고인물이다!
+;-------------------------------------------------
+;1회차
+;-------------------------------------------------
+ELSE
+
+    DRAWLINE
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (……마녀.)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 자기 직전, 버릇처럼 일기를 쓰려던 히로는 고쿠쵸가 몇 시간 전에 한 말을 떠올렸다.
+    PRINTFORML 
+    PRINTFORML 
+    PRINTFORMW 『여러분은【마녀】가 될 소질을 가지고 있습니다.』
+    PRINTFORMW 『높으신 분들이 정한 이야기에 따르면【마녀】는 이 나라에 재앙을 가져오는『악』이라고 합니다.』
+    PRINTFORMW 『장래에【마녀】가 될 가능성이 있다면, 그냥 둘 수는 없으니까요……』
+    PRINTFORML 
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (여기 있는 모두가 마녀가 될 가능성이 있는 자들이라고 고쿠쵸가 말했었지.)
+    PRINTFORMW (그렇다는 것은 여기 있는 소녀 전원, 가지고 있다는 건가.)
+    PRINTFORML 
+    PRINTFORMW (ㅡㅡ【마법】을.)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 그녀는 침대 위에 앉은 채 떠올린다.
+    PRINTFORMW 자신이 가지고 있는 올바르지 않은ㅡㅡ 이 마법을.
+    PRINTFORML 
+    PRINTFORMW 【사망회귀】
+    PRINTFORML 
+    PRINTFORMW 소유자가 죽으면 그날 아침, 깨어났을 때로 되돌아가는 마법.
+    PRINTFORMW 니카이도 히로의 삶이 아직까지도 이어지고 있는 이유다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (어렸을 때 수난사고에 휘말려서 죽을 뻔 했지만…… 죽었어야 할 자가 아직까지도 살아있다는 이유로 마녀라 불리는 게 아닌 이상, 난 마녀가 아니야.)
+    PRINTFORMW (게다가 내가『악』이라고? ……웃기지도 않는군.)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 히로는 평생을 선을 좇으며 살아왔다.
+    PRINTFORMW 그리고,『악』을 이 세상에서 없애는 것을 자신의 사명으로 삼았다.
+    PRINTFORML 
+    PRINTFORMW 그런 의미에서 이곳은 『올바르지 않다.』
+    PRINTFORMW 갑작스러운 납치. 감금. 불법적인 미성년자 구속에 이형의 괴물까지. 터무니 없는 인권유린의 현장이 일상이라는 듯 자연스럽게 눈앞에 펼쳐져있었다.
+    PRINTFORMW 심지어 오늘 만난 부엉이 괴물에 따르면 지금 행해지고 있는 모든 것이 정부에 의해 용인된 행위라는 모양이다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (거기에…… 하필이면 에마와 같은 방인가.)
+    PRINTFORMW (아아, 그래. 확실히 에마라면 마녀일지도 몰라. 그 녀석은 마녀라도 이상할 게 없지.)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 그것은 언젠가 그리운 사람이 히로에게 해주었던 말.
+    PRINTFORML 
+    PRINTFORML 
+    PRINTFORML 『에마는, 머지않아 재앙을 불러올 마녀가 될 거에요.』
+    PRINTFORMW 『모두를 불행하게 만드는 마녀가.』
+    PRINTFORML 
+    PRINTFORML 
+    PRINTFORMW 경고처럼, 학교 옥상에서 둘이 앉아있을 때 그녀의 입에서 흘러가듯 나온 말이었다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (……)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 얼마나 그리워하든 잃어버린 것은 돌아오지 않는다.
+    PRINTFORMW 과거의 어느 시점에 모든 장면이 멈춰진 채, 언제까지고 마음은 그때에 묶여있는데도 남겨진 쪽의 시간만이 무정하게 흘러간다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (스스로 생각하기에도 오늘은 유난히 감정적이지. 갑자기 낯선 곳에서 눈을 떠서인가?)
+    PRINTFORMW (그러고보니 고쿠쵸로부터 스트레스를 주의해라, 라는 말도 들었던가.【마녀화】라는 이상한 말을 하면서.)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 너무 많은 일이 일어난 하루였다.
+    PRINTFORMW 급격히 밀려오는 피로에 히로는 눈 사이를 손으로 지긋이 누르면서 억지로 밀려오는 감정을 억누르고 스스로를 다잡았다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (……지금은 가진 정보가 부족하니 이 사안에 대해서는 나중에 더 생각해보도록 하고…… 이런, 시간이.)
+    PRINTFORMW (이러다가 잘 시간을 놓치겠어. 규칙적이지 않은 생활 패턴은 올바르지 않아.)
+    PRINTFORMW (일기만 쓰고 빨리 자도록 할까……)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORML 그렇게 결론을 낸 히로는 자기 전 일기를 쓰기 위해 버릇처럼 주머니에 손을 넣어 필기구를 찾으려고 했으나,
+    PRINTFORMW 지금 입고 있는 복장은 감옥 측에 의해 강제로 갈아입혀진 것. 평소에 가지고 있던 소지품들은 전부 없어진 상태였다.
+    PRINTFORMW 펜이 있을리가 없다는 것을 깨닫고 주머니 속에서 손을 빼려던 찰나, 무언가 길고 단단한 게 히로의 손에 잡혔다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (……응?)
+    PRINTFORMW (뭔가 주머니 안에 들어가 있어…?)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 꺼낸 손에 들려있던 것은 이 감옥에 있을 리가 없는,
+    PRINTFORMW 있어서는 안 되는,
+    PRINTFORMW 
+    PRINTFORMW ㅡㅡ소중한 친구에게 주었던 만년필이었다.
+    PRINTFORML 
+    DRAWLINE
+    PRINTFORML 
+    PRINTFORMW 니카이도 히로는 일기를 남겼다.
+    PRINTFORMW 
+
+    CALL MASTER_DIARY_WRITE, @"감옥생활 1일차.<br><br>눈을 뜨자 알 수 없는 곳에 납치되어 있었다.<br>고쿠쵸라는 옥장에 따르면 여기는 감옥으로, 마녀후보들을 가둬두는 시설인 모양이다.<br>나를 제외한 12명의 소녀가 더 잡혀있으며 모두 혼란스럽다는 듯한 표정이었다.<br>그중에는 사쿠라바 에마도 있었다.<br><br>……나는 마녀가 아니다.<br>이건 올바르지 않아.<br>일단 당장은 저쪽에서 하라는 대로 움직여야겠지만…… 앞으로는 어떻게 해야할까.<br>향후 행동에 대해서는 고민해볼 필요가 있다.<br><br>마지막으로…… 어째서 만년필이 내 주머니에 있던 거지?"
+
+    ITEM:만년필 = 1
+
+  
+ENDIF

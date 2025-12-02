@@ -1,0 +1,776 @@
+﻿;FileName_MANOSABA_보강함수.ERB ------------------------------ Rev1. 00
+;COMMENT 이것저것 지우면서 흩어진 함수들 모아둔 곳
+;-----------------------------------------------------------
+;-------------------------------------------------
+;위치짐작
+;-------------------------------------------------
+@HITOSAGASI(ARG)
+CALL HITOSAGASI_2(1)
+CALL HITOSAGASI_2(2)
+PRINTFORML [0] 돌아간다
+;PRINTBUTTON "[확인 종료]", 0
+
+;ARG=몇번째의 표시인가(1or2)
+@HITOSAGASI_2(ARG)
+SIF FLAG:정렬
+	CALL CHARASORT_EX
+FOR LOCAL:1, 1, EX_CHARANUM
+	IF FLAG:정렬
+		LOCAL = RESULT:(LOCAL:1)
+		SIF LOCAL < 0
+			CONTINUE
+	ELSE
+		LOCAL = LOCAL:1
+		SIF LOCAL >= CHARANUM
+			BREAK
+	ENDIF
+	SIF AT_HOME(LOCAL) == 0
+		CONTINUE
+	SIF CFLAG:LOCAL:현재위치 < MINROOM()
+		CONTINUE
+	SIF CFLAG:LOCAL:현재위치 == MAXROOM && CFLAG:LOCAL:수면
+		CONTINUE
+	IF ARG == 1
+		SIF !CFLAG:LOCAL:신사거주
+			CONTINUE
+		SETCOLOR C_S_BLUE
+	ELSEIF ARG == 2
+		SIF CFLAG:LOCAL:신사거주
+			CONTINUE
+	ENDIF
+	PRINTFORM %CALLNAME:LOCAL, 15, LEFT%
+	RESETCOLOR
+	LOCALS = %NAME_FROM_PLACE(CFLAG:LOCAL:현재위치)%
+	; LOCALS = %NAME_FROM_PLACE(CFLAG:LOCAL:현재위치)%
+	; SIF CFLAG:LOCAL:현재위치 == CFLAG:MASTER:311
+	; 	LOCALS = %CALLNAME:MASTER% 방
+	; PRINTBUTTON "["+LOCALS+"]", CFLAG:LOCAL:현재위치
+	; PRINTFORM %" "*(22-STRLENS(LOCALS))%
+	PRINTFORM [{CFLAG:LOCAL:현재위치, 3}] %LOCALS, 24, LEFT%
+	IF LOCALS == ""
+		PRINTFORML 알 수 없는 위치에 있습니다({CFLAG:LOCAL:현재위치})
+	ELSEIF CFLAG:LOCAL:수면
+		;PRINTL 취침중
+		;KR판 추가수정, 취침중 색 변경
+		CALL COLORMESSAGE("취침중", C_N_BLUE, 1)
+	ELSEIF CFLAG:LOCAL:행동 == 5
+		IF CFLAG:LOCAL:현재위치 == TFLAG:연회장 && TIME_PROGRESS(TIME:1) && (CFLAG:LOCAL:직종 == 49 || CFLAG:LOCAL:직종 == 51)
+			PRINTL 연회중
+		ELSE
+			;PRINTL 일하는중
+			;KR판 추가수정, 일하는중 색 변경
+			CALL COLORMESSAGE("일하는중", C_D_ORANGE, 1)
+		ENDIF
+	ELSE
+		PRINTL
+	ENDIF
+NEXT
+
+
+
+;-------------------------------------------------
+;캐릭터 삭제 후 삭제했음을 기록하는 함수
+;-------------------------------------------------
+;ARG : 판단 대상 캐릭터
+@MANOSABA_DELETED(ARG)
+
+CFLAG:ARG:출금 = 1
+
+SELECTCASE ARG
+	CASE 1
+		FLAG:에마삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 30000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 0
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 10000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 5000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 10000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 7000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 25000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 5000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 30000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 20000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 3000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+		
+	CASE 2
+		FLAG:안안삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 15000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 20000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 15000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 0
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 10000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 5000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 15000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 25000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 3
+		FLAG:노아삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 25000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 20000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 30000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 0
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 15000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 5000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 20000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 25000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 4
+		FLAG:레이아삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 30000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 20000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 17000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 5000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 0
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 5000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 15000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 25000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 5
+		FLAG:미리아삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 17000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 22000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 17000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 7000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 12000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 0
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 7000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 12000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 17000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 27000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 17000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 6
+		FLAG:마고삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 15000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 20000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 15000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 5000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 10000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 0
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 15000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 25000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 7
+		FLAG:나노카삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 20000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 20000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 15000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 5000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 10000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 5000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 0
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 15000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 25000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 8
+		FLAG:아리사삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		;히로 -> 15%
+		BASE:MASTER:스트레스 += 15000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 20000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 15000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 5000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 10000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 5000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 0
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 25000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 9
+		FLAG:셰리삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 15000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 25000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 15000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 5000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 10000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 5000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 15000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 40000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 10
+		FLAG:한나삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 15000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 25000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 15000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 5000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 10000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 5000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 15000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 20000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 25000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 11
+		FLAG:코코삭제 = 1
+
+		;사망 혹은 마녀화 시 애들 스트레스 증가
+		BASE:MASTER:스트레스 += 15000
+		FOR I,1,13
+			IF !FLAG:(3000+I)
+				SELECTCASE I
+					;에마
+					CASE 1
+						BASE:1:스트레스 += 20000
+					;안안
+					CASE 2
+						BASE:2:스트레스 += 15000
+					;노아
+					CASE 3
+						BASE:3:스트레스 += 5000
+					;레이아
+					CASE 4
+						BASE:4:스트레스 += 10000
+					;미리아
+					CASE 5
+						BASE:5:스트레스 += 15000
+					;마고
+					CASE 6
+						BASE:6:스트레스 += 5000
+					;나노카
+					CASE 7
+						BASE:7:스트레스 += 10000
+					;아리사
+					CASE 8
+						BASE:8:스트레스 += 15000
+					;셰리
+					CASE 9
+						BASE:9:스트레스 += 1000
+					;한나
+					CASE 10
+						BASE:10:스트레스 += 25000
+					;코코
+					CASE 11
+						BASE:11:스트레스 += 15000
+					;메루루
+					CASE 12
+						BASE:12:스트레스 += 2000
+				ENDSELECT
+			ENDIF
+		NEXT
+		FLAG:낙오자발생 = 1
+	CASE 12
+		FLAG:메루루삭제 = 1
+
+		IF !TALENT:12:흑막
+			;사망 혹은 마녀화 시 애들 스트레스 증가
+			BASE:MASTER:스트레스 += 15000
+			FOR I,1,13
+				IF !FLAG:(3000+I)
+					SELECTCASE I
+						;에마
+						CASE 1
+							BASE:1:스트레스 += 25000
+						;안안
+						CASE 2
+							BASE:2:스트레스 += 15000
+						;노아
+						CASE 3
+							BASE:3:스트레스 += 5000
+						;레이아
+						CASE 4
+							BASE:4:스트레스 += 10000
+						;미리아
+						CASE 5
+							BASE:5:스트레스 += 15000
+						;마고
+						CASE 6
+							BASE:6:스트레스 += 5000
+						;나노카
+						CASE 7
+							BASE:7:스트레스 += 10000
+						;아리사
+						CASE 8
+							BASE:8:스트레스 += 15000
+						;셰리
+						CASE 9
+							BASE:9:스트레스 += 1000
+						;한나
+						CASE 10
+							BASE:10:스트레스 += 30000
+						;코코
+						CASE 11
+							BASE:11:스트레스 += 15000
+						;메루루
+						CASE 12
+							BASE:12:스트레스 += 2000
+					ENDSELECT
+				ENDIF
+			NEXT
+		ENDIF
+		FLAG:낙오자발생 = 1
+	CASE 13
+		FLAG:고쿠쵸삭제 = 1
+	CASE 14
+		FLAG:간수삭제 = 1
+		SIF !FLAG:나노카삭제
+			BASE:7:스트레스 += 50000
+		FLAG:낙오자발생 = 1
+	CASE 15
+		FLAG:유키삭제 = 1
+		BASE:MASTER:스트레스 += 40000
+		SIF !FLAG:에마삭제
+			BASE:1:스트레스 += 40000
+		SIF !FLAG:메루루삭제
+			BASE:12:스트레스 += 40000
+		FLAG:낙오자발생 = 1
+	CASE 16
+		FLAG:마녀화에마삭제 = 1
+	CASE 17
+		FLAG:마녀화안안삭제 = 1
+	CASE 18
+		FLAG:마녀화노아삭제 = 1
+	CASE 19
+		FLAG:마녀화레이아삭제 = 1
+	CASE 20
+		FLAG:마녀화미리아삭제 = 1
+	CASE 21
+		FLAG:마녀화마고삭제 = 1
+	CASE 22
+		FLAG:마녀화나노카삭제 = 1
+	CASE 23
+		FLAG:마녀화아리사삭제 = 1
+	CASE 24
+		FLAG:마녀화셰리삭제 = 1
+	CASE 25
+		FLAG:마녀화한나삭제 = 1
+	CASE 26
+		FLAG:마녀화코코삭제 = 1
+	CASE 27
+		FLAG:마녀화메루루삭제 = 1
+ENDSELECT
+
+;-------------------------------------------------
+;캐릭터 추가 후 삭제했음을 다시 복원하는 기록하는 함수
+;-------------------------------------------------
+;ARG : 판단 대상 캐릭터
+@MANOSABA_ADDED(ARG)
+
+CFLAG:ARG:출금 = 0
+
+SELECTCASE ARG
+	CASE 1
+		FLAG:에마삭제 = 0
+	CASE 2
+		FLAG:안안삭제 = 0
+	CASE 3
+		FLAG:노아삭제 = 0
+	CASE 4
+		FLAG:레이아삭제 = 0
+	CASE 5
+		FLAG:미리아삭제 = 0
+	CASE 6
+		FLAG:마고삭제 = 0
+	CASE 7
+		FLAG:나노카삭제 = 0
+	CASE 8
+		FLAG:아리사삭제 = 0
+	CASE 9
+		FLAG:셰리삭제 = 0
+	CASE 10
+		FLAG:한나삭제 = 0
+	CASE 11
+		FLAG:코코삭제 = 0
+	CASE 12
+		FLAG:메루루삭제 = 0
+	CASE 13
+		FLAG:고쿠쵸삭제 = 0
+	CASE 14
+		FLAG:간수삭제 = 0
+	CASE 15
+		FLAG:유키삭제 = 0
+	CASE 16
+		FLAG:마녀화에마삭제 = 0
+		CFLAG:ARG:현재위치 = P5에마・히로방
+	CASE 17
+		FLAG:마녀화안안삭제 = 0
+		CFLAG:ARG:현재위치 = P4노아・안안방
+	CASE 18
+		FLAG:마녀화노아삭제 = 0
+		CFLAG:ARG:현재위치 = P4노아・안안방
+	CASE 19
+		FLAG:마녀화레이아삭제 = 0
+		CFLAG:ARG:현재위치 = P3레이아・미리아방
+	CASE 20
+		FLAG:마녀화미리아삭제 = 0
+		CFLAG:ARG:현재위치 = P3레이아・미리아방
+	CASE 21
+		FLAG:마녀화마고삭제 = 0
+		CFLAG:ARG:현재위치 = P6마고・나노카방
+	CASE 22
+		FLAG:마녀화나노카삭제 = 0
+		CFLAG:ARG:현재위치 = P6마고・나노카방
+	CASE 23
+		FLAG:마녀화아리사삭제 = 0
+		CFLAG:ARG:현재위치 = P7셰리・아리사방
+	CASE 24
+		FLAG:마녀화셰리삭제 = 0
+		CFLAG:ARG:현재위치 = P7셰리・아리사방
+	CASE 25
+		FLAG:마녀화한나삭제 = 0
+		CFLAG:ARG:현재위치 = P2코코・한나방
+	CASE 26
+		FLAG:마녀화코코삭제 = 0
+		CFLAG:ARG:현재위치 = P2코코・한나방
+	CASE 27
+		FLAG:마녀화메루루삭제 = 0
+		CFLAG:ARG:현재위치 = P1메루루방
+ENDSELECT

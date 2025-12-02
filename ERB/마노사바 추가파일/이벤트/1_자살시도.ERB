@@ -1,0 +1,283 @@
+﻿;FileName_자살시도.ERB ------------------------------ Rev1. 00
+;COMMENT 모두를 다치게 할 바에야.
+;-----------------------------------------------------------
+
+@MANOSABA_SUICIDETRY
+#DIM 계산수치
+
+
+;일단 어느 쪽이든 성공하면 히로의 스트레스 팍 오르고(금기:자살)
+;실패하면 아리사의 경우에는 마녀화하니 추가 스트레스 상승은 없으나(마녀화 스트레스는 있음) 미리아의 경우 자살시도 스트레스 오름(자살시도 소식 들음)
+
+;-------------------------------------------------
+;아리사의 자살시도
+;------------------------------------------------- 
+
+;기준: 아리사의 마녀화가 90% 이상 진행 시, 10% 확률로 시도함.
+IF !FLAG:아리사삭제 && BASE:8:스트레스 >= 90000 && RAND:10 == 0
+    DRAWLINE
+    PRINTFORML
+    SETCOLOR 178, 34, 34
+    PRINTFORMW 「……」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 시토 아리사는 자신의 손톱을 내려다 보고 있었다.
+    PRINTFORMW 분명 3시간쯤 전에 말끔하게 손톱을 정리했었는데, 몇 시간도 안 지난 지금 아리사의 손톱은 벌써 간수의 것마냥 길어져있었다.
+    PRINTFORMW 이것을 사람에게 휘두른다면 어떻게 될까. 날카롭게 벼려진 손톱은 연약한 소녀의 살점 정도는 가볍게 찢어발기고 그 목숨을 가져갈 터였다.
+    PRINTFORML 
+    SETCOLOR 178, 34, 34
+    PRINTFORMW 「……여기까지인가.」
+    RESETCOLOR
+    ;or
+    ;「……나는 여기까지인 거지?」 / 「……역시 이 이상은 버티기 어렵겠지.」
+    PRINTFORML 
+    PRINTFORMW 신체에 나타난 마녀화의 징조 외에도 마음마저 살인충동에 잡아먹혀가고 있다.
+    PRINTFORMW 조금이라도 방심했다가는 다른 사람을 해칠까 가능한 홀로 모두에게서 떨어진 곳에 있어왔지만, 그것도 이제는 한계였다.
+    PRINTFORML
+    SETCOLOR 178, 34, 34
+    PRINT 「
+    SIF !FLAG:에마삭제 && FLAG:마녀화에마삭제
+        PRINT 사쿠라바나 
+    SIF !FLAG:메루루삭제 && !TALENT:12:흑막 && FLAG:마녀화메루루삭제
+        PRINT 히카미나 
+    PRINTFORMW 니카이도…… 너희들은 내가 지키기로 다짐했으니까……」
+    RESETCOLOR
+    PRINTFORML
+    PRINTFORMW 아리사는 모두를 지킨다고 다짐했다.
+    PRINTFORMW 그러니까.
+    PRINTFORML 
+    SETCOLOR 178, 34, 34
+    PRINTFORMW 「이걸로, 지킬 수 있어.」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 자신으로부터 모두를 지키기 위해 아리사는 염원을 담아 나이프를 치켜들었다.
+    PRINTFORMW 더 이상 죄를 추가할 일이 없도록.
+    PRINTFORMW 
+    PRINTW …
+    PRINTW ……
+    PRINTW …………
+    PRINTFORMW 
+
+    ;성공확률은 기본 70%에 스트레스 퍼센트를 역으로 한 거. 스트레스 퍼센트가 100%일 때 0.9 곱해서 63% 성공, 90%일때 1.0 곱해서 70% 성공.
+    ;마녀화할수록 죽기 힘들어지는 몸이 되니까. 
+
+    계산수치 = RAND:100 * (190000 - BASE:8:스트레스)
+    ;[IF_DEBUG]
+    ;    PRINTFORML 아리사 사망 다이스 굴린다. 계산수치는 {계산수치}야.
+    ;[ENDIF]
+
+    IF 계산수치 > 2900000
+        SETCOLOR 178, 34, 34
+        PRINTFORMW 「하ㅡㅡㅡ」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORML 철 냄새가 지독하리만큼 공기를 뒤엎고,
+        PRINTFORMW 자그맣게 바람이 새는 듯한 소리가 울린 곳에서 수많은 붉은 나비가 피어올랐다……
+        PRINTFORML 
+        DRAWLINE
+        PRINTFORML 
+        PRINTFORMW 시토 아리사는 자살했다.
+        PRINTFORML 시토 아리사의 자살로 인해 니카이도 히로의 금기가 건드려져, 스트레스가 대폭 상승하였다.
+        PRINTFORML 
+        PRINTFORML 아리사의 사망 소식은 곧 감옥 내의 전원에게 전해졌다……
+        PRINTFORMW 
+        
+        ;아리사 사망처리
+        CALL MANOSABA_DELETED(8)
+        ;니카이도 히로의 스트레스 상승 10%
+        BASE:MASTER:스트레스 += 10000
+    ELSE
+        SETCOLOR 178, 34, 34
+        PRINTFORMW 「거짓…… 말이지…?」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 평범한 사람이라면 즉사할 정도로 나이프로 크게 목을 도려냈음에도 잠깐의 순간만에 상처는 바로 아물어버렸다. 
+        PRINTFORMW 몇 번을 반복해도, 다른 곳을 찔러봐도, 도구를 바꿔봐도, 고통에 몸부림치면서 신께 제발 죽게 해달라고 빌어봐도, 
+        PRINTFORMW 마녀화가 진행된 몸은 아리사가 죽는 것을 용서하지 않는다.
+        PRINTFORML 
+        PRINTFORMW 죽을 수가 없다.
+        PRINTFORMW 소녀의 몸은 이미 불로불사의 괴물ㅡㅡ【마녀】에 가까워져있었다.
+        PRINTFORML 
+        SETCOLOR 178, 34, 34
+        PRINTFORMW 「뭐야 이건…… 이래서야 완전히 괴물 그 자체잖아. 이렇게나, 이렇게나 피가 흐르고 있는데도, 어째서 죽지 않는 거냐고……」
+        PRINTFORMW 「나는 이제 죽는 것조차도 용서받지 못한다는 거냐? 어이, 누가 좀 답해보라고. 응?」
+        PRINTFORMW 「나같은 괴물 새끼는 영원히 이도저도 아닌 채 다른 사람들을 상처입히며 고통받아야 마땅하다는 거냐고…!」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 격정과 함께 고온의 불길이 아리사를 중심으로 퍼져나가더니, 모든 것을 집어삼킬 기세로 타오른다.
+        PRINTFORMW 그 모습은 아리사 안에 있던 어느【기억】을 떠올리게 하기에 충분했다.
+        PRINTFORML 
+        SETCOLOR 178, 34, 34
+        PRINTFORMW 「하하, 하하핫.」
+        PRINTFORMW 「아하하하하하하하!」
+        PRINTFORMW 「아아…… 맞아. 결국에는 다 똑같아. 어차피 다들『그때』처럼 죽지 못하는 나만 내버려두고선 죽어버리겠지.」
+        PRINTFORMW 「그렇다면…… 전부 내 손으로 죽여버리겠어. 그러면…… 그렇게 하면……」
+        PRINTFORML
+        PRINTFORMW 「이런 나를 혼내주겠지…?」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 광소와 함께 이형화한 몸을 이끌고 시토 아리사『였던 것』은 움직이기 시작했다……
+        PRINTFORML 
+        DRAWLINE
+        PRINTFORML 
+        PRINTFORMW 시토 아리사는【마녀화】했다.
+        PRINTFORMW 
+
+        ;아리사 마녀화
+        CALL MANOSABA_ADDED(23)
+        MARK:23:반발취득이력 = MARK:8:반발취득이력
+        CFLAG:23:현재위치 = P54호숫가
+        CALL MANOSABA_DELETED(8)
+        
+    ENDIF
+ENDIF
+
+
+;-------------------------------------------------
+;미리아의 자살시도
+;------------------------------------------------- 
+
+;기준: 미리아의 마녀화가 85% 이상 진행 시, 10% 확률로 시도함.
+IF !FLAG:미리아삭제 && BASE:5:스트레스 >= 85000 && RAND:10 == 0
+    IF !FLAG:미리아자살시도
+        DRAWLINE
+        PRINTFORML
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「싫어…… 아저씨는 그러고 싶지 않아…!」
+        PRINTFORMW 「모두를 해치고 싶다니, 그런 거, 아저씨는……」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 아무도 안 보이는 곳에서 사에키 미리아는 홀로 머리를 붙잡고 괴로워하고 있었다.
+        PRINTFORMW 시간이 지남에 따라 미리아의 몸속 마녀인자는 점점 활성화되어 몸의 주인인 미리아를 꼬드긴다.
+        PRINTFORML 
+        PRINTFORMW 『모두 사라져버리면 좋을 텐데.』
+        PRINTFORMW 『있어봤자 서로 다투고 헐뜯기만 할 뿐. 사회에서 몇 번이고 봐왔던 거지. 지쳤어.』
+        PRINTFORMW 『그럴 바에는 이 손으로 부숴버려서 조용하게 만들면 좋지 않을까?』
+        PRINTFORML 
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「ㅡㅡㅡ싫어!!!」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 아직까지는 어떻게든 맨정신으로 버티고 있었지만, 머지않아 이 발버둥의 끝이 다가온다는 것을 미리아는 느끼고 있었다.
+        PRINTFORML 
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「차라리 그럴 바에는 아저씨가 죽는 편이 나아……」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 죽음이 두렵지 않은 것은 아니다.
+        PRINTFORMW 그녀는 여기 있는 소녀들 중 누구보다도 어른스러웠지만, 동시에 누구보다도 평범한 15세 소녀였다.
+        PRINTFORMW 그러나 스스로의 목숨 이상으로 미리아가 두려워하는 것은『자신이 누군가를 해칠지도 모른다』는 사실이었다.
+        PRINTFORML 
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「무서워. 싫어. 죽고 싶지 않아. 그렇지만, 그렇지만…… 이대로면 분명……」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 두려움에 떨면서도 미리아는 식당에서 몰래 들고왔던 나이프를 목에 댄다.
+        PRINTFORMW 손에 떨림이 그대로 전해져 나이프는 이리저리 흔들리며 목의 살갗을 조금씩 상처내고 있었다.
+        PRINTFORML 
+        PRINTFORMW 아저씨는【아저씨】니까.
+        PRINTFORMW 여기 있는 소녀들은 모두 지켜져야 할【아이들】이니까.
+        PRINTFORMW 그러니까, 무섭고 두렵더라도 해내야만 한다.
+        PRINTFORML 
+        PRINTFORMW 숨을 가프게 쉬면서 미리아는 마지막으로 팔에 힘을 주었다.
+        PRINTFORMW 이런 자신이라도 모두를 위험으로부터 지켜낼 수 있기를 바라며.
+        FLAG:미리아자살시도 = 1
+    ELSE
+        DRAWLINE
+        PRINTFORML
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「……이번에야말로, 해내는 거야.」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 덜덜 떨면서도 사에키 미리아는 나이프를 목에 가져다 대었다.
+        PRINTFORML 
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「지난 번에는 실패했지만…… 이번에야말로 제대로 하지 않으면 분명 너무 늦어버릴테니까……」
+        PRINTFORMW 「하지 않으면 아저씨가 다른 얘들을 위험에 빠뜨리게 될 테니까…!」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 시간은 점점 줄어든다.
+        PRINTFORMW 날이 지나면 지날수록 마녀화가 진행되며 발현된 월등한 회복력으로 인해 점차 더 죽기 힘든 몸으로 변해갈 터였다.
+        PRINTFORMW 그렇기에, 죽으려면 지금밖에 기회가 없다.
+        PRINTFORML 
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「부디 용기를 낼 수 있게 도와주세요ㅡㅡ」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 누구에게 빈 기도였을까.
+        PRINTFORMW 미리아는 두 눈을 감고 그대로 나이프를 자신의 목을 향해 밀어넣었다.
+    ENDIF
+    PRINTFORMW 
+    PRINTW …
+    PRINTW ……
+    PRINTW …………
+    PRINTFORMW 
+
+    ;성공확률은 기본 70%에 스트레스 퍼센트를 역으로 한 거. 스트레스 퍼센트가 100%일 때 0.85 곱해서 59.5% 성공, 85%일때 1.0 곱해서 70% 성공.
+    ;마녀화할수록 죽기 힘들어지는 몸이 되니까. 
+
+    계산수치 = RAND:100 * (185000 - BASE:5:스트레스)
+    ;[IF_DEBUG]
+    ;    PRINTFORML 미리아 사망 다이스 굴린다. 계산수치는 {계산수치}야.
+    ;[ENDIF]
+
+    IF 계산수치 > 2900000
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「ㅡㅡㅡ콜록.」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORML 철 냄새가 지독하리만큼 공기를 뒤엎고,
+        PRINTFORMW 괴로운 듯 젖은 기침 소리가 몇 번 들린 후 잠잠해진 곳에는 수많은 붉은 나비가 날아올랐다……
+        PRINTFORML 
+        DRAWLINE
+        PRINTFORML 
+        PRINTFORMW 사에키 미리아는 자살했다.
+        PRINTFORML 사에키 미리아의 자살로 인해 니카이도 히로의 금기가 건드려져, 스트레스가 대폭 상승하였다.
+        PRINTFORML 
+        PRINTFORML 미리아의 사망 소식은 곧 감옥 내의 전원에게 전해졌다……
+        PRINTFORMW 
+
+        ;미리아 사망처리
+        CALL MANOSABA_DELETED(5)
+        ;니카이도 히로의 스트레스 상승 10%
+        BASE:MASTER:스트레스 += 10000
+    ELSE
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「콜록, 켈륵, 으, 아파, 아파…………」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 카랑, 하고 금속이 바닥에 떨어져 부딪치는 소리가 저택 내부에 울려퍼졌다.
+        PRINTFORMW 밀려오는 아픔에 고통스러워하면서도 미리아는 절망스러운 표정으로 자신이 떨어뜨린 나이프를 바라보았다.
+        PRINTFORML 
+        PRINTFORMW ……죽지 못 했다.
+        PRINTFORML 
+        PRINTFORMW 미리아의 목 주변에 피나비가 피어오르고 있었지만, 죽기에는 상처가 충분히 깊지 않았다.
+        PRINTFORML 죽음에 대한 본능적인 거부감, 생존 본능, 두려움.
+        PRINTFORMW 이 모든 것이 마지막의 마지막에 발목을 붙잡은 결과 이도저도 아닌 상처만이 목에 남아버렸다.
+        PRINTFORMW 다시 시도하려고 나이프를 향해 손을 뻗은 미리아였지만, 손의 떨림은 이전보다 더 심해져 나이프를 제대로 잡을 수조차 없었다.
+        PRINTFORML 
+        SETCOLOR 222, 184, 135
+        PRINTFORMW 「아, 하하…… 그렇지…… 그렇겠지…… 아저씨가 해냈을리가.」
+        PRINTFORMW 「……이런 우유부단한 나 같은 거, 정말 싫어……」
+        RESETCOLOR
+        PRINTFORML 
+        PRINTFORMW 밀려오는 혐오감과 함께 미리아는 엉망이 된 바닥과 몸을 정리하기 위해 비틀거리며 일어섰다……
+        PRINTFORML 
+        DRAWLINE
+        PRINTFORML 
+        PRINTFORMW 사에키 미리아의 자살시도가 실패했다.
+        PRINTFORML 사에키 미라아의 자살시도로 인해 니카이도 히로의 금기가 건드려져, 스트레스가 상승하였다.
+        PRINTFORMW 
+
+        ;미리아 스트레스 5% 상승, 체력 500 다운
+        BASE:5:스트레스 += 5000
+        IF BASE:5:체력 > 500
+            BASE:5:체력 -= 500
+        ELSE
+            BASE:5:체력 = 1
+        ENDIF
+        ;니카이도 히로의 스트레스 상승 5%
+        BASE:MASTER:스트레스 += 5000
+    ENDIF
+ENDIF
+

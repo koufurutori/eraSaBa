@@ -1,0 +1,25 @@
+﻿@DAILY_CONDITION_EV17
+SIF RAND:20 > 0 || FLAG:이상기상
+	RETURN -1
+CALL DAILY_EV17
+RETURN 1
+
+@DAILY_EV17
+FLAG:이상기상 = RAND:5 + 1
+TIME:5 = 0
+SELECTCASE FLAG:이상기상
+	CASE 1
+		LOCALS = 모두의 클리토리스가 민감
+	CASE 2
+		LOCALS = 모두의 여성기가 민감
+	CASE 3
+		LOCALS = 모두의 항문이 민감
+	CASE 4
+		LOCALS = 모두의 가슴이 민감
+	CASE 5
+		LOCALS = 모두의 입술이 민감
+ENDSELECT
+
+PRINTFORMW 밤새 저택 내부에 있던 사라지지 않는 마법들이 서로 간섭하며 이상 현상을 발생시킨 모양이다!
+PRINTFORMW 마법의 효과가 점차 저택 내부에 퍼져나가기 시작했다……
+CALL COLORMESSAGE(@"%LOCALS%해졌다", C_PINK, 2,1)

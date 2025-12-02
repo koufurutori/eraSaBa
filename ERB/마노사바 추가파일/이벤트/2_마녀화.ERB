@@ -1,0 +1,223 @@
+﻿;FileName_마녀화.ERB ------------------------------ Rev1. 00
+;COMMENT 결국 소녀는 마녀가 된다.
+;-----------------------------------------------------------
+
+@MANOSABA_BECOME_WITCH
+
+;스트레스가 100000을 넘으면 마녀화합니다.
+
+;-------------------------------------------------
+;에마 마녀화(에마는 마녀화하면 바로 게임오버로 이어지게 할까? 좀 고민되네)
+;------------------------------------------------- 
+IF !FLAG:에마삭제 && BASE:1:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「에마가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(16)
+    MARK:16:반발취득이력 = MARK:1:반발취득이력
+    CALL MANOSABA_DELETED(1)
+
+ENDIF
+
+
+;-------------------------------------------------
+;안안 마녀화
+;------------------------------------------------- 
+IF !FLAG:안안삭제 && BASE:2:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「안안이 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(17)
+    MARK:17:반발취득이력 = MARK:2:반발취득이력
+    CALL MANOSABA_DELETED(2)
+
+ENDIF
+
+
+;-------------------------------------------------
+;노아 마녀화
+;------------------------------------------------- 
+IF !FLAG:노아삭제 && BASE:3:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「노아가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(18)
+    MARK:18:반발취득이력 = MARK:3:반발취득이력
+    CALL MANOSABA_DELETED(3)
+
+ENDIF
+
+
+;-------------------------------------------------
+;레이아 마녀화
+;------------------------------------------------- 
+IF !FLAG:레이아삭제 && BASE:4:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「레이아가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(19)
+    MARK:19:반발취득이력 = MARK:4:반발취득이력
+    CALL MANOSABA_DELETED(4)
+
+ENDIF
+
+
+;-------------------------------------------------
+;미리아 마녀화
+;------------------------------------------------- 
+IF !FLAG:미리아삭제 && BASE:5:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「미리아가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(20)
+    MARK:20:반발취득이력 = MARK:5:반발취득이력
+    CALL MANOSABA_DELETED(5)
+
+ENDIF
+
+
+;-------------------------------------------------
+;마고 마녀화
+;------------------------------------------------- 
+IF !FLAG:마고삭제 && BASE:6:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「마고가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(21)
+    MARK:21:반발취득이력 = MARK:6:반발취득이력
+    CALL MANOSABA_DELETED(6)
+
+ENDIF
+
+
+;-------------------------------------------------
+;나노카 마녀화
+;------------------------------------------------- 
+IF !FLAG:나노카삭제 && BASE:7:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「나노카가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(22)
+    MARK:22:반발취득이력 = MARK:7:반발취득이력
+    CALL MANOSABA_DELETED(7)
+
+ENDIF
+
+
+;-------------------------------------------------
+;아리사 마녀화
+;------------------------------------------------- 
+IF !FLAG:아리사삭제 && BASE:8:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「아리사가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(23)
+    MARK:23:반발취득이력 = MARK:8:반발취득이력
+    CALL MANOSABA_DELETED(8)
+
+ENDIF
+
+
+;-------------------------------------------------
+;셰라 마녀화
+;------------------------------------------------- 
+IF !FLAG:셰리삭제 && BASE:9:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「셰리가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(24)
+    MARK:24:반발취득이력 = MARK:9:반발취득이력
+    CALL MANOSABA_DELETED(9)
+
+ENDIF
+
+
+;-------------------------------------------------
+;한나 마녀화
+;------------------------------------------------- 
+IF !FLAG:한나삭제 && BASE:10:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「한나가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(25)
+    MARK:25:반발취득이력 = MARK:10:반발취득이력
+    CALL MANOSABA_DELETED(10)
+
+ENDIF
+
+
+;-------------------------------------------------
+;코코 마녀화
+;------------------------------------------------- 
+IF !FLAG:코코삭제 && BASE:11:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「코코가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(26)
+    MARK:26:반발취득이력 = MARK:11:반발취득이력
+    CALL MANOSABA_DELETED(11)
+
+ENDIF
+
+
+;-------------------------------------------------
+;메루루 마녀화
+;------------------------------------------------- 
+IF !FLAG:메루루삭제 && BASE:12:스트레스 >= 100000
+    DRAWLINE
+    PRINTFORML
+
+    PRINTFORMW 「메루루가 마녀화 했음. 좆됨.」
+
+    PRINTFORMW 
+    
+    CALL MANOSABA_ADDED(27)
+    MARK:27:반발취득이력 = MARK:12:반발취득이력
+    CALL MANOSABA_DELETED(12)
+
+ENDIF
+

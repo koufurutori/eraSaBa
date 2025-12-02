@@ -1,0 +1,2 @@
+;TALENT를 알아차렸는가 확인하는 변수
+#DIM SAVEDATA KNOWTALENT,100,1000

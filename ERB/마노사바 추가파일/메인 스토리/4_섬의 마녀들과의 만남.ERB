@@ -1,0 +1,82 @@
+﻿;FileName_MANOSABA_하루시작전함수.ERB ------------------------------ Rev1. 00
+;COMMENT 섬의 마녀들의 목소리가 닿았다.
+;-----------------------------------------------------------
+
+@MANOSABA_WITCHCALLING
+
+;-------------------------------------------------
+;다회차 + 해피엔딩 도달 이후
+;-------------------------------------------------
+IF FLAG:주회수 >= 1 && FLAG:해피엔딩도달
+    PRINTFORML 흐익 유키를 알아버린 N회차 고인물이다!
+;-------------------------------------------------
+;다회차
+;-------------------------------------------------
+ELSEIF FLAG:주회수 >= 1
+    PRINTFORML 흐익 N회차 고인물이다!
+;-------------------------------------------------
+;1회차
+;-------------------------------------------------
+ELSE
+
+    CLEARLINE LINECOUNT
+    SETBGCOLOR 0, 0, 102
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「또다시 시작되는구나.」
+    PRINTFORMW 「이번으로 몇 번째 기수일까.」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 밤중, 몽롱한 의식 사이 목소리가 들려왔다.
+    PRINTFORMW 머나먼 곳에서 말을 하는 것 같기도, 가까운 곳에서 말을 하는 것 같기도 한 목소리는 어딘가 지친 음색을 띄고 있었다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (들어본 적이 있는 목소리던가…?)
+    PRINTFORMW (아니…… 기억에 없는 것 같은데……)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 히로는 어떻게든 목소리의 주인이 누구인지 떠올려보려고 노력했으나, 반쯤 잠들어 흐뿌연 연기로 가득찬 머리는 제대로 돌아가질 않았다.
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「응? 아아, 설마……」
+    PRINTFORMW 「우리의 목소리가 들리는 거니?」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 그런 히로의 낌새를 눈치 챈 듯 목소리가 말을 걸어온다.
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「이런. 반쯤 잠든거나 다름없는 상태네. 이래서야 이번에 서로 대화하기는 어렵겠는걸.」
+    PRINTFORMW 「하지만 그래. 만약 이번에 네가 우리의 목소리를 들은 게 우연이 아니라면,」
+    PRINTFORMW 「그렇다면 우리가 너를 도와줄 수 있을지도 몰라.」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 상냥하게, 안심시키려는 듯, 목소리는 말을 이어간다.
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「우리는 계속해서 지켜봐왔으니까.」
+    PRINTFORMW 「만약 잘 모르겠는 게 생긴다면 잠에서 깨어나기 전에 도와달라고 강하게 생각해봐.」
+    PRINTFORMW 「집중할만한 요소가 있다면 상상하기 쉬울테니, 간단하게【TUTORIAL】이란 단어를 키워드로 삼을까?」
+    PRINTFORML 「잘은 모르지만 이게 너희들이 좋아하는 게임에서 처음에 나오는 설명? 같은 거라던데.」
+    PRINTFORMW 「네게도 익숙한 단어지?」
+    RESETCOLOR
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW (물론 게임이라면 나도 한 적은 있, 지만……)
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW ……뭔가 상황이 이상하지 않은가? 라는 중요한 의문이 머리 속에서 톡 떠오른 것도 잠시.
+    PRINTFORMW 끝없는 수마에 기껏 떠올린 의문은 허무할 정도로 쉽게 잊혀져갔다.
+    PRINTFORMW 약 먹은 병아리 같은 히로의 모습이 안쓰러웠는지, 어쩐지 쓰게 웃고 있는 표정이 연상되는 음색으로 작별인사가 들려왔다.
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「일단 지금은 잠에 들렴.」
+    PRINTFORMW 「나중에 한 번 해보면 무슨 느낌인지 바로 알 테니까.」
+    PRINTFORMW 
+    PRINTFORMW 「그럼, 좋은 꿈을.」
+    RESETCOLOR
+    PRINTFORMW 
+    PRINTFORMW 그 말을 끝으로 히로의 의식은 끝없는 어둠 속으로 떨어져갔다……
+    RESETBGCOLOR
+    CLEARLINE LINECOUNT
+    
+ENDIF

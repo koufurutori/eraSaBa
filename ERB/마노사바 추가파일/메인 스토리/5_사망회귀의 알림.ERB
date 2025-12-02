@@ -1,0 +1,158 @@
+﻿;FileName_MANOSABA_하루시작전함수.ERB ------------------------------ Rev1. 00
+;COMMENT 낙오자가 발생했구나.
+;-----------------------------------------------------------
+
+@MANOSABA_DIEANDCOME_TELL
+
+;-------------------------------------------------
+;해피엔딩 도달 이후 -> 아무것도 없음
+;-------------------------------------------------
+IF FLAG:해피엔딩도달
+    FLAG:사망회귀설명 = 1
+;-------------------------------------------------
+;첫번째 회차
+;-------------------------------------------------
+ELSEIF FLAG:주회수 == 0
+
+    DRAWLINE
+    PRINTFORML
+    PRINTFORMW 아슬아슬하게 유지되던 일상이 무너져내렸다.
+    PRINTFORMW 더이상 감옥에 그녀는 없다. 그녀『였던』것만이 남아 있을 뿐.
+    PRINTFORMW 어쩌면 마녀후보로 낙인되어 마녀 저택에 끌려온 13명의 소녀의 미래는 이미 정해져있던 걸지도 모른다.
+    PRINTFORMW 첫 날 고쿠쵸가 설명했던대로 파멸만이 남은, 그러한 미래.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「어째서 우리가 이런 꼴을 당해야 하는 거지…?」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 스스로도 모르는 사이 히로의 입에서 나지막히 흘러나온 말이었다.
+    PRINTFORMW 평소라면 나약한 생각이라고 코웃음 쳤을테지만 지금만큼은 그럴 힘도 없었다.
+    PRINTFORML 
+    PRINTFORMW 알아버렸다.
+    PRINTFORMW 알아버리고 말았다.
+    PRINTFORMW 겉으로는 티를 내지 않았지만, 히로의 명석한 두뇌는 벌써 결론을 낸지 오래였다.
+    PRINTFORMW 결국 시간이 지나면 지날수록 여기 있는 모두가 그러한 결말을 맞이하게 될 것이라고.
+    PRINTFORMW 마땅한 탈출 방법도 계획도 없는 상황에서 소녀들은 천천히 시간을 흘려보내며 죽음을 기다릴 뿐이었다.
+    PRINTFORML 
+    CLEARLINE LINECOUNT
+    SETBGCOLOR 0, 0, 102
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「다시 시작하고 싶니?」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORML 갑자기, 목소리가 히로에게 말을 걸어왔다.
+    PRINTFORMW 첫날 밤에 들었던 정체를 알 수 없는 목소리다.
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「네가 바란다면 이 모든 일을『없던』것으로 할 수 있어.」
+    RESETCOLOR
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「……【사망회귀】를 말하는 건가.」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 죽어서 그날 깨어난 때로 돌아가는 마법. 분명 일어난 비극을 없었던 것으로 취급하고 다시 시작하고자 한다면 제일 알맞은 마법일 것이다.
+    ;PRINTFORMW 죽어서 그날 깨어난 때로 돌아가는 마법. 분명 그녀의 죽음을 없었던 것으로 취급하고 다시 시작하고자 한다면, 제일 알맞은 마법일 것이다.
+    PRINTFORMW 그러나 히로는 자신의 마법을 쓸 수 없었다.
+    PRINTFORMW 그것은 마법이 올바르지 않기 때문만이 아니라ㅡㅡ
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「지금 나한테【자살】을 하라고?」
+    PRINTFORMW 「절대로 있을 수 없는 일이야. 내가, 그녀를 빼앗아 간 행위를 할 것 같아?」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 절망스러워하던 얼굴에 서서히 노기가 차올랐다.
+    PRINTFORMW 자살은 니카이도 히로의【금기】다. 중학교 시절 친구를 자살로 인해 잃은 이후 그것은 그녀에게 있어 무엇보다도 용서할 수 없는 행위가 되었다.
+    PRINTFORMW 그녀의 목숨을 빼앗은 것은 천장에 매달린 로프로 만들어진 단순한 고리였다. 히로는 유학에서 돌아온 후, 그 가증스러운 물건을 몇 시간이고 노려보고 있었다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「말해두겠지만, 무슨 일이 있더라도 내가 자살할 일은 없어.」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 생각만으로도 손톱이 길어질 것 같아 히로는 사납게 말을 끊었다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「게다가 오늘 아침으로 돌아간다고 하더라도…… 상황은 크게 변하지 않아.」
+    PRINTFORMW 「모두 감옥 안에서 지속적으로 스트레스를 받고 있다. 지금까지 쌓인 감정이나 스트레스는 고작 하루로 풀릴 게 아니야.」
+    RESETCOLOR
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「만약 감옥에서 눈을 뜬 순간으로 돌아갈 수 있다면?」
+    RESETCOLOR
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「뭐…?」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 갑작스러운 말에 히로의 사고가 멈춘다.
+    PRINTFORMW 자신이 하루가 아닌, 며칠이고 돌아갈 수 있다면.
+    PRINTFORMW 아예 처음부터 비극이 일어날 수 있는 가능성을 전부 없앨 수 있다면.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「거짓말이다.」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 그러나 히로는 꿈 같은 말에 넘어갈 정도로 어리지 않았다.
+    PRINTFORMW 아니, 오히려 다른 사람들이라면 꿈 같다고 여길 마법을 가지고 있었기 때문에 알고 있었다.
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「지나간 것은 돌아오지 않아. 그때도 수없이 방법을 찾아 헤맸지만 그런 거, 가능했던 적은 한 번도 없었어.」
+    PRINTFORMW 「그렇게 형편 좋은 이야기가 있을 리 없어!」
+    RESETCOLOR
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「과연 그럴까.」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORMW 다급하게 소리치는 히로를 목소리가 차분하게 가로막는다.
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「이곳은 마녀 저택. 과거 수많은 마녀들이 살았던 저택이자, 지금도 수많은 사라지지 않는 마법들이 남아있는 장소.」
+    PRINTFORMW 「우리는 네 마법을 보조해줄 수 있어.」
+    PRINTFORMW 「단 하루만 돌아가는 것이 아닌, 처음으로 돌아가는 정도로는.」
+    RESETCOLOR
+    PRINTFORML 
+    PRINTFORML 마치『마녀의 속삭임』처럼 달콤한 선택지가 히로의 눈앞에 놓인다.
+    PRINTFORMW 과거, 그렇게나 바랐음에도 오지 않았던 선택지가.
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「이대로면 저 끝에 기다리고 있는 건 모두의 파멸이야. 현명한 너라면 이미 알아버렸을 거라고 생각하지만.」
+    PRINTFORMW 「하지만 만약 네가 이 모든 것을 다시 시작할 의지가 있다면,」
+    PRINTFORMW 「지금까지 일어난 비극을 전부 없던 일로 하고 1일째로 돌아갈 마음이 있다면.」
+    PRINTFORMW 「그렇다면 우리는 언제든 너를 도와줄게.」
+    RESETCOLOR
+    RESETBGCOLOR
+    CLEARLINE LINECOUNT
+
+    FLAG:사망회귀설명 = 1
+
+;-------------------------------------------------
+;사망회귀설명 한 이후
+;-------------------------------------------------
+ELSE
+
+    CLEARLINE LINECOUNT
+    SETBGCOLOR 0, 0, 102
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「다시 비극이 일어난 모양이네.」
+    RESETCOLOR
+    PRINTFORML 
+    SETCOLOR 184, 38, 71
+    PRINTFORMW 「……아아.」
+    RESETCOLOR
+    PRINTFORML 
+    SETCOLOR 0xE6E6FA
+    PRINTFORMW 「너라면 이미 알고 있을 것 같지만.」
+    PRINTFORMW 「만약 네가 되돌아갈 자신이 있다면, 이 모든 것을 다시 시작할 의지가 있다면,」
+    PRINTFORMW 「우리를 불러.」
+    RESETCOLOR
+    PRINTFORML 
+    RESETBGCOLOR
+    CLEARLINE LINECOUNT
+    PRINTFORML 
+    PRINTFORMW 그 말을 끝으로, 목소리는 사라졌다.
+    PRINTFORML 
+
+    FLAG:사망회귀설명 = 1
+ENDIF
