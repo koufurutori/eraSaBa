@@ -1,0 +1,107 @@
+﻿;-------------------------------------------------
+;61, 후배위
+;-------------------------------------------------
+@MESSAGE_COM61
+IF CFLAG:MASTER:장난 == 2
+	;후배위
+		;뽑지 않고
+		IF TCVAR:100 == PLAYER && TARGET == TFLAG:103
+			IF EXP:TARGET:수면간경험 >= EXP:TARGET:애정경험 + 50
+				IF TALENT:체형 == -1
+					IF TEQUIP:체위2 == 2
+						;조교자에 대하고 있다
+						IF TALENT:PLAYER:2 & 2
+							PRINTFORML 자고 있는 %CALLNAME:TARGET%의 질내의 감촉을 맛보면서, 다시 허리를 움직이기 시작했다…
+						;페니스밴드를 사용하고 있는 경우
+						ELSE
+							PRINTFORML 자고 있는 %CALLNAME:TARGET%의 질내로부터 뽑지 않고, 다시 허리를 움직이기 시작했다…
+						ENDIF
+					ELSE
+						PRINTFORML %마스터는% %CALLNAME:TARGET%의 질 구멍에 %TINKO(PLAYER)%를 삽입한 채로, %타겟의% 작은 몸을 몸부림 시켜
+						PRINTFORML 엎드려로 하고 나서, 다시 어린 질 구멍을 범하기 시작했다…
+					ENDIF
+				ELSEIF TEQUIP:체위2 == 2
+					;조교자에 대하고 있다
+					IF TALENT:PLAYER:2 & 2
+						PRINTFORML 자고 있는 %CALLNAME:TARGET%의 질내의 감촉을 맛보면서, 다시 허리를 움직이기 시작했다…
+					;페니스밴드를 사용하고 있는 경우
+					ELSE
+						PRINTFORML 자고 있는 %CALLNAME:TARGET%의 질내로부터 뽑지 않고, 다시 허리를 움직이기 시작했다…
+					ENDIF
+				ELSE
+					PRINTFORML 고기 오나홀이 되어 있는 %CALLNAME:TARGET%의 질 구멍으로부터 뽑지 않고 엎드린 자세로 해, 다시 질 구멍을 범하기 시작했다…
+				ENDIF
+			ELSE
+				IF TEQUIP:체위2 == 2
+					;조교자에 대하고 있다
+					IF TALENT:PLAYER:2 & 2
+						PRINTFORML 자고 있는 %CALLNAME:TARGET%의 질내의 감촉을 맛보면서, 다시 허리를 움직이기 시작했다…
+					;페니스밴드를 사용하고 있는 경우
+					ELSE
+						PRINTFORML 자고 있는 %CALLNAME:TARGET%의 질내로부터 뽑지 않고, 다시 허리를 움직이기 시작했다…
+					ENDIF
+				ELSE
+					PRINTFORML 질내로부터 뽑지 않고 자고 있는 %타겟을% 엎드리게 해, 다시 허리를 움직이기 시작했다…
+				ENDIF
+			ENDIF
+		;신규 삽입
+		ELSE
+			IF EXP:TARGET:수면간경험 >= EXP:TARGET:애정경험 + 50
+				IF TALENT:체형 == -1
+					IF TALENT:처녀 == 1
+						PRINTFORML %마스터는% 자고 있는 %타겟을% 엎드리게 해
+						PRINTFORML 개척되기에는 너무 이른 아이와 같은 세로줄에 %TINKO(PLAYER)%를 쑤셔 넣어
+						PRINTFORML 애처로울 정도로 넓혀져 있는 어린 질 구멍을 범하기 시작했다…
+					ELSEIF MASTER_POSE(SET_V, SET_P, 1) && MASTER_POSE(SET_V, SET_P, 1) != TARGET
+						PRINTFORML %CALLNAME:(MASTER_POSE(SET_V, SET_P, 1))%로부터 %TINKO(PLAYER)%를 뽑는 것과 동시에
+						PRINTFORML %CALLNAME:TARGET%에 삽입했다…
+					ELSE
+						PRINTFORM 자고 있는 %타겟을% 엎드리게 해 
+						IF TEQUIP:0 & 2
+							PRINTFORM %SHOW_BOTTOM(TARGET, 2)%를 비켜 놓아
+						ELSEIF TEQUIP:0 & 1
+							PRINTFORM %SHOW_BOTTOM(TARGET, 1)%를 걷어 올려
+						ENDIF
+						PRINTFORM , 그 작은 몸에 덮이듯이 해서
+						;윤활 LV4 이상
+						SIF PALAM:윤활 >= PALAMLV:3
+							PRINT 점액에 젖은 
+						PRINTFORML 아이와 같은 세로줄에 %TINKO(PLAYER)%를 쑤셔 넣어
+						PRINTFORML 짐승처럼 격렬하게 허리를 털어, %CALLNAME:TARGET%의 어린 질 구멍을 범하기 시작했다…
+					ENDIF
+				ELSEIF TALENT:처녀 == 1
+					PRINTFORML 자고 있는 %CALLNAME:TARGET%의 엉덩이를 높게 들어 올리고
+					PRINTFORML 오나홀로서 사용하기 위해 미개척의 \@ TALENT:체형 < 0 ? 어린 균열 # 비렬 \@에 %TINKO(PLAYER)%를 쑤셔 넣었다…
+				ELSEIF MASTER_POSE(SET_V, SET_P, 1) && MASTER_POSE(SET_V, SET_P, 1) != TARGET
+					PRINTFORML %CALLNAME:(MASTER_POSE(SET_V, SET_P, 1))%로부터 %TINKO(PLAYER)%를 뽑는 것과 동시에
+					PRINTFORML %CALLNAME:TARGET%에 삽입했다…
+				ELSE
+					PRINTFORM 자고 있는 %CALLNAME:TARGET%의 질을 오나홀 대신 사용하기 위해, 엎드리게 해 
+					IF TEQUIP:0 & 2
+						PRINTFORM %SHOW_BOTTOM(TARGET, 2)%를 비켜 놓아, 
+					ELSEIF TEQUIP:0 & 1
+						PRINTFORM %SHOW_BOTTOM(TARGET, 1)%를 걷어 올려, 
+					ENDIF
+					PRINTFORML 뒤로부터 %SLIT()%에 삽입해 질 구멍을 범하기 시작했다…
+				ENDIF
+			ELSE
+				IF TALENT:처녀 == 1
+					PRINTFORML 자고 있는 %CALLNAME:TARGET%의 엉덩이를 높게 들어 올리고
+					PRINTFORML 미개척의 \@ TALENT:체형 < 0 ? 어린 균열 # 비렬 \@을 %TINKO(PLAYER)%로 관철했다…
+				ELSEIF MASTER_POSE(SET_V, SET_P, 1) && MASTER_POSE(SET_V, SET_P, 1) != TARGET
+					PRINTFORML %CALLNAME:(MASTER_POSE(SET_V, SET_P, 1))%로부터 %TINKO(PLAYER)%를 뽑는 것과 동시에
+					PRINTFORML %CALLNAME:TARGET%에 삽입했다…
+				ELSE
+					PRINTFORM 자고 있는 %CALLNAME:TARGET%의 
+					IF TEQUIP:0 & 2
+						PRINTFORM %SHOW_BOTTOM(TARGET, 2)%를 비켜 놓아, 
+					ELSEIF TEQUIP:0 & 1
+						PRINTFORM %SHOW_BOTTOM(TARGET, 1)%를 걷어 올려 
+					ENDIF
+					PRINTFORML 엎드리게 해 %SLIT()%의 최심부까지 찔러 넣었다…
+				ENDIF
+			ENDIF
+		ENDIF
+ELSE
+	CALL MESSAGE_COM61통상
+ENDIF

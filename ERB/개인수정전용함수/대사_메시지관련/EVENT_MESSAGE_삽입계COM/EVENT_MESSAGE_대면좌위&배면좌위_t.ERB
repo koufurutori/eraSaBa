@@ -1,0 +1,108 @@
+﻿;-------------------------------------------------
+;67, 대면좌위
+;-------------------------------------------------
+@MESSAGE_COM67
+IF TCVAR:100 == PLAYER && TARGET == TFLAG:103
+	IF TEQUIP:체위2 == 4
+		PRINTFORML %타겟은% %CALLNAME:PLAYER%과 키스를 해, 혀를 휘감으면서 다시 허리를 흔들기 시작했다…
+	ELSE
+		PRINTFORM 질내로부터 %TINKO(PLAYER)%를 뽑지 않고 %CALLNAME:TARGET%의 몸을 끌어안아, 
+		PRINTFORML 혀를 휘감으면서 다시 허리를 흔들기 시작했다…
+	ENDIF
+ELSE
+	PRINTFORM %CALLNAME:TARGET%의 몸을 안아 올려 
+	PRINTFORM 천천히 내리면서 
+	SIF TEQUIP:0 & 2
+		PRINTFORM 비켜 놓은 %SHOW_BOTTOM(TARGET, 2)%의 틈새의 
+	PRINTFORM %SLIT()%에 삽입해, 
+	;볼개그의 유무
+	SIF TEQUIP:볼개그 == 0
+		PRINT 입맞춤을 하면서 
+	PRINTL 허리를 흔들었다…
+ENDIF
+
+
+;-------------------------------------------------
+;68, 배면좌위
+;-------------------------------------------------
+@MESSAGE_COM68
+IF TCVAR:100 == PLAYER && TARGET == TFLAG:103
+	IF TEQUIP:체위2 == 5
+		PRINTFORML %타겟을% 등 뒤로부터 꼭 껴안아 다시 %CALLNAME:TARGET%의 몸을 흔들기 시작했다…
+	ELSE
+		PRINTFORML 질내로부터 %TINKO(PLAYER)%를 뽑지 않고 %CALLNAME:TARGET%의 몸을 등 뒤에서 끌어안아 몸을 흔들기 시작했다…
+	ENDIF
+ELSE
+	PRINTFORM %CALLNAME:TARGET%의 몸을 안아 올려, %SLIT()%
+	IF TEQUIP:0 & 2
+		PRINTFORML 에 %SHOW_BOTTOM(TARGET, 2)%의 틈새로부터 천천히 삽입했다…
+	ELSE
+		PRINTFORML 를 기다리고 있던 물건으로 천천히 관철했다…
+	ENDIF
+ENDIF
+
+;-------------------------------------------------
+;69, 대면좌위애널
+;-------------------------------------------------
+@MESSAGE_COM69
+;연속
+IF SELECTCOM == PREVCOM && ASSIPLAY == TFLAG:150
+	PRINTFORML %타겟은% %CALLNAME:PLAYER%과 키스를 해, 혀를 휘감으면서 다시 허리를 흔들기 시작했다…
+	RETURN 0
+;뽑지 않고
+ELSEIF TCVAR:101 == PLAYER
+	PRINTFORM 장내로부터 
+	;조교자에 대하고 있다
+	IF TALENT:PLAYER:2 & 2
+		PRINTFORM %TINKO(PLAYER)%를 
+	ELSE
+		PRINTFORM 딜도를 
+	ENDIF
+		PRINTFORM 뽑지 않고 %CALLNAME:TARGET%의 몸을 꽉 껴안아
+ELSE
+	PRINTFORM %CALLNAME:TARGET%의 몸을 안아 올리고 
+	SIF TEQUIP:0 & 2
+		PRINTFORM %SHOW_BOTTOM(TARGET, 2)%를 억지로 비켜 놓아 
+	PRINTFORM 천천히 내리면서 
+	;윤활 LV4 이상
+	SIF PALAM:윤활 >= PALAMLV:4
+		PRINT 점액 투성이가 된 
+	PRINTFORM 아누스에 삽입하자, 
+ENDIF
+;볼개그의 유무
+SIF TEQUIP:볼개그 == 0
+	PRINT 입맞춤을 하면서 
+PRINTL 허리를 흔들었다…
+;함락이 끝난 상태
+SIF TALENT:연모
+	PRINTFORML %타겟은% %CALLNAME:PLAYER%의 목에 손을 두르고 안겨왔다…
+
+;-------------------------------------------------
+;70, 배면좌위애널
+;-------------------------------------------------
+@MESSAGE_COM70
+;연속
+IF SELECTCOM == PREVCOM && ASSIPLAY == TFLAG:150
+	PRINTFORML %타겟을% 등 뒤로부터 꼭 껴안아 다시 %CALLNAME:TARGET%의 몸을 흔들기 시작했다…
+;뽑지 않고
+ELSEIF TCVAR:101 == PLAYER
+	PRINTFORM 장내로부터 
+	;조교자에 대하고 있다
+	IF TALENT:PLAYER:2 & 2
+		PRINTFORM %TINKO(PLAYER)%를 
+	ELSE
+		PRINTFORM 딜도를 
+	ENDIF
+	PRINTFORML 뽑지 않고 %CALLNAME:TARGET%의 몸을 등 뒤에서 껴안아, 몸을 흔들기 시작했다…
+ELSE
+	PRINTFORML %CALLNAME:TARGET%의 몸을 안아 올려,
+	SIF TEQUIP:0 & 2
+		PRINTFORM 비켜 놓은 %SHOW_BOTTOM(TARGET, 2)%의 틈새로부터 
+	;윤활 LV4 이상
+	SIF PALAM:윤활 >= PALAMLV:4
+		PRINT 점액 투성이가 된 
+	PRINTFORML 아누스를 기다리고 있던 물건으로 천천히 관철했다…
+ENDIF
+;함락이 끝난 상태
+SIF TALENT:연모
+	PRINTFORML %타겟은% 등을 뒤로 젖히고 %CALLNAME:PLAYER%에게 아양 떨며 기댔다…

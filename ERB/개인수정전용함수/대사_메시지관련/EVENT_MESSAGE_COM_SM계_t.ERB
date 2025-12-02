@@ -1,0 +1,287 @@
+﻿
+;-------------------------------------------------
+;100, 스팬킹
+;-------------------------------------------------
+@MESSAGE_COM100
+
+IF TEQUIP:50 == PLAYER
+	PRINTFORM %타겟을% 격렬하게 범하면서
+ELSEIF TEQUIP:51 == PLAYER
+	PRINTFORM %CALLNAME:TARGET%의 국화구멍을 격렬하게 범하면서
+ELSEIF TEQUIP:0 & 1 && (EQUIP:치마|| EQUIP:하반신윗도리 || EQUIP:원피스|| EQUIP:기모노)
+	PRINTFORM %CALLNAME:TARGET%의 %SHOW_BOTTOM(TARGET, 1)%를 넘기고
+ELSE
+	PRINTFORM %CALLNAME:TARGET%의
+ENDIF
+SIF EQUIP:TARGET:레오타드|| EQUIP:TARGET:보디슈트
+	PRINTFORM %SHOW_하반신속옷(TARGET, 2)%에 싸인
+PRINTFORML %HIP(TARGET)%을 손바닥으로 강하게 때렸다
+PRINTFORM 몇 번이고 몇 번이고 얻어맞고 있는 동안에,
+;남자＋마조끼 LV2 이상
+IF !(TALENT:2 & 1) && (ABL:마조끼 >= 2)
+	PRINTFORML %CALLNAME:TARGET%의 고간은 딱딱해져 갔다…
+;마조끼 LV2 이상
+ELSEIF ABL:마조끼 >= 2 && TEQUIP:50 == -1
+	PRINTFORML %CALLNAME:TARGET%의 고간은 자신의 애액으로 젖어가고 있었다…
+ELSE
+	PRINTFORML %CALLNAME:TARGET%의 엉덩이는 새빨갛게 부어 갔다…
+ENDIF
+
+;-------------------------------------------------
+;101, 채찍
+;-------------------------------------------------
+@MESSAGE_COM101
+PRINTFORM 채찍을 크게 치켜들고 마음껏 내리치면, %CALLNAME:TARGET%의 피부에 새빨간 자국이 여러 개 새겨져 갔다…
+;-------------------------------------------------
+;102, 초
+;-------------------------------------------------
+@MESSAGE_COM102
+
+PRINTFORM %조교자는% 는 촛불에 불을 붙여 달궈진 밀랍을
+;밧줄 등으로 긴박중
+SIF TEQUIP:밧줄
+	PRINT 밧줄로 묶여 움직일 수 없는
+PRINTFORM %CALLNAME:TARGET%의
+;조교자가 새드
+IF TALENT:PLAYER:새드
+	PRINT 민감한 부위에 집중적으로
+ELSE
+	;(eraElona용 소질[알비노]의 대신 ), 고통에 약하다를 본다
+	IF TALENT:통각 > 1
+		PRINT 새하얀 맨살에
+	ELSE
+		PRINT 몸 위에
+	ENDIF
+ENDIF
+PRINTL 떨어뜨렸다
+
+;-------------------------------------------------
+;103, 바늘
+;-------------------------------------------------
+@MESSAGE_COM103
+
+PRINTFORM %CALLNAME:TARGET%의 유두나 클리토리스를
+;조교자가 바늘질이나 새드
+IF TALENT:PLAYER:바늘질 || TALENT:PLAYER:새드
+	PRINTL 가차 없이 바늘로 찔렀다…
+ELSE
+	PRINTL 바늘로 찔렀다…
+ENDIF
+;-------------------------------------------------
+;104, 눈가리개
+;-------------------------------------------------
+@MESSAGE_COM104
+;해제시
+IF !TEQUIP:눈가리개
+	PRINTFORML %CALLNAME:TARGET%로부터 눈가리개를 벗겨 주었다
+ELSE
+	PRINTFORML %CALLNAME:TARGET%에게 눈가리개를 씌웠다
+ENDIF
+;-------------------------------------------------
+;105, 밧줄
+;-------------------------------------------------
+@MESSAGE_COM105
+;해제시
+IF !TEQUIP:밧줄
+	PRINTFORML %CALLNAME:TARGET%로부터 밧줄을 풀어 주었다
+ELSE
+	PRINTFORML %타겟을% 밧줄로 묶었다
+ENDIF
+;-------------------------------------------------
+;106, 볼개그
+;-------------------------------------------------
+@MESSAGE_COM106
+;해제시
+IF !TEQUIP:볼개그
+	PRINTFORML %CALLNAME:TARGET%로부터 볼개그를 떼어 주었다
+ELSE
+	PRINTFORML %CALLNAME:TARGET%에게 볼개그를 끼게 시켰다
+ENDIF
+;-------------------------------------------------
+;107, 구속플레이
+;-------------------------------------------------
+@MESSAGE_COM107
+;해제시
+IF !TEQUIP:구속
+	PRINTFORML %CALLNAME:TARGET%의 구속을 해제했다
+ELSE
+	PRINTFORML %CALLNAME:TARGET%의 구속을 시도했다
+ENDIF
+;-------------------------------------------------
+;108, 젖스팬킹
+;-------------------------------------------------
+@MESSAGE_COM108
+
+IF TEQUIP:50 == PLAYER
+	PRINTFORM %타겟을% 격렬하게 범하면서
+ELSEIF TEQUIP:51 == PLAYER
+	PRINTFORM %CALLNAME:TARGET%의 국화구멍을 격렬하게 범하면서
+ELSE
+	PRINTFORM %CALLNAME:TARGET%의
+ENDIF
+IF TEQUIP:0 & 1 && EQUIP:기모노
+	PRINTFORM %SHOW_TOP(TARGET, 1)%의 앞쪽으로 드러난
+ELSEIF TEQUIP:0 & 1 && (EQUIP:원피스|| EQUIP:상반신윗도리1)
+	PRINTFORM %SHOW_TOP(TARGET, 2)% 너머로
+ELSEIF TEQUIP:0 & 1 && EQUIP:상반신윗도리2
+	PRINTFORM %SHOW_TOP(TARGET, 1)%의 앞쪽으로 드러난
+ELSE
+ENDIF
+SIF EQUIP:TARGET:레오타드|| EQUIP:TARGET:보디슈트
+	PRINTFORM %SHOW_상반신속옷(TARGET, 2)%에 싸인
+;작은 가슴인가 절벽
+IF TALENT:TARGET:가슴사이즈 < 0
+	PRINTFORM %OPPAI_DESCRIPTION(TARGET, 1)%의 %NIPPLE_DESCRIPTION(TARGET, 1)%
+	PRINTL 를 강하게 손톱으로 때렸다…
+ELSE
+	PRINTFORM %OPPAI_DESCRIPTION(TARGET, 1)%
+	PRINTL 를 튕기듯이 손바닥으로 때렸다…
+ENDIF
+PRINTFORM 몇 번이나 몇 번이나 얻어맞고 있는 동안에,
+;남자＋마조끼 LV2 이상
+IF !(TALENT:성별 & 1) && (ABL:마조끼 >= 2)
+	PRINTFORML %CALLNAME:TARGET%의 고간은 딱딱해져 갔다…
+;마조끼 LV2 이상
+ELSEIF ABL:마조끼 >= 2 && TEQUIP:50 == -1
+	PRINTFORML %CALLNAME:TARGET%의 고간은 자신의 애액으로 젖어들기 시작했다…
+ELSE
+	PRINTFORML %CALLNAME:TARGET%의 %OPPAI_DESCRIPTION(TARGET)%는 새빨갛게 부어 갔다…
+ENDIF
+
+;-------------------------------------------------
+;141, 피스트성교
+;-------------------------------------------------
+@MESSAGE_COM141
+
+PRINTFORML %CALLNAME:TARGET%의 질을 %CALLNAME:PLAYER%의 주먹으로 휘저었다
+IF EXP:V확장경험 >= 20
+	PRINTFORML %CALLNAME:TARGET%의 성기로부터는 조갯살이 빠져 나와, 빠끔히 벌려져 있는 질구의 안쪽에는 자궁구가 보이고 있다
+ELSEIF EXP:V확장경험 >= 10
+	PRINTFORML %CALLNAME:TARGET%의 질은 벌려진 채로 좀처럼 돌아오지 않는다
+ELSEIF EXP:V확장경험 >= 5
+	PRINTFORML %CALLNAME:TARGET%의 질은 빠끔히 입을 열고 있다
+ELSE
+	PRINTFORML %타겟은%, 자신의 질구를 손가락으로 펼쳐 황홀감에 빠져있다
+ENDIF
+
+;-------------------------------------------------
+;142, 애널피스트
+;-------------------------------------------------
+@MESSAGE_COM142
+
+PRINTFORML %CALLNAME:TARGET%의 항문은 %CALLNAME:PLAYER%의 주먹으로 휘저었다
+IF EXP:A확장경험 >= 20
+	PRINTFORML %CALLNAME:TARGET%의 항문으로부터는 조갯살이 빠져 나와, 장안이 훤히 들여다 보이고 있다
+ELSEIF EXP:A확장경험 >= 10
+	PRINTFORML %CALLNAME:TARGET%의 항문은 벌려진 채로 좀처럼 돌아오지 않는다
+ELSEIF EXP:A확장경험 >= 5
+	PRINTFORML %CALLNAME:TARGET%의 항문은 빠끔히 입을 열고 있다
+ELSE
+	PRINTFORML %타겟은%, 자신의 항문을 손가락으로 펼쳐 황홀감에 빠져있다
+ENDIF
+
+;-------------------------------------------------
+;143, 두 구멍 피스트
+;-------------------------------------------------
+@MESSAGE_COM143
+
+PRINTFORML %CALLNAME:TARGET%의 질과 항문은 %CALLNAME:PLAYER%의 주먹으로 휘저었다
+IF EXP:V확장경험 >= 10 && EXP:A확장경험 >= 10
+	PRINTFORML %타겟은%, 완전히 펼쳐진 질구와 항문의 주위를 양손의 손가락으로 어루만지고 돌리고 있다
+ELSE
+	PRINTFORML %타겟은% 양 다리를 벌려 축 늘어져 있고, 벌어진 질구와 항문으로부터 점액이 흘려 보내지고 있었다…
+ENDIF
+
+;-------------------------------------------------
+;144, 방뇨
+;-------------------------------------------------
+@MESSAGE_COM144
+;야외플레이중
+IF TEQUIP:야외플레이
+	PRINTFORML %타겟은% 수치와 굴욕감에 눈물을 머금으면서, 수풀속에서 방뇨했다…
+;수치플레이중
+ELSEIF TEQUIP:수치플레이
+	PRINTFORML %타겟은% 거울에 비치는 자신을 보지 않으려고 웅크리고 앉아 방뇨하기 시작했다…
+;작은 체형
+ELSEIF TALENT:체형 < 0
+	PRINTFORML %타겟은% %CALLNAME:PLAYER%에게 어린 아이와 같이 두 다리를 안아올려져서 방뇨했다…
+ELSE
+	PRINTFORML %타겟은% 수치에 뺨을 붉히면서, 그 자리에 웅크리고 앉아 방뇨하기 시작했다…
+ENDIF
+;-------------------------------------------------
+;146, 관장기＋플러그
+;-------------------------------------------------
+@MESSAGE_COM146
+;해제시
+IF !TEQUIP:관장
+	PRINTFORML %타겟은% 항문마개를 뽑아져 장내의 오물을 항문으로부터 흩뿌렸다
+	;마조끼
+	IF ABL:마조끼 == 0
+		PRINTFORML %타겟은% 괴로움과 치욕의 표정을 띠고 있다
+	ELSEIF ABL:마조끼 == 1
+		PRINTFORML %타겟은% 비지땀을 흘리며 아직도 아랫배에 남는 배설감에 견디고 있다
+	ELSEIF ABL:마조끼 == 2
+		PRINTFORML %타겟은% 부끄러워하면서도, 해방감에 안심한 표정을 띠고 있다
+	ELSEIF ABL:마조끼 == 3
+		PRINTFORML %타겟은% 항문을 통과하는 배설물의 감각에 이따금 요염한 헐떡거리는 소리를 내고 있다
+	ELSEIF ABL:마조끼 == 4
+		PRINTFORML %타겟은% 황홀한 표정을 띠며 배설감을 즐기고 있다
+	ELSEIF ABL:마조끼 >= 5
+		PRINTFORML %타겟은% 배설감과 치욕을 마음껏 맛보고 있다
+		PRINTFORML %CALLNAME:TARGET%의 표정은 쾌감에 야무지지 못하게 느슨해져, 항문으로부터 오물을 내보내는 것과 동시에, 질구로부터도 애액을 뚝뚝하고 방울져 떨어지게 하고 있다
+	ENDIF
+ELSE
+	PRINTFORML %CALLNAME:TARGET%의 국화구멍에 관장액을 흘려 넣어, 마개를 꽂았다
+	;마조끼
+	IF ABL:마조끼 == 0
+		PRINTFORML %타겟은% 괴로움의 표정을 띠고 있다
+	ELSEIF ABL:마조끼 == 1
+		PRINTFORML %타겟은% 비지땀을 흘리며 배설감에 견디고 있다
+	ELSEIF ABL:마조끼 == 2
+		PRINTFORML %타겟은% 괴로운 듯한 표정을 하면서도, 얼굴을 홍조시키고 머뭇머뭇 엉덩이를 흔들고 있다
+	ELSEIF ABL:마조끼 == 3
+		PRINTFORML %타겟은%, 배설감에 시달리면서도, 때때로 황홀한 표정을 띠고 있다
+	ELSEIF ABL:마조끼 == 4
+		PRINTFORML %타겟은%, 황홀한 표정을 띠며 배설감과 복통을 즐기고 있다
+	ELSEIF ABL:마조끼 >= 5
+		PRINTFORML %타겟은%, 배설감을 마음껏 맛보고 있다
+		PRINTFORML %CALLNAME:TARGET%의 표정은 쾌감에 야무지지 못하게 느슨해져, 그 입과 질구로부터는 뚝뚝하고 군침을 방울져 떨어지게 하고 있다
+	ENDIF
+ENDIF
+
+;-------------------------------------------------
+;147, 확장벌룬
+;-------------------------------------------------
+@MESSAGE_COM147
+
+;해제시
+IF !TEQUIP:확장벌룬
+	PRINTFORML %타겟이% 펼쳐진 국화구멍으로부터 에어벌룬을 뽑아 주었다…
+	;A감각
+	IF ABL:A감각 == 0
+		PRINTFORML %CALLNAME:TARGET%의 항문은 천천히 닫혀 갔다
+	ELSEIF ABL:A감각 == 1
+		PRINTFORML %CALLNAME:TARGET%의 항문은 움찔움찔 거리면서 천천히 닫혀 갔다
+	ELSEIF ABL:A감각 == 2
+		PRINTFORML %CALLNAME:TARGET%의 항문은 빠끔히 열려 있다
+	ELSEIF ABL:A감각 == 3
+		PRINTFORML %CALLNAME:TARGET%의 항문은 벌려진 채로 좀처럼 돌아오지 않는 것 같다
+	ELSEIF ABL:A감각 == 4
+		PRINTFORML %CALLNAME:TARGET%의 항문으로부터 내부가 훤히 들여다 보여지고 있다
+	ELSEIF ABL:A감각 >= 5
+		PRINTFORML %타겟은%, 자신의 항문을 손가락으로 펼치며 황홀감에 빠져있다
+	ENDIF
+ELSE
+	PRINTFORML %CALLNAME:TARGET%의 국화구멍에 에어벌룬을 삽입해, 공기를 보냈다…
+ENDIF
+
+;-------------------------------------------------
+;148, 애널전극
+;-------------------------------------------------
+@MESSAGE_COM148
+;해제시
+IF !TEQUIP:애널전극
+	PRINTFORML %CALLNAME:TARGET%의 애널에서 전극을 뽑아 주었다…
+ELSE
+	PRINTFORML %CALLNAME:TARGET%의 국화구멍에 전극을 삽입해 스위치를 넣었다…
+ENDIF

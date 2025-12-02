@@ -1,0 +1,374 @@
+﻿
+;-------------------------------------------
+;触手の射精時のテキスト
+;-------------------------------------------
+@PALAM_MESSAGE_E
+;触手が射精
+SIF TFLAG:15 == 1
+	PRINTFORML %CALLNAME:TARGET%에 얽힌 촉수가 끈적거리는 체액을 뿜어냈다…
+;触手が大量射精
+SIF TFLAG:15 == 2
+	PRINTFORML %CALLNAME:TARGET%의 전신에 얽힌 촉수가 일제히 끈적거리는 체액을 뿜어냈다…
+;テキストを読むためのウエイト
+;表示があるときのみ
+SIF TFLAG:15
+	WAIT
+;-------------------------------------------
+;奴隷の焦らしのテキスト
+;-------------------------------------------
+@PALAM_MESSAGE_F
+PRINTFORMW %타겟이% 금방이라도 갈 것 같은 때를 가늠해서, %마스터는% 애무의 손을 멈추어 버렸다
+PRINTFORMW %타겟은% 원망스러운 눈빛을 보내면서, 마지막 한 방을 요구하며 애타게 몸을 비비고 있다…
+
+;-------------------------------------------
+;奴隷の絶頂時のテキスト
+;-------------------------------------------
+@PALAM_MESSAGE_B
+#DIM OMORASHI
+
+IF TCVAR:이뇨제 || TALENT:오줌싸개버릇
+	OMORASHI = 1
+ELSE
+	OMORASHI = 0
+ENDIF
+
+LOCAL =  NOWEX:C절정 + NOWEX:V절정 + NOWEX:A절정 + NOWEX:B절정 + NOWEX:M절정
+SIF !(LOCAL + NOWEX:방뇨)
+	RETURN 0
+
+IF CFLAG:MASTER:장난 == 2
+	PRINTFORM 자고 있는 %타겟은% 
+	SIF LOCAL >= 5
+		PRINT 음순에서 투명한 물줄기를 내뿜으 
+	SIF NOWEX:분유 || LOCAL >= 5
+		PRINT 면서,
+	PRINTL 온몸을 떨며 절정에 이르렀다
+
+	SIF NOWEX:V절정 && TEQUIP:50 == PLAYER
+		PRINTFORML 절정한 질내는 움찔움찔 경련하며, 빈틈 없이 %TINKO(PLAYER)%에 달라붙어 온다…
+	SIF NOWEX:A절정 && TEQUIP:51 == PLAYER
+		PRINTFORML 절정한 애널은, 찔러 넣어진 %조사처리(TINKO(PLAYER),"를")% 꾸욱꾸욱하며 단단히 조여 온다…
+
+	;絶頂と噴乳とおもらし
+	CALL PrintMilkAndOmorashi(LOCAL, OMORASHI)
+ELSE
+	PRINTFORM %타겟은% \@ TCVAR:억지로? 눈에 눈물이 글썽이며 # \@
+	SIF LOCAL >= 5
+		PRINT 음순에서 투명한 물줄기를 내뿜으며
+	PRINTFORML \@ LOCAL < 5?  등을 크게 젖히고# \@, 온몸을 떨며 \@ SYNCED_ORGASM(TARGET)? %마스터와% 동시에  # \@절정에 이르렀다
+
+
+	;絶頂と噴乳とおもらし
+	CALL PrintMilkAndOmorashi(LOCAL, OMORASHI)
+ENDIF
+
+;テキストを読むためのウエイト
+;表示があるときのみ
+IF LOCAL + NOWEX:방뇨 > 0
+	WAIT
+	IF CFLAG:TARGET:구상셀렉터
+		TRYCALLFORM M_KOJO_K{NO:TARGET}_{CFLAG:TARGET:구상셀렉터}
+	ELSE
+		TRYCALLFORM M_KOJO_K{NO:TARGET}
+	ENDIF
+	;TARGET口上出力
+	SIF FLAG:구상색 && RESULT
+		TRYCALLFORM M_KOJO%RESULTS%_COLOR_K{NO:TARGET}
+ENDIF
+
+;-------------------------------------------
+;調教者の射精時のテキスト
+;-------------------------------------------
+@PALAM_MESSAGE_A
+VARSET LOCAL
+
+LOCAL = NOWEX:MASTER:C절정 + NOWEX:MASTER:V절정 + NOWEX:MASTER:A절정 + NOWEX:MASTER:B절정 + NOWEX:MASTER:M절정
+IF LOCAL >= 1
+	PRINTFORM %마스터는% 
+	IF NOWEX:MASTER:오중절정 || NOWEX:MASTER:사중절정
+		PRINTFORML 온몸을 덮치는 강렬한 쾌감의 폭풍에 목소리를 높이며 미친 듯이 날뛰었다
+	ELSE
+		LOCAL:1 = 0
+		IF NOWEX:MASTER:C절정
+			IF TALENT:MASTER:성별 & 2
+				PRINT 페니스
+			ELSE
+				PRINT 크리토리스
+			ENDIF
+			LOCAL:1 = 1
+		ENDIF
+		IF NOWEX:MASTER:V절정
+			SIF LOCAL:1
+				PRINT 와 
+			PRINT 질
+			LOCAL:1 = 1
+		ENDIF
+		IF NOWEX:MASTER:A절정
+			SIF LOCAL:1
+				PRINT 와 
+			PRINT 아날
+			LOCAL:1 = 1
+		ENDIF
+		IF NOWEX:MASTER:B절정
+			SIF LOCAL:1
+				PRINT 와 
+			IF TALENT:MASTER:성별 & 1
+				PRINT 가슴
+			ELSE
+				PRINT 젖꼭지
+			ENDIF
+			LOCAL:1 = 1
+		ENDIF
+		IF NOWEX:MASTER:M절정
+			SIF LOCAL:1
+				PRINT 와 
+			PRINT 입술
+			LOCAL:1 = 1
+		ENDIF
+		IF LOCAL >= 5
+			PRINTFORML 를 덮치는 강렬한 절정감에 머리가 새하얗게 되는 것을 느꼈다
+		ELSE
+			PRINTFORML 에 대한 쾌감으로 절정하여 몸을 떨었다
+		ENDIF
+	ENDIF
+ENDIF
+
+;TFLAG:1 射精箇所 (ビット0=콘돔 1=膣内 2=アナル 3=手淫 4=口淫 5=パイズリ 6=素股 7=足コキ 8=体表 9=アナル奉仕
+;20=手淫フェラ 21=パイズリフェラ22=シックスナイン 24=子宮口 25=疑似 26=授乳プレイ
+
+;콘돔
+IF TCVAR:PLAYER:콘돔 == 1
+	IF CFLAG:TARGET:자동고무
+		PRINTFORML %마스터는% 콘돔을 다시 씌\@ TEQUIP:MASTER:콘돔? 웠다# 우려 했지만, 예비가 없었다\@
+	ENDIF
+	WAIT
+	RETURN
+;個別処理
+;子宮口責め
+ELSEIF GETBIT(TFLAG:1,24)
+	IF NOWEX:TARGET:V절정
+		;---------------------------------
+		;睡眠姦
+		;---------------------------------
+		IF CFLAG:MASTER:장난 == 2
+			;---------------------------------
+			;睡眠姦・鬼畜
+			;---------------------------------
+			IF EXP:TARGET:수면간경험 >= EXP:TARGET:애정경험 + 50
+				;---------------------------------
+				;小柄体型
+				;---------------------------------
+				IF TALENT:TARGET:체형 == -2
+					IF EXP:TARGET:자궁구개발경험 >=300
+						PRINTFORML 자고 있음에도 불구하고 %CALLNAME:(TARGET)%의 질내는 자궁마저 침범되는 열락에 강렬한 절정을 맞이하고 있다
+					ELSE
+						PRINTFORML %CALLNAME:(TARGET)%의 질내는 자궁을 쿡쿡 찌르는 쾌감에 단숨에 절정했다
+						PRINTFORML 간발의 차도 없이, %조교자는% %TINKO(PLAYER)%의 끝을 안쪽으로 꾸욱꾸욱 밀어 넣었다
+					ENDIF
+				;---------------------------------
+				;幼児体型
+				;---------------------------------
+				ELSEIF TALENT:TARGET:체형 == -1
+					PRINTFORML %CALLNAME:(TARGET)%의 질내는, 자궁구를 쿡쿡 찔러지는 쾌감에 억지로 절정 당하고 있다
+					PRINTFORML 꽉하고 음부를 강렬하게 조이면서, 꼬옥하고 달라붙는 자궁구에, %CALLNAME:MASTER%도 끝에 다다른다
+				;---------------------------------
+				;それ以外
+				;---------------------------------
+				ELSEIF EXP:TARGET:자궁구개발경험 >= 300
+					PRINTFORML 질 내부를 강렬하게 단단히 조여 자궁구 마저, 느슨하게 입을 열어 끝부분을 물어버리니 %조사처리(CALLNAME:(TARGET),"가")% 절정 하고 있다
+	
+				ELSE
+					PRINTFORML 자궁구를 쿡쿡 찌르는 감촉에 끝에 다다른 %CALLNAME:(TARGET)%의 질내가, 강렬한 경련과 함께 단단히 조여온다
+					PRINTFORML %마스터를% 거부하듯이 굳게 닫힌 %CALLNAME:(TARGET)%의 자궁구에, %조사처리(TINKO(PLAYER),"를")% 꾸욱꾸욱 밀어넣었다
+				ENDIF
+			;---------------------------------
+			;睡眠姦・通常
+			;---------------------------------
+			ELSEIF EXP:TARGET:자궁구개발경험 >= 50
+				PRINTFORML 잠들면서, 절정에 경련하는 %CALLNAME:(TARGET)%의 질 깊숙히
+				PRINTFORML %조사처리(TINKO(PLAYER),"를")% 강하게 찔러넣은 %마스터는%,
+				PRINTFORMW 달라붙어 오는 자궁구에 부르르 떨었다
+			ELSE
+				PRINTFORML %타겟은%, 질내를 움찔움찔하고 경련하며 절정하고 있다
+			ENDIF
+		
+		ENDIF
+	ENDIF
+	CALL POISONBODY_MESSAGE(24)
+;シックスナイン
+ELSEIF GETBIT(TFLAG:1,22)
+	IF NOWEX:TARGET:C절정 || NOWEX:TARGET:M절정
+		
+
+		IF NOWEX:TARGET:C절정 && NOWEX:TARGET:M절정
+			PRINTFORML \@ GETBIT(TALENT:TARGET:성별,1) ? %조사처리(TINKO((TARGET)),"와")% # 클리토리스와 \@ 입안을 떨면서 %타겟은% 끝에 다다르고 있다
+		ELSEIF NOWEX:TARGET:C절정 && !NOWEX:TARGET:M절정
+			PRINTFORML %CALLNAME:(TARGET)%의 \@ GETBIT(TALENT:TARGET:성별,1) ? %조사처리(TINKO((TARGET)),"가")% # 클리토리스가 \@ 절정에 떨고 있다
+		ELSEIF !NOWEX:TARGET:C절정 && NOWEX:TARGET:M절정
+			PRINTFORML %CALLNAME:(TARGET)%의 입안이 절정에 떨고 있다
+		ENDIF
+	ELSE
+
+	ENDIF
+	CALL POISONBODY_MESSAGE(22)
+ENDIF
+
+IF CFLAG:TARGET:우후후 == 2
+	SIF !(NOWEX:TARGET:C절정 + NOWEX:TARGET:V절정 + NOWEX:TARGET:A절정 + NOWEX:TARGET:B절정 + NOWEX:TARGET:M절정)
+		PRINTFORML %타겟은% 절정에 이완된 %CALLNAME:MASTER%의 표정을 바라보며 히죽히죽거리고 있다…
+	IF GROUPMATCH(TCVAR:PLAYER:사정한장소플래그,1,2)
+		CALL SHIBORITORI(MASTER,(TARGET))
+	ELSEIF GROUPMATCH(TCVAR:TARGET:사정한장소플래그,1,2)
+		CALL SHIBORITORI((TARGET),MASTER)
+	ENDIF
+ENDIF
+
+
+IF CFLAG:TARGET:구상셀렉터
+	TRYCALLFORM M_KOJO_K{NO:TARGET}_{CFLAG:TARGET:구상셀렉터}
+ELSE
+	TRYCALLFORM M_KOJO_K{NO:TARGET}
+ENDIF
+;TARGET口上出力
+SIF FLAG:구상색
+	TRYCALLFORM M_KOJO%RESULTS%_COLOR_K{NO:TARGET}
+
+@PrintMilkAndOmorashi(ARG, OMORASHI)
+#DIM OMORASHI
+#DIM IKIOI = 0, 1, 1, 2, 2, 3, 3, 3, 4
+#DIM BOOST
+#DIMS BED
+;絶頂と噴乳とおもらし
+
+SIF ARG >= 3
+	PRINTS CALLNAME:TARGET
+IF ARG >= 5 && TEQUIP:50 > 0
+	PRINTL 의 고기 주름은 끈적거리는 액체를 떨어뜨리며, 허덕이듯이 개폐를 반복하고 있다…
+ELSEIF ARG >= 5
+	PRINTFORML %조사만처리(CALLNAME:TARGET,"은")% 단속적으로 절정을 반복하면서, 맥없이 탈진하고 있다…
+ELSEIF ARG >= 3
+	PRINTFORML %조사만처리(CALLNAME:TARGET,"은")% \@CFLAG:MASTER:장난 == 2 ?숨소리를 거칠게 하면서 #거친 숨을 몰아쉬면서 \@ 절정의 여운에 젖어있다…
+ENDIF
+
+IF (ARG >= 7 && TCVAR:이뇨제 && TALENT:오줌싸개버릇) || (ARG >= 9 && NOWEX:분유)
+	PRINTFORM %타겟은% 움찔움찍 몸을 경련하고, 
+ELSEIF (ARG >= 7 && OMORASHI) || (ARG >= 7 && NOWEX:분유)
+	PRINTFORM 경련하는 %타겟은% 
+ELSEIF (ARG >= 5 && OMORASHI) || (ARG >= 5 && NOWEX:분유)
+	PRINTFORM 축 처진 %타겟은% 
+ELSEIF (ARG >= 3 && OMORASHI) || (ARG >= 3 && NOWEX:분유)
+	PRINTFORM 떨고있는 %타겟은% 
+ELSEIF (ARG >= 1 && OMORASHI) || NOWEX:분유
+	PRINTFORM %타겟은% 
+ENDIF
+IF NOWEX:분유
+	IF ARG >= 9
+		LOCALS = 흩날릴 정도로 힘차게 모유를 분출하
+	ELSEIF ARG >= 7
+		LOCALS = 뷰─웃 뷰─웃하며 모유를 분출하
+	ELSEIF ARG >= 5
+		LOCALS = 넘쳐흐를 듯이 모유를 분출하
+	ELSEIF ARG >= 3
+		LOCALS = 모유를 분출하
+	ELSE
+		LOCALS = 모유를 흘리
+	ENDIF
+	PRINTFORM %조사처리(NIPPLE_DESCRIPTION(TARGET),"로")%부터 %LOCALS%
+	IF OMORASHI
+		PRINTFORM 면서, 
+	ELSE
+		PRINTFORML …
+	ENDIF
+ENDIF
+IF OMORASHI
+	BOOST = TCVAR:이뇨제 && TALENT:오줌싸개버릇
+	IF BEDROOM(CFLAG:현재위치)
+		BED = %\@ INROOM(CFLAG:현재위치) == 1 ? 이불 # 침대 \@%
+		IF (CFLAG:현재위치 == CFLAG:MASTER:초기위치) && (CFLAG:초기위치 != CFLAG:현재위치)
+			LOCALS = %CALLNAME:MASTER%의 %BED%
+		ELSEIF CFLAG:현재위치 / 100 == MAIN_MAP && PRIVATEROOM:(CFLAG:현재위치 % 100)
+			LOCALS = %CALLNAME:(PRIVATEROOM:(CFLAG:현재위치 % 100))%의 %BED%
+		ELSEIF CFLAG:현재위치 == OMANEKIBEYA()
+			LOCALS = %CALLNAME:TARGET%의 %BED%
+		ELSE
+			LOCALS = %BED%
+		ENDIF
+	ELSE
+		LOCALS = %\@ OUTROOF(CFLAG:현재위치) ? 지면 # 마루 \@%
+	ENDIF
+	SELECTCASE IKIOI:(MIN(ARG, 7) + BOOST)
+		CASE 4
+			PRINTFORML 하염없이 소변을 계속 흘리고 있다…
+			IF BEDROOM(CFLAG:현재위치)
+				PRINTFORML %LOCALS%에 소변이 흠뻑 적셔져버렸다…
+			ELSE
+				PRINTFORML %LOCALS%에 커다란 웅덩이가 만들어져 간다…
+			ENDIF
+		CASE 3
+			IF BOOST
+				PRINTFORML 요도구에서 분수처럼 소변을 뿜어내었다…
+			ELSE
+				PRINTFORML 요도구에서 힘차게 물줄기를 뿜어내며 완전한 포물선을 그리고있다…
+			ENDIF
+			IF BEDROOM(CFLAG:현재위치)
+				PRINTFORML %LOCALS%에 커다란 지도를 그리고있다…
+			ELSE
+				PRINTFORML %LOCALS%에 커다란 웅덩이를 만들었다…
+			ENDIF
+		CASE 2
+			IF BOOST
+				PRINTFORML 요도구에서 화려하게 소변이 뿜어져 멈출 수 조차 없다…
+			ELSE
+				PRINTFORML 요도구에서 소변이 흘러나와 하반신을 적시고있다…
+			ENDIF
+			IF BEDROOM(CFLAG:현재위치)
+				PRINTFORML %LOCALS%에 분명히 알 수 있는 얼룩을 만들어 버렸다…
+			ELSE
+				PRINTFORML %LOCALS%에 웅덩이를 만들어 놓아 버렸다…
+			ENDIF
+		CASE 1
+			IF BOOST
+				PRINTFORML 음순에서 소변이 방울방울 떨어져 허벅지까지 흘러내렸다…
+			ELSE
+				PRINTFORML 음순에서 소변을 찔끔찔끔 흘리고있다…
+			ENDIF
+			IF BEDROOM(CFLAG:현재위치)
+				PRINTFORML %LOCALS%에 방울방울 작은 얼룩을 만들고있다…
+			ELSE
+				PRINTFORML %LOCALS%에 방굴방울 물방울이 흘러내리고 있다…
+			ENDIF
+	ENDSELECT
+ENDIF
+IF TEQUIP:유두빨기 && NOWEX:분유
+	SELECTCASE ARG
+		CASE IS >= 9
+			LOCALS = 입가에 흘리면서 모유를 꿀꺽꿀꺽 마시고 있다…
+		CASE IS >= 7
+			LOCALS = 입가에 흘러넘칠 정도의 모유를 마시고 있다…
+		CASE IS >= 5
+			LOCALS = 주르륵 하고 흘러 넘치는 모유를 마시고 있다…
+		CASE IS >= 3
+			LOCALS = 모유를 마시고 있다…
+		CASEELSE
+			LOCALS = 배어 나오는 모유를 혀로 핥고 있다…
+	ENDSELECT
+	PRINTFORML %마스터는% %CALLNAME:TARGET%의 %조사처리(NIPPLE_DESCRIPTION(TARGET),"를")% 빨아 올려 %LOCALS%
+ENDIF
+
+@POISONBODY_MESSAGE(ARG)
+SIF !TFLAG:포이즌바디
+	RETURN 
+
+SELECTCASE ARG
+	CASE 3, 5, 6, 7, 8, 25, 26;体外
+		LOCALS = 몸에 달라붙은 정액이 은은한 인광을 발하며 신체에 침투해 간다……
+	CASE 4, 20, 21, 22;口
+		LOCALS = 입안에 싼 정액에 얽힌 미독이 인두로부터 침투해 간다…
+	CASE 1, ;膣
+		LOCALS = 질내에 싼 정액에 얽힌 미독이 몸 속으로 침투해 간다…
+	CASE 2;アナル
+		LOCALS = 직장에 싼 정액에 얽힌 미독이 몸 속으로 침투해 간다…
+	CASE 24;子宮口
+		LOCALS = 자궁에 싼 정액에 얽힌 미독이 암컷으로서의 본능을 돋구고 있다…
+ENDSELECT
+CALL COLORMESSAGE(@"%CALLNAME:(TARGET)%의 %LOCALS%", C_PINK, 1)

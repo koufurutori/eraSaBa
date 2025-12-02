@@ -1,0 +1,175 @@
+﻿
+;FileName_SHOP.ERB -------------------------------- Rev1. 00
+;RESULT_104(설정) 처리
+;CALL		SYSTEM
+;ARG		VOID
+;RETURN		VOID
+;COMMENT	
+;----------------------------------------------------------
+@SCHEDULE
+PRINTFORML [0] - 기상시간 설정(현재：%시각표시(TIME:3)%)
+
+;#;PRINTFORML [-99] - 디버그용, 함수 호출 버튼
+PRINTL [100] - 돌아간다
+INPUT
+IF RESULT == 100
+	RETURN 0
+ELSEIF RESULT == 0
+	CALL 기상시간설정()
+
+ELSEIF RESULT == -99
+	;이 항목은 아니고
+	;@TEST_동작테스트용의 내용을 만져 주세요
+	;#; CALL TEST_동작테스트용
+ENDIF
+RETURN 1
+
+[SKIPSTART]
+함수의 동작 테스트용
+PRINTFORM를 코피페 하면 말표시시의 웨이트의 빈도 조정 정도의 용도에는 사용할 수 있다
+주의점
+·사용할 수 있는 타이밍이 한정된다(의로, 판정 내용에 따라서는 거동이 바뀐다)
+·CFLAG의 조작 등을 실시했을 경우에는 세이브하지 않고 그대로 Emuera를 종료하는 편이 무난
+·다 사용했으면 백지로 돌아가 둡시다
+[SKIPEND]
+@TEST_동작테스트용
+;좋아하게 써라
+
+[SKIPSTART]
+;구문, 몽정 이벤트의 동작 테스트
+DO
+	PRINTFORMW 와 대기중
+	CALL DAILY_EV2
+LOOP 1
+[SKIPEND]
+
+
+;시간(ARG)에 기상하는 경우 얼마나 수면 하는지를 산출
+@수면시간예측(ARG)
+#FUNCTION
+LOCAL = CFLAG:MASTER:취침시간 - DAY * 1440
+IF ARG >= LOCAL
+	RETURNF ARG - LOCAL
+ELSE
+	RETURNF 1440 + ARG - LOCAL
+ENDIF
+
+@최저수면시간설정
+TIME:3 = (CFLAG:MASTER:취침시간 - DAY * 1440) + 60
+SIF TIME:3 >= 1440
+	TIME:3 -= 1440
+SIF TIME:3 < 0
+	TIME:3 = 0
+
+@기상시간설정
+#DIM 동거사람
+#DIM 전날취침시간
+전날취침시간 = CFLAG:MASTER:취침시간 - DAY * 1440
+동거사람 = 0
+FOR LOCAL,1,CHARANUM
+	IF CFLAG:LOCAL:초기위치 == CFLAG:MASTER:초기위치
+		동거사람 = LOCAL
+		BREAK
+	ENDIF
+NEXT
+DO
+	PRINTFORML 몇 시에 기상합니까? (전날취침시간：%시각표시(전날취침시간)%)(수면시간：{수면시간예측(TIME:3) / 60}시간{수면시간예측(TIME:3) % 60}분 )
+	PRINTBUTTON "┏━ △ ", 60
+	PRINTBUTTON "━△", 10
+	PRINTBUTTON "△━┓", 1
+	PRINTL 
+	PRINT ┃　
+	SIF TIME:3 < 600
+		PRINT ０
+	PRINTFORM %TOFULL(TOSTR(TIME:3 / 60))%：
+	SIF TIME:3 % 60 < 10
+		PRINT ０
+	PRINTFORM %TOFULL(TOSTR(TIME:3 % 60))%　
+	PRINTBUTTON "□", 5555
+	PRINTL 
+	PRINTBUTTON "┗━ ▽ ", -60
+	PRINTBUTTON "━▽", -10
+	PRINTBUTTON "▽━┛", -1
+	PRINTL 
+	SIF 동거사람 < CHARANUM && 동거사람
+		PRINTFORM [2222] - 동거중인 %CALLNAME:동거사람%의 기상시간에 맞춘다
+	PRINTL 
+	PRINT [3333] - 캘린더 -
+	PRINT
+	PRINTL [4444] - 직접 입력
+	IF 수면시간예측(TIME:3) < 240
+		PRINTFORM [5555] -
+		CALL COLORMESSAGE("최악이어도 1시간 이상 잘 필요가 있습니다", C_ORANGE, 1)
+	ELSE
+		PRINTFORML [{0,4}] - 완료
+	ENDIF
+	INPUT
+	IF RESULT == 0 && 수면시간예측(TIME:3) >= 240
+		PRINTFORM 자명종을 
+		CALL COLORMESSAGE(@"%시각표시(TIME:3)%", C_YELLOW)
+		PRINTFORMW 로 설정했습니다.
+		RETURN 1
+	ELSEIF RESULT == 2222 && 동거사람 < CHARANUM && 동거사람
+		TIME:3 = CFLAG:동거사람:기상시간
+	ELSEIF RESULT == 3333
+		CALL 캘린더()
+	ELSEIF RESULT == 4444
+		CALL 기상시간입력()
+	ELSEIF RESULT == 5555
+		CALL 최저수면시간설정()
+	ELSEIF INRANGE(RESULT, -1360, 1360)
+		TIME:3 += RESULT
+		IF TIME:3 >= 1440
+			TIME:3 -= 1440
+		ELSEIF TIME:3 < 0
+			TIME:3 += 1440
+		ENDIF
+	CLEARLINE 8
+	ENDIF
+LOOP 1
+[SKIPSTART]
+	;전의 것이 괜찮다고 되면(자) 여기를 되돌려
+	VARSET LOCAL
+	FOR LOCAL, 0, 24
+		IF 수면시간예측(LOCAL * 60) < 240
+			SETCOLOR 50, 50, 50
+			PRINTPLAINFORM [{LOCAL, 2}]
+		ELSE
+			SIF TIME:3 == LOCAL * 60
+				SETCOLOR C_AQUA
+			PRINTFORM [{LOCAL, 2}]
+		ENDIF
+		RESETCOLOR
+		SIF LOCAL % 12 == 11
+			PRINTL 
+	NEXT
+	IF 동거사람 < CHARANUM && 동거사람
+		LOCAL:1 = CFLAG:동거사람:기상시간 / 60
+		DRAWLINE
+		PRINTFORML [{LOCAL:1, 2}] - 동거(同居) 안의 %CALLNAME:동거사람%의 기상시간
+	ENDIF
+	$INPUT_LOOP
+	INPUT
+	SIF RESULT < 0 || RESULT > 23 || 수면시간예측(RESULT * 60) < 240
+		GOTO INPUT_LOOP
+	TIME:3 = RESULT * 60
+	PRINTFORM 자명종을 
+	CALL COLORMESSAGE(@"%시각표시(TIME:3)%", C_YELLOW)
+	PRINTFORMW 로 설정했습니다. ({수면시간예측(TIME:3) / 60}시간{수면시간예측(TIME:3) % 60}분 잡니다)
+[SKIPEND]
+
+
+
+@기상시간입력
+#DIM 시간
+#DIM 분수
+PRINTL 기상시각을 hhmm 형식으로 입력해 주세요.(입력범위 hh=0~23, mm=0~59, 대상외의 값 입력시 취소)
+PRINTL [2400] - 캔슬
+INPUT
+시간 = RESULT / 100
+분수 = RESULT % 100
+IF 0 <= 시간 && 시간 < 24 && 0 <= 분수 && 분수 < 60
+	TIME:3 = 시간 * 60 + 분수
+	CALL COLORMESSAGE(@"%시각표시(TIME:3)%", C_YELLOW)
+	PRINTFORMW 로 설정했습니다.
+ENDIF

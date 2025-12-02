@@ -1,0 +1,268 @@
+﻿;-------------------------------------------
+;각인 취득시의 텍스트
+;-------------------------------------------
+@MARK_MESSAGE
+M:1 = 0
+SETCOLOR 247,171,166
+CALL MARK_MESSAGE_A
+CALL MARK_MESSAGE_P
+CALL MARK_MESSAGE_S
+SIF SHIRAHU(TARGET)
+	CALL MARK_MESSAGE_R
+RESETCOLOR
+IF CFLAG:TARGET:구상셀렉터
+	TRYCALLFORM M_KOJO_K{NO:TARGET}_{CFLAG:TARGET:구상셀렉터}
+ELSE
+	TRYCALLFORM M_KOJO_K{NO:TARGET}
+ENDIF
+;TARGET口上出力
+SIF FLAG:구상색
+	TRYCALLFORM M_KOJO%RESULTS%_COLOR_K{NO:TARGET}
+@MARK_MESSAGE_A
+;고통각인
+IF FLAG:70 == 1
+	IF TFLAG:고통각인취득 == 1
+		PRINTFORML 시간이 멈춘 %CALLNAME:TARGET%의 몸에 고통을 아로새겨 나간다……
+		PRINTFORMW %타겟은% 고통각인 LV1을 얻었다
+	ELSEIF TFLAG:고통각인취득 == 2
+		PRINTFORML 시간이 멈춘 %CALLNAME:TARGET%의 몸에 강한 고통을 아로새겨 나간다……
+		PRINTFORMW %타겟은% 고통각인 LV2를 얻었다
+	ELSEIF TFLAG:고통각인취득 == 3
+		PRINTFORML 시간이 멈춘 %CALLNAME:TARGET%의 몸에 강렬한 고통을 아로새겨 나간다……
+		PRINTFORMW %타겟은% 고통각인 LV3을 얻었다
+		IF TALENT:PLAYER:새드
+			PRINTFORML 【%조교자가% 새드】
+			PRINTL 이상경험＋2
+		ELSEIF TALENT:PLAYER:바늘질 && SELECTCOM == 104
+			PRINTFORML 【%조교자가% 바늘질】
+			PRINTL 이상경험＋2
+		ELSE
+			PRINTL 이상경험＋1
+		ENDIF
+	ENDIF
+ELSEIF CFLAG:MASTER:장난 == 2
+	IF TFLAG:고통각인취득 == 1
+		PRINTFORML 악몽에 시달리는 %CALLNAME:TARGET%의 몸에 고통을 아로새겨 나간다……
+		PRINTFORMW %타겟은% 고통각인 LV1을 얻었다
+	ELSEIF TFLAG:고통각인취득 == 2
+		PRINTFORML 악몽에 시달리는 %CALLNAME:TARGET%의 몸에 강한 고통을 아로새겨 나간다……
+		PRINTFORMW %타겟은% 고통각인 LV2를 얻었다
+	ELSEIF TFLAG:고통각인취득 == 3
+		PRINTFORML 악몽에 시달리는 %CALLNAME:TARGET%의 몸에 강렬한 고통을 아로새겨 나간다……
+		PRINTFORMW %타겟은% 고통각인 LV3을 얻었다
+		IF TALENT:PLAYER:새드
+			PRINTFORML 【%조교자가% 새드】
+			PRINTL 이상경험＋2
+		ELSEIF TALENT:PLAYER:바늘질 && SELECTCOM == 104
+			PRINTFORML 【%조교자가% 바늘질】
+			PRINTL 이상경험＋2
+		ELSE
+			PRINTL 이상경험＋1
+		ENDIF
+	ENDIF
+ELSE
+	IF TFLAG:고통각인취득 == 1
+		PRINTFORM %타겟은% 
+		PRINTFORM 얼굴을 일그러뜨리며 
+		PRINTFORML 고통을 견디고 있다……
+		PRINTFORMW %타겟은% 고통각인 LV1을 얻었다
+	ELSEIF TFLAG:고통각인취득 == 2
+		PRINTFORML %타겟은% 한동안, 괴로운 신음을 계속 흘리고 있었다……
+		PRINTFORMW %타겟은% 고통각인 LV2를 얻었다
+		IF TFLAG:각인순종변화 == 1 && M:1 == 0
+			PRINTL 그리고 순종이 LV1이 되었다
+			M:1 = 1
+		ENDIF
+	ELSEIF TFLAG:고통각인취득 == 3
+		PRINTFORM %타겟은% 넘치는 고통에 
+		PRINTFORML 울부짖고 있었다……
+		PRINTFORMW %타겟은% 고통각인 LV3을 얻었다
+		IF TFLAG:각인순종변화 == 1 && M:1 == 0
+			PRINTL 그리고 순종이 LV1이 되었다
+			M:1 = 1
+		ENDIF
+		IF TALENT:PLAYER:새드
+			PRINTFORML 【%조교자가% 새드】
+			PRINTL 이상경험＋2
+		ELSEIF TALENT:PLAYER:바늘질 && SELECTCOM == 104
+			PRINTFORML 【%조교자가% 바늘질】
+			PRINTL 이상경험＋2
+		ELSE
+			PRINTL 이상경험＋1
+		ENDIF
+	ENDIF
+ENDIF
+
+@MARK_MESSAGE_P
+;쾌락각인
+IF !FLAG:70
+	IF CFLAG:MASTER:장난 == 2
+		IF TFLAG:23 == 1
+			PRINTFORML %타겟은% 잠든 채로 몸에 쾌락이 아로새겨져 간다………
+			PRINTFORMW %타겟은% 쾌락각인 LV1을 얻었다
+		ELSEIF TFLAG:23 == 2
+			PRINTFORML %타겟은% 잠을 자면서도 음란한 몸으로 변해간다……
+			PRINTFORMW %타겟은% 쾌락각인 LV2를 얻었다
+		ELSEIF TFLAG:23 == 3
+			PRINTFORML %CALLNAME:TARGET%의 몸은 잠든 채로 음탕하고 문란한 욕구에 굴복해갔다……
+			PRINTFORMW %타겟은% 쾌락각인 LV3을 얻었다
+;		ELSEIF TFLAG:23 == 4
+;			PRINTFORML 어린 몸이 알기에는 너무 이른 쾌락이, %타겟을% 「여자」로 바꾸어 간다……
+;			PRINTFORMW %타겟은% 초경을 맞이해 버렸다
+		ENDIF
+	ELSE
+		IF TFLAG:23 == 1
+			PRINTFORML %타겟은% 이제 막 기억한 쾌락에 몸을 부들부들 떨고 있었다……
+			PRINTFORMW %타겟은% 쾌락각인 LV1을 얻었다
+		ELSEIF TFLAG:23 == 2
+			PRINTFORM %타겟은% 쾌락의 여운에 
+			PRINTFORM 얼굴을 느슨하게 풀고 
+			PRINTFORML 있다……
+			PRINTFORMW %타겟은% 쾌락각인 LV2를 얻었다
+		ELSEIF TFLAG:23 == 3
+			PRINTFORML %타겟은% 강렬한 쾌락에 몸도 마음도 애태우고 있는 것 같다……
+			PRINTFORMW %타겟은% 쾌락각인 LV3을 얻었다
+			IF TFLAG:각인순종변화 == 1 && M:1 == 0
+			PRINTL 그리고 순종이 LV1가 되었다
+				M:1 = 1
+			ENDIF
+;		ELSEIF TFLAG:23 == 4
+;			PRINTFORML 어린 몸이 알기에는  너무 이른 쾌락이, %타겟을% 「여자」로 바꾸어 간다……
+;			PRINTFORMW %타겟은% 초경을 맞이해 버렸다
+		ENDIF
+	ENDIF
+ENDIF
+
+@MARK_MESSAGE_S
+;괘씸각인
+;쾌락에 의한 각인
+IF TFLAG:24 == 11
+	PRINTFORM %타겟은% 무심코 사랑스러운 교성을 흘려버린 것을 자각하자, 
+	PRINTFORM 얼굴을 붉히며 
+	PRINTFORML 이쪽으로부터 눈을 피했다……
+	PRINTFORMW %타겟은% 괘씸각인 LV1을 얻었다
+ELSEIF TFLAG:24 == 12
+PRINTFORML %타겟은% 쾌락에 떨면서도, 갖고 싶어하는 듯한 시선을 보내고 있었다……
+	PRINTFORMW %타겟은% 괘씸각인 LV2를 얻었다
+	IF TFLAG:각인순종변화 == 1 && M:1 == 0
+		PRINTL 그리고 순종이 LV1이 되었다
+		M:1 = 1
+	ENDIF
+ELSEIF TFLAG:24 == 13
+	PRINTFORML %타겟은% 쾌락에 흐트러지면서도, 새로운 행위를 간청해 왔다……
+	PRINTFORMW %타겟은% 괘씸각인 LV3을 얻었다
+	IF TFLAG:각인순종변화 == 1 && M:1 == 0
+		PRINTL 그리고 순종이 LV2가 되었다
+		M:1 = 1
+	ENDIF
+;굴복, 공순에 의한 각인
+ELSEIF TFLAG:24 == 31
+	PRINTFORML %타겟은% 아첨하는 듯한 시선을 %CALLNAME:MASTER%에게 던졌다……
+	PRINTFORMW %타겟은% 괘씸각인 LV1을 얻었다
+ELSEIF TFLAG:24 == 32
+	PRINTFORML %타겟은% 좀 더 %CALLNAME:MASTER%가 기뻐해 주었으면 하는것 같다……
+	PRINTFORMW %타겟은% 괘씸각인 LV2를 얻었다
+	IF TFLAG:각인순종변화 == 1 && M:1 == 0
+		PRINTL 그리고 순종이 LV1이 되었다
+		M:1 = 1
+	ENDIF
+ELSEIF TFLAG:24 == 33
+	PRINTFORM %타겟은% 
+	IF TARGET == 57 && !TALENT:연모
+		PRINTFORM 후쿠노카미와 노인 가면을 빙글빙글 바꾸면서 
+	ELSE
+		PRINTFORM 어딘가 황홀한 표정으로 
+	ENDIF
+	PRINTFORML 가만히 %마스터를% 바라보고 있다……
+	PRINTFORMW %타겟은% 괘씸각인 LV3을 얻었다
+	IF TFLAG:각인순종변화 == 1 && M:1 == 0
+		PRINTL 그리고 순종이 LV2가 되었다
+		M:1 = 1
+	ENDIF
+ENDIF
+
+
+@MARK_MESSAGE_R
+;반발각인
+IF TFLAG:반발각인취득 == 1
+	PRINTFORM %타겟은% 
+	PRINTFORM 날카로운 시선을 
+	PRINTFORML 이쪽으로 향하고 있다……
+	PRINTFORMW %타겟은% 반발각인 LV1을 얻었다
+ELSEIF TFLAG:반발각인취득 == 2
+	PRINTFORM %타겟은% 
+	PRINTFORML 분노에 휩싸인 듯한 표정을 하고 있다……
+	PRINTFORMW %타겟은% 반발각인 LV2을 얻었다
+	IF TFLAG:각인순종변화 == 1
+		PRINTFORMW 순종이{ABL:순종}에 내렸다
+		PRINTFORMW 친밀이{ABL:친밀}에 내렸다
+		M:1 = 1
+	ELSEIF TFLAG:각인순종변화 == 2 && M:1 == 0
+		PRINTFORMW 순종이{ABL:순종}에 내렸다
+		M:1 = 1
+	ENDIF
+ELSEIF TFLAG:반발각인취득 == 3
+	PRINTFORM %타겟은% 분노에 차 
+	PRINTFORM 얼굴을 찡그리고
+	PRINTFORML , 원망의 말을 중얼거리고 있다……
+	PRINTFORMW %타겟은% 반발각인 LV3을 얻었다
+	IF TFLAG:각인순종변화 == 1 && M:1 == 0
+		PRINTFORMW 순종이{ABL:순종}에 내렸다
+		PRINTFORMW 친밀이{ABL:친밀}에 내렸다
+		M:1 = 1
+	ELSEIF TFLAG:각인순종변화 == 2 && M:1 == 0
+		PRINTFORMW 순종이{ABL:순종}에 내렸다
+		PRINTFORMW 친밀이{ABL:친밀}에 내렸다
+		M:1 = 1
+	ENDIF
+ENDIF
+
+;-------------------------------------------
+;SP 이벤트 말텍스트
+;-------------------------------------------
+;데이트 키스 공통 텍스트
+@SPEVENT_MESSAGE_1(ARG, ARG:1)
+;이중표시억제
+SIF LOCAL == FLAG:데이트상대
+	RETURN
+PRINTL
+PRINTFORML …데이트를 마치고 돌아오는 길에 %타겟은% 문득 멈춰 서더니
+PRINTFORMW 뒤를 돌아 %CALLNAME:MASTER%의 입술을 빼앗았다…
+PRINTL
+LOCAL = FLAG:데이트상대
+
+;데이트 고백 공통 텍스트
+@SPEVENT_MESSAGE_2(ARG, ARG:1)
+IF ARG == 0
+	PRINTL
+	PRINTFORML 데이트를 마치고 돌아오는 길에 %타겟은% %마스터를% 불러 세웠다
+	PRINTFORMW 살짝 떨리는 목소리로 %타겟은% %CALLNAME:MASTER%에 대한 마음을 전했다…
+	PRINTL
+ELSEIF ARG == 1
+	PRINTFORML %마스터가% 마음을 받아들이자 %타겟은% 
+	PRINTFORMW 기쁨으로 뺨이 느슨하게 풀어졌다…
+	PRINTL
+ELSEIF ARG == 2
+	PRINTFORML %타겟은% %CALLNAME:MASTER%의 말에 낙심해 
+	PRINTFORMW 쓸쓸히 고개를 떨궜다…
+	PRINTL
+ENDIF
+
+;데이트 반발각인 소거 공통 이벤트
+@SPEVENT_MESSAGE_3(ARG, ARG:1)
+;반발각인 LV1 소거시
+IF ARG == 1
+	PRINTL
+	PRINTFORML …외출할 때에 비해 두 사람 사이의 응어리는 풀어져 있다
+	PRINTFORMW %타겟은% %마스터를% 다시 본 것 같다…
+;반발각인 LV2 소거시
+ELSEIF ARG == 2
+	PRINTL
+	PRINTFORML …외출할 때에 비해 조금 거리가 줄어든 것 같다
+	PRINTFORMW %타겟은% %마스터를% 조금 다시 본 것 같다…
+;반발각인 LV3 소거시
+ELSEIF ARG == 3
+	PRINTL
+	PRINTFORML …%타겟은% 무엇인가 중얼거리며 %CALLNAME:MASTER%의 뒤를 따라 걷고 있다
+	PRINTFORMW %타겟은% %마스터를% 조금 다시 본 것 같다…
+ENDIF

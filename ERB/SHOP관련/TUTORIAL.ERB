@@ -1,0 +1,761 @@
+﻿@TUTORIAL_MAIN
+#DIM チュート行数保管
+
+CLEARLINE 1
+PRINTL 
+CALL 画像表示("立ち絵_服_通常_109", "right", 0, 230, 110)
+CALL 画像描画終了
+PRINTL 
+PRINTL 
+PRINTL 
+SETBGCOLOR 0, 0, 102
+PRINTFORML .........
+PRINTFORML ......
+PRINTFORML ...
+PRINTFORML 
+PRINTFORML ............정신을 차려보니 히로는 이상한 세계에 있었다.
+PRINTFORML 어딘가 일렁거리는, 붉은 것 같은 아지랑이가 눈앞을 가득 채운다.
+PRINTFORML 
+PRINTW 
+SETCOLOR 0xE6E6FA
+CALL DQPRINT("「네가 이번에 선택된 죄수구나.」", FLAG:594)
+
+SELECTCASE FLAG:592
+	CASE 0
+		CALL DQPRINT("「우리는 계속 기다렸어…… 이의 목소리를 들을 수 있는 자를.」", FLAG:594)
+		CALL DQPRINT("「그리고 이 기다긴 이야기의 끝을 내줄 소녀를.」", FLAG:594)
+		PRINTFORMDW 모습 없는 목소리는 그렇게 말을 시작했다.
+	CASE 1
+		CALL DQPRINT("「다시 왔구나.」", FLAG:594)
+		CALL DQPRINT("「이번에는 무슨 이야기를 해줄까?」", FLAG:594)
+		PRINTFORMDW 목소리는 이쪽을 도와주려는 모양이다.
+	CASE 2
+		CALL DQPRINT("「어서 와.」", FLAG:594)
+		CALL DQPRINT("「너무 오래 있다가는 잠을 자고 일어나도 피로가 안 풀린 기분이 들 테니, 적당한 때에 돌아가야 해?」", FLAG:594)
+		PRINTFORMDW 목소리는 차분하게 응답을 기다리고 있다.
+	CASE 3
+		CALL DQPRINT("「후후. 어서 와.」", FLAG:594)
+		CALL DQPRINT("「어쩌면 여기가 네게 있어 잠깐의 휴식처가 될지도 모르겠네.」", FLAG:594)
+		PRINTFORMDW 목소리는 여느 때와 같이 나긋하지만, 어딘가 슬픔에 잠긴 것 같기도 하다.
+	CASEELSE
+		SELECTCASE RAND:5
+			CASE 0
+				CALL DQPRINT("「다시 왔구나.」", FLAG:594)
+				CALL DQPRINT("「이번에는 무슨 이야기를 해줄까?」", FLAG:594)
+				PRINTFORMDW 목소리는 이쪽을 도와주려는 모양이다.
+			CASE 1
+				CALL DQPRINT("「어서 와.」", FLAG:594)
+				CALL DQPRINT("「너무 오래 있다가는 잠을 자고 일어나도 피로가 안 풀린 기분이 들 테니, 적당한 때에 돌아가야 해?」", FLAG:594)
+				PRINTFORMDW 목소리는 차분하게 응답을 기다리고 있다.
+			CASE 2
+				CALL DQPRINT("「후후. 어서 와.」", FLAG:594)
+				CALL DQPRINT("「어쩌면 여기가 네게 있어 잠깐의 휴식처가 될지도 모르겠네.」", FLAG:594)
+				PRINTFORMDW 목소리는 여느 때와 같이 나긋하지만, 어딘가 슬픔에 잠긴 것 같기도 하다.
+			CASE 3
+				CALL DQPRINT("「우리가 누군지 궁금하다고?」", FLAG:594)
+				CALL DQPRINT("「글쎄…… 우린 이미 떠나간 자들이니 누구인가는 그리 중요하진 않을 거야.」", FLAG:594)
+				PRINTFORMDW 주인을 알 수 없는 목소리가 반겨온다.
+			CASEELSE
+				CALL DQPRINT("「예전에는 이 저택도 활기찼지.」", FLAG:594)
+				CALL DQPRINT("「하지만 영원한 것은 없어. 그것만큼은 우리 모두가 알고 있었지.」", FLAG:594)
+				PRINTFORMDW 목소리는 어딘가 추억에 잠긴 듯하다……
+		ENDSELECT
+ENDSELECT
+PRINTL 
+CALL DQPRINT("「이곳에 왔다는 건 알고 싶은 게 있다는 거겠지.」", FLAG:594)
+CALL DQPRINT("「자, 무엇이 궁금하니?」",2)
+DRAWLINE
+PRINTL 
+
+$LOOP01
+
+チュート行数保管 = 0
+
+RESETCOLOR
+PRINTLC [100] - 뭘 해야할까?
+PRINTLC [103] - 하루의 흐름
+PRINTL 
+PRINTLC [104] - 기상과 취침
+PRINTLC [107] - 실적 해제
+PRINTL 
+PRINTLC [108] - 죄수들과의 관계
+PRINTLC [109] - 친해지는 방법
+PRINTLC [110] - 빨리 즐기고 싶다
+PRINTLC [111] - 욕구 불만도
+PRINTL 
+PRINTLC [112] - 덮쳐지고 싶다
+PRINTLC [113] - 미움받았을 때는?
+PRINTL 
+PRINTLC [118] - 운세에 대해
+PRINTL 
+PRINTLC [200] - 청소
+PRINTLC [201] - 화술기능
+PRINTLC [202] - 전투능력
+PRINTLC [203] - 교양
+PRINTL 
+PRINTLC [204] - 요리에 대해
+PRINTLC [205] - 더 요리에 대해
+PRINTLC [206] - 음악과 연주
+PRINTLC [207] - 낚시
+PRINTL 
+PRINTLC [208] - 채집
+PRINTLC [209] - 조제
+PRINTL 
+PRINTLC [212] - 텃밭
+PRINTLC [213] - 의뢰
+PRINTL 
+PRINTLC [217] - 벌채
+PRINTLC [218] - 덫사냥
+PRINTL 
+
+IF FLAG:튜토리얼로그 == 0;FLAG:594
+	PRINTL [996] - 조금 전에 뭐라고 했더라, 기억이 안 나.
+ELSE
+	PRINTL [996] - 지금 말하고 있는 한 마디 한 구절에 집중하고 싶다.
+ENDIF
+PRINTL [997] - 좀 더 빨리 말해 줘.
+PRINTL [998] - 그런데……
+PRINTL [999] - 딱히 궁금한 것은 없어.
+
+$INPUTLOOP
+INPUT
+SETCOLOR 0xE6E6FA
+;★消去行数はLOOP01からのPRINTLの数+1
+CLEARLINE 16
+SELECTCASE RESULT
+	;뭘 해야할까?
+	CASE 100
+		CALL DQPRINT("「뭘 해야 되는가, 라……」", FLAG:594)
+		CALL DQPRINT("「『목적』은 결국 개개인에 따라 다르니, 우리가 뭐라고 해줄 말은 없네.」", FLAG:594)
+		CALL DQPRINT("「눈을 떠보니 이곳, 감옥저택에 잡혀와」", FLAG:594)
+		CALL DQPRINT("「실은 네가【마녀인자】를 몸에 지니고 있는 마녀 후보라는 말을 들어버렸으니까.」", FLAG:594)
+		CALL DQPRINT("「스트레스가 높아지면【마녀화】하여 끝내 죽지도 않는 괴물인【말로】가 된다니, 현실성이 없지?」", FLAG:594)
+		CALL DQPRINT("「……하지만 이게 실제로 네게 일어난 일이니까.」", FLAG:594)
+		CALL DQPRINT(" ", FLAG:594)
+		CALL DQPRINT("「일단은 감옥의 규칙에 따르면서 네가 원하는대로 하루하루를 보내면 되지 않을까?」", FLAG:594)
+		CALL DQPRINT("「스트레스가 쌓이는 걸 조심하면서 밥을 꼬박꼬박 잘 먹고, 건강하게 생활하기.」", FLAG:594)
+		CALL DQPRINT("「낚시, 채집, 벌목, 밭일…… 의외로 여기서도 할 일은 상당히 있어.」", FLAG:594)
+		CALL DQPRINT("「생각보다 이런 곳에서 연애도 자주 일어난단다?」", FLAG:594)
+		CALL DQPRINT("「과거 몇몇 소녀 중에는 그게 좀…… 지나쳐서 주지육림에 잠기고 음탕함에 빠지기도 했었지만.」", FLAG:594)
+		CALL DQPRINT(" ", FLAG:594)
+		CALL DQPRINT("「길고도 짧은 역사를 보아 온 우리니까 네게 미리 경고해주지만,」", FLAG:594)
+		CALL DQPRINT("「탈출을 목표한다면 조심하렴. 감옥저택의 역사상 여길 탈출한 소녀들은 단 한 명도 없었으니까.」", FLAG:594)
+		CALL DQPRINT(" ", FLAG:594)
+		CALL DQPRINT("「……이쪽에서는 네가 부디『그 아이』도 구해줄 수 있기를 바랄 뿐이야.」", FLAG:594)
+		チュート行数保管 += 17
+	;하루의 흐름	
+	CASE 103
+		CALL DQPRINT("「하루는 기본적으로 이 눈뜨기 전의 메뉴 화면에서 시작해.」", FLAG:594)
+		CALL DQPRINT("「【기상시간 설정】,【SAVE】,【LOAD】등등, 여기서만 할 수 있는 일도 많아.」", FLAG:594)
+		CALL DQPRINT("「준비가 되면【기상】하는 것으로 하루가 시작 돼.」", FLAG:594)
+		CALL DQPRINT("「태풍이나 눈보라 같은, 무언가 특수한 일이 일어나고 있을 때는, 이 때 상황을 알 수 있어.」", FLAG:594)
+		CALL DQPRINT("「낮의 활동 중에『기력』이 없어지면 많은 명령어를 실행할 수 없게 돼.」", FLAG:594)
+		CALL DQPRINT("「또한,『체력』이 없어지면 거기서 게임이 끝나버리니까 조심하자?」", FLAG:594)
+		CALL DQPRINT("「계속 배고픈 상태로 다니면 체력도 줄어드니까 제때 잘 먹는 게 좋아.」", FLAG:594)
+		CALL DQPRINT("「너 자신의『스트레스』가 높아지면【마녀화】하여 게임이 끝나니까 신경쓰도록 해.」", FLAG:594)
+		CALL DQPRINT("「【마녀화】의 위험은 모든 죄수들이 다 가지고 있으니, 그 아이들의 스트레스에도 신경을 쓰지 않으면 곤란해질 수 있어.」", FLAG:594)
+		CALL DQPRINT("「이성을 잃은【말로】가 되어 무차별적인 살육을 하고 다닐테니까.」", FLAG:594)
+		CALL DQPRINT("「간식이나 식사,【낮잠을 잔다】나【욕탕에서 쉰다】,【아이템】의 사용을 통해, 상태를 유지하자.」", FLAG:594)
+		CALL DQPRINT("「또, 기상으로부터의 활동 시간이 일정시간을 넘으면『수면요』상태가 돼.」", FLAG:594)
+		CALL DQPRINT("「『수면요』상태가 되면, 체력과 기력의 소비가 크게 증가해. 그때는 다른 일 말고 얌전히 자.」", FLAG:594)
+		CALL DQPRINT("「【낮잠】을 자거나, 졸음을 쫓는 효과가 있는 아이템을 사용하면 수면요 상태에 들어가는 것을 늦출 수 있어.」", FLAG:594)
+		CALL DQPRINT("「취침, 혹은 기절하면 그걸로 하루는 끝이 나.」", FLAG:594)
+		CALL DQPRINT("「소지품이나 상황에 따라 특별한 일이 생길 수도 있겠네.」", FLAG:594)
+		CALL DQPRINT("「……대충 이 정도인가? 자세한 기능에 대해서는 따로 설명해줄게.」", FLAG:594)
+		チュート行数保管 += 17
+	;기상과 취침	
+	CASE 104
+		CALL DQPRINT("「기상 전 메뉴의【생활환경 설정】에서 기상시간을 변경할 수 있어.」", FLAG:594)
+		CALL DQPRINT("「어지간한 상태가 아닌 한, 이 시간에서 늦잠은 자지 않아. 늦잠 자는 건 너도 별로 좋아진 않지?」", FLAG:594)
+		CALL DQPRINT("「동침하고 있는 사람이 잠을 자거나, 행복한 시간을 보내고 있다면 이야기는 달라지겠지만.」", FLAG:594)
+		CALL DQPRINT("「기상시간에 따라, 취침해야 하는 시간……『수면요』상태에 들어가는 시간도 달라져.」", FLAG:594)
+		CALL DQPRINT("「가끔 특이한 생활패턴을 가진 사람들도 있으니, 그러한 사람과 교류를 돈독히 하고 싶다면 일부러 기상을 늦추는 것도 한 방법이야.」", FLAG:594)
+		CALL DQPRINT("「취침은 『수면가능』이 되면 언제든지 가능해.」", FLAG:594)
+		CALL DQPRINT("「잠은 스트레스 감소에 좋으니 이것도 고려하는 게 좋을 거야.」", FLAG:594)
+		CALL DQPRINT("「졸리면 제대로 잠자리에 들어 질 높은 수면을 취하렴. 건강은 중요하니까.」", FLAG:594)
+		IF ITEM:스위티숙면배개
+			CALL DQPRINT("「맞다. 그 배개, 꽤 좋지?」", FLAG:594)
+			CALL DQPRINT("「우리들도 자주 애용하던 물품이었어.」", FLAG:594)
+		ELSE
+			CALL DQPRINT("「그렇다고 해도, 여러 가지로 바쁘면 수면시간을 확보하는 건 어렵겠지.」", FLAG:594)
+			CALL DQPRINT("「음…… 저택 어딘가에 수면에 도움이 되는 마법 배개를 두었던 것 같은데……」", FLAG:594)
+		ENDIF
+		チュート行数保管 += 10
+	;실적 해제	
+	CASE 107
+		CALL DQPRINT("「실적 해제는 기상 전 메뉴에서 할 수 있어.」", FLAG:594)
+		CALL DQPRINT("「예를 들어 무언가의 수집량이나『연모』등의 함락계 소질을 일정 인원 취득 등의 조건을 충족시키면 보너스를 받을 수 있어.」", FLAG:594)
+		CALL DQPRINT("「여기서만 취득할 수 있는 능력도 있단다? 마녀인자의 좋은 점 중에 하나겠네.」", FLAG:594)
+		CALL DQPRINT("「삶을 꽤 편하게 해주니까, 실적 해제를 목표로 해도 좋을 거야.」", FLAG:594)
+		CALL DQPRINT("「체력 최대치나 기력 최대치 등은 여기서 주로 성장시킬 수 있으니까, 노린다면 이쪽이야.」", FLAG:594)
+		CALL DQPRINT("「가끔씩 확인하는 습관을 들이도록 하자.」", FLAG:594)
+		チュート行数保管 += 6
+	;여성과의 관계	
+	CASE 108
+		CALL DQPRINT("「다른 사람들과의 관계에 대해서는, 몇 개의 단계로 나누어져 있어.」", FLAG:594)
+		CALL DQPRINT("「크게 나누면『사모』→『연모』로 나아가는 루트와『섹프』→『애욕』으로 나아가는 루트로 2개가 있어.」", FLAG:594)
+		CALL DQPRINT("「일단 어떤 루트를 타면 기본적으로 그 루트로 고정돼.」", FLAG:594)
+		CALL DQPRINT("「옵션을 통해서 상호 변화를 가능하게 할 수도 있어. 경우에 따라서 활용해봐.」", FLAG:594)
+		CALL DQPRINT("「『사모』등을 취득하는 데 필요한 조건은【능력 표시】의『함락 조건』에서 확인할 수 있어.」", FLAG:594)
+		CALL DQPRINT("「때로는 특정 이벤트가 필요할 수도 있고.」", FLAG:594)
+		CALL DQPRINT("「또, 충분히 교우를 돈독히 한 사람과는 고백을 통해 연인이 될 수 있어.」", FLAG:594)
+		CALL DQPRINT("「기본적으로는 연인은 한 명이 맞지만…… 글쎄, 몇몇 겁없는 애들은 문어발을 시도하더라고.」", FLAG:594)
+		CALL DQPRINT("「끝은 어땠냐고?」", FLAG:594)
+		CALL DQPRINT("「권리와 의무는 하나다, 라는 말만 해둘까……」", FLAG:594)
+		CALL DQPRINT("「충분히 시간을 갖고 무드를 띄워, 뜨거운 고백을 해 주렴.」", FLAG:594)
+		CALL DQPRINT("「경우에 따라서는 데이트를 하고 돌아가는 길 등에서 마음을 털어놓을 수 있게 될지도 몰라?」", FLAG:594)
+	
+		チュート行数保管 += 12
+	;친해지는 방법	
+	CASE 109
+		CALL DQPRINT("「다른 사람과 친해지기 위해서는, 어쨌든 접점을 가지는 것이 중요하겠네.」", FLAG:594)
+		CALL DQPRINT("「그다지 친하지 않을 때는 할 수 있는 일도 적을 거야.」", FLAG:594)
+		CALL DQPRINT("「회화를 하거나, 차를 타거나…… 일을 돕는 것도 좋지.」", FLAG:594)
+		CALL DQPRINT("「악기 연주나 요리에 자신이 있다면 그쪽에서 어필하는 건 어떨까?」", FLAG:594)
+		CALL DQPRINT("「【채집】【조합】은 어느 정도 친해지면 같이 있을 때 도움을 받을 수 있어.」", FLAG:594)
+		CALL DQPRINT("「어느 정도 친해지고【데리고 나간다】를 할 수 있게 되면【데이트】를 권유해보자.」", FLAG:594)
+		CALL DQPRINT("「데이트중에는 호감도나 신뢰도가 올라가기 쉬워져. 또,『데이트경험』을 얻을 수도 있어.」", FLAG:594)
+		CALL DQPRINT("「『데이트경험』은 보다 깊은 관계를 가질 때, 여러가지로 유의미하게 작용하므로 적극적으로 가자.」", FLAG:594)
+		CALL DQPRINT("「친해지면 여러가지로 할 수 있는 일은 늘어나지만, 지나치면『반발각인』이 붙어 버릴 수도 있어.」", FLAG:594)
+		CALL DQPRINT("「기본적으로 신체의 접촉을 수반하는 행위는『사모』를 얻고 하는 게 좋을 거야.」", FLAG:594)
+		CALL DQPRINT("「음란한 행위도 제대로 된 상태라면『연모』나『섹프』를 얻고 나서 하는 걸 추천할까.」", FLAG:594)
+		CALL DQPRINT("「아 맞다, 차나 식사에『춘약』을 타면 호감도가 오르기 쉬워져.」", FLAG:594)
+		チュート行数保管 += 12
+	;빨리 즐기고 싶다	
+	CASE 110
+		CALL DQPRINT("「빨리 즐기고 싶다……? 음……」", FLAG:594)
+		CALL DQPRINT("「……벌써 마녀화한 건가?」", FLAG:594)
+		CALL DQPRINT("「아니, 아무것도 아니야. 그렇네……」", FLAG:594)
+		CALL DQPRINT("「술에 취하면 아무래도 가드가 느슨해지지.」", FLAG:594)
+		CALL DQPRINT("「구체적으로는 상대를『만취』상태까지 마시게 하면 판단력이 흐려지니까, 저항없이 덮칠 수 있게 될 거야.」", FLAG:594)
+		CALL DQPRINT("「아이템인『우콘드링크』같은 것을 사용하여 자신의 취기는 억제하고, 독한 주류를 준비하자.」", FLAG:594)
+		CALL DQPRINT("「또, 차에『수면제』를 타두면, 수면 중에 방에 숨어들어 장난을 치는 것도 가능해.」", FLAG:594)
+		CALL DQPRINT("「단, 면간・취간 모두 잠이 깼을 때 엄청난 반발을 살 수밖에 없어? 아무래도.」", FLAG:594)
+		CALL DQPRINT("「경우에 따라서는『멈춘다』는 결단이 필요할 지도.」", FLAG:594)
+		CALL DQPRINT("「어쨌든 이와 같은 무자각한 상태에서의 관계를 가졌을 경우에는『깨끗한 교제』가 아니니까, 그건 알아둬.」", FLAG:594)
+		チュート行数保管 += 10
+	;욕구 불만도	
+	CASE 111
+		CALL DQPRINT("「『욕구 불만도』는 소녀들이 얼마나 성욕을 많이 쌓아두고 있는지를 보여주는 거야.」", FLAG:594)
+		CALL DQPRINT("「【실적 해제】에서 취득할 수 있는『정욕감지』마법이 있다면 가시화할 수 있어.」", FLAG:594)
+		CALL DQPRINT("「『욕구 불만도』가 높으면 덮쳐질 가능성이 높아지거나, 성적인 것들에 방어력이 약해질 수도 있어.」", FLAG:594)
+		CALL DQPRINT("「누적되는 거라 쌓인 애들도 있을 거야. 계속 방치하면 자위로 발산하곤 하더라.」", FLAG:594)
+		CALL DQPRINT("「또한,『미약』계통의 아이템을 사용하여 절정하지 않을 정도의 접촉을 반복하면 욕구 불만도를 빠르게 높일 수 있어.」", FLAG:594)
+		CALL DQPRINT("「반대로 절정을 하거나 강도 높은 성적인 접촉을 하면 욕구 불만도가 감소하고.」", FLAG:594)
+		CALL DQPRINT("「참고로 덮쳐졌을 때는『욕구 불만도』가 0이 되지 않으면 해방시켜 주지 않으니까?」", FLAG:594)
+		CALL DQPRINT("「제대로 마지막까지 함께 있어줘.」", FLAG:594)
+		チュート行数保管 += 8
+	;덮쳐지다	
+	CASE 112
+		CALL DQPRINT("「너도 꽤 호색한이구나.」", FLAG:594)
+		CALL DQPRINT("「함락 소질이 없거나 의식이 있는 상태에서 정사에 이르고 싶은 경우 등은 상대 쪽에서의 주체적인 행동이 필요하지.」", FLAG:594)
+		CALL DQPRINT("「그걸 위한『밀려 넘어뜨려짐』이야. 조건을 만족시키면 상대 쪽에서 덮쳐 올 거야.」", FLAG:594)
+		CALL DQPRINT("「밀려 넘어져 있을 때는 상대방의 체력・기력의 소비가 줄어, 오래 즐길 수 있을 지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「밀려 넘어지는 전제로서는 성에 대한 지식이 있을 것, 상대가『그럴 마음』이 되게 하는 것이 중요해.」", FLAG:594)
+		CALL DQPRINT("「구체적으로는,『욕정』『욕구 불만도』등이 충분히 높아져 있을 필요가 있어.」", FLAG:594)
+		CALL DQPRINT("「게다가,【끌어안는다】커맨드는 상대로부터의 덮치기를 유발하기 쉽게 하는 효과를 지녀.」", FLAG:594)
+		CALL DQPRINT("「시간을 통해『욕정』을 벌어 미약 계통의 아이템을 사용해 두는 것으로, 최후의 한 방을 가하자.」", FLAG:594)
+		CALL DQPRINT("「【조합】에서만 얻을 수 있는 평범한『미약』이외의 계통 아이템이 이러한 움직임에 도움이 될 거야.」", FLAG:594)
+		CALL DQPRINT("「어느 쪽이든 이런 함락 소질이 없으면 꽤 엄격한 밸런스가 돼.」", FLAG:594)
+		CALL DQPRINT("「『반감』이나『불쾌』의 값에 신경 써서 섣불리 손을 대서 반발각인을 얻는 일이 없도록 조심하자?」", FLAG:594)
+		チュート行数保管 += 11
+	;미움받았을 때는?	
+	CASE 113
+		CALL DQPRINT("「상대방한테 미움을 받았다고? 그럼 가서 사과해야지.」", FLAG:594)
+		CALL DQPRINT("「『분노 게이지』가 보일 때는 경솔한 행동은 하지 않도록 주의해.」", FLAG:594)
+		CALL DQPRINT("「분노상태는 날이 지나면 진정되지만,『반발각인』을 얻어버렸을 경우에는 계속 영향이 생겨.」", FLAG:594)
+		CALL DQPRINT("「『반발각인』이 있으면 커맨드의 실행 판정이 보다 엄격해지므로 조속히 어떻게든 해야겠지?」", FLAG:594)
+		CALL DQPRINT("「『과자상자』를 찾아【사과한다】를 하면 운이 좋으면 반발각인을 지울 수도 있어.」", FLAG:594)
+		CALL DQPRINT("「데이트를 권할 수 있는 사이라면 데이트 종료 시 이벤트로『반발각인』이 내려갈 수도 있고.」", FLAG:594)
+		CALL DQPRINT("「데이트에서 확실히 대접해 오명을 씻도록 노력해보자.」", FLAG:594)
+		CALL DQPRINT("「그리고 『반발각인』은 지웠을 때 기본적으로는 상대의 정보・이력에는 남지만 큰 문제는 아니야.」", FLAG:594)
+		CALL DQPRINT("「이력이 남아서 생기는 메리트도 있으니까.」", FLAG:594)
+		CALL DQPRINT("「다음에 똑같은 행동을 했을 때 이력이 없는 경우에 비해 약간『반발각인』이 붙기 어려워지는 효과가 있어.」", FLAG:594)
+		CALL DQPRINT("「『아ㅡ 쟤는 뭐 저런 애였으니까 내가 봐줘야지 뭐……』같은 느낌으로.」", FLAG:594)
+		CALL DQPRINT("「다만 어디까지나 약간이니까 지나치면 역시 미움을 받게되겠지.」", FLAG:594)
+		CALL DQPRINT("「신이 나서 또『반발각인』을 늘리지 않도록 주의하자.」", FLAG:594)
+		チュート行数保管 += 13
+	;운세에 대해	
+	CASE 118
+		CALL DQPRINT("「운세…… 다른 말로는 행운 보정. 이른바 행운에 관한 거네.」", FLAG:594)
+		CALL DQPRINT("「운세뽑기 통을 통해서나『역서』점쟁이의 점으로 오늘의 운세를 알 수 있어.」", FLAG:594)
+		CALL DQPRINT("「운이 좋으면 낚시나 채집의 성과 등에서 행운이 네 편이 되어줄지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「또, 다른 소녀들의 럭키스케베와 마주칠 가능성 등도 높아지지.」", FLAG:594)
+		CALL DQPRINT("「운을 시험하고 나서 그날 어떤 행동을 할지 생각해 보는 것도 네 자유야.」", FLAG:594)
+		チュート行数保管 += 5
+	;청소	
+	CASE 200
+		CALL DQPRINT("「이 세계에서는 장롱을 뒤지거나 항아리를 뒤질 수는 없지만, 청소를 하는 것은 가능해.」", FLAG:594)
+		CALL DQPRINT("「일상 생활과 함께 조금씩 더러움은 쌓여가는 법. 청소도 중요한 일 중 하나야.」", FLAG:594)
+		CALL DQPRINT("「그건 너도 잘 알고 있는 일이지? 청결을 중요하게 생각하는 것 같기도 하니까.」", FLAG:594)
+		CALL DQPRINT("「……뜻하지 않게『무언가』가 있을지도 모르지만 그것을 목표로 삼지는 말자?」", FLAG:594)
+		CALL DQPRINT("「그렇다고는 해도, 지나친 것도 주의해야지. 아주 드물게『청소중독』에 빠지는 아이들도 있더라고.」", FLAG:594)
+		CALL DQPRINT("「설마 몸을 섞는 도중에 신경이 쓰였다고 청소를 시작한다거나…… 그러진 않지?」", FLAG:594)
+		CALL DQPRINT("「너는 어째 그럴 것 같다는 느낌이 들어서 좀 신경쓰이네……」", FLAG:594)
+		CALL DQPRINT("「참고로, 실적 해제에서 습득할 수 있는『오방짐작』마법이 있으면, 어디가 더러워져 있는지 한눈에 알 수 있어.」", FLAG:594)
+		チュート行数保管 += 8
+	;화술기능	
+	CASE 201
+		CALL DQPRINT("「화술기능에 관해서, 라.」", FLAG:594)
+		CALL DQPRINT("「회화는 교우를 깊게 하는 첫걸음이지만 이야기의 유연함이 떨어지는 것은 별개의 문제야.」", FLAG:594)
+		CALL DQPRINT("「화술기능이란 상대에게 이야기를 나누는 것이 즐겁다, 라고 생각하게 하는 능력이라고 생각해주렴.」", FLAG:594)
+		CALL DQPRINT("「때와 경우에 따라서는 남을 구슬리는 데 효과를 발휘할 수도 있어.」", FLAG:594)
+		CALL DQPRINT("「……그렇다고는 해도 아무리 화술이 뛰어난 사람도 매너리즘을 이길 수 없지?」", FLAG:594)
+		CALL DQPRINT("「생각해보렴. 아무리 사이가 좋은 사람과도 계속 이야기하다 보면 이야깃거리가 없어지잖니?」", FLAG:594)
+		チュート行数保管 += 6
+	;전투능력
+	CASE 202
+		CALL DQPRINT("「전투능력에 관해서, 라.」", FLAG:594)
+		CALL DQPRINT("「말 그대로야. 얼마나 잘 싸우는가지.」", FLAG:594)
+		CALL DQPRINT("「……아주 드물게 던져진 물건을 피하고 싶을 때에도 활용할 수도 있고.」", FLAG:594)
+		CALL DQPRINT("「단련하기 위해서는 어딘가『트인 장소』에서【전투훈련】을 하면 돼.」", FLAG:594)
+		CALL DQPRINT("「혼자서 훈련을 하는 것보다도, 누군가와 함께 하는 것이 도움이 된다는 건 뭐, 당연한 말이지?」", FLAG:594)
+		CALL DQPRINT("「덧붙여서, 어딘가에 있는『전술지도서』를 찾으면 경험이 많이 쌓여서 유익할 거야.」", FLAG:594)
+		CALL DQPRINT("「꽤 피곤해지겠지만, 호신을 위해서도 조금은 단련해 두는 게 어떨까.」", FLAG:594)
+		CALL DQPRINT("「이곳에는 말로나 이전 기수들에 의해 남겨진 마법들이 있으니까. 조금이라도 대항할 수 없으면 그대로 죽어버릴 거야.」", FLAG:594)
+		チュート行数保管 += 8
+	;교양	
+	CASE 203
+		CALL DQPRINT("「교양에 관해서, 라.」", FLAG:594)
+		CALL DQPRINT("「무엇을 하든, 그것에 대한 지식이 있다는 건 유리하게 작용하니까.」", FLAG:594)
+		CALL DQPRINT("「사람에 따라서는 교양이 없는 사람과는 이야기 수준이 달라서 싫어, 라고 생각할지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「또한, 교양Lv이 높지 않으면 도와줄 수 없는 일이나 들어갈 수 없는 장소도 있어.」", FLAG:594)
+		CALL DQPRINT("「조합 레시피의 일부 해방 등에도 관여하는 능력이네.」", FLAG:594)
+		CALL DQPRINT("「교양Lv을 올리기 위해서는, 일단 제일 빠른 길은 공부하는 거야.」", FLAG:594)
+		CALL DQPRINT("「침착하게 앉을 수 있는 방에서 누군가에게 배우거나 가르치거나 하면서 조금씩 학습을 해 나가면 좋지 않을까?」", FLAG:594)
+		CALL DQPRINT("「덧붙여서, 어딘가에 있는『사전』을 찾으면 경험이 많이 쌓여서 유익할 거야.」", FLAG:594)
+		CALL DQPRINT("「시험을 위해서만 공부하는 게 아닌, 나 자신의 삶을 위한 공부에 힘써 보는 것도 좋을지도 몰라.」", FLAG:594)
+		チュート行数保管 += 9
+	;요리에 대해	
+	CASE 204
+		CALL DQPRINT("「요리에 대해서, 라.」", FLAG:594)
+		CALL DQPRINT("「부엌이 있는 곳에서, 소지하고 있는 소재를 사용하여 요리할 수 있어.」", FLAG:594)
+		CALL DQPRINT("「대부분의 요리를 만들 수 있는 기본 베이스는 『식재』와 『감미재』야.」", FLAG:594)
+		CALL DQPRINT("「『고기』나 『야채』를 얻을 수 있다면 요리의 폭이 넓어질 거야.」", FLAG:594)
+		CALL DQPRINT("「그밖에 『개구리』나 『물고기』, 『산나물』, 『벌레』 같은 것도 의외로 재료로 쓸 수 있어?」", FLAG:594)
+		CALL DQPRINT("「이건 『낚시』나 『채집』, 『곤충채집』 등으로 주로 얻을 수 있어.」", FLAG:594)
+		CALL DQPRINT("「모든 음식에서 소비하는 재료는 선택한 것 하나 뿐이니 쟤료 부담은 적을 거야.」", FLAG:594)
+		CALL DQPRINT("「단, 어려운 요리는 『요리기능』이 어느 정도 없으면 만들 수 없으니 주의해.」", FLAG:594)
+		CALL DQPRINT("「요리를 잘하는 아이와 함께 만들거나『조리지도서』를 찾으면 효율적으로 경험을 쌓을 수 있을 거야.」", FLAG:594)
+		CALL DQPRINT("「맛있는 식사는 중요하니까. 스트레스 관리와 공복 신경은 잘 해야 돼?」", FLAG:594)
+		チュート行数保管 += 10
+	;더 요리에 대해
+	CASE 205
+		CALL DQPRINT("「꽤 요리에 열의가 있네. 밖에서는 취미 중 하나였어?」", FLAG:594)
+		CALL DQPRINT("「혼자서 요리할 때는 몰래『첨가물』을 추가할 수 있어.」", FLAG:594)
+		CALL DQPRINT("「첨가물은 너무 과하지 않게 하자.」", FLAG:594)
+		CALL DQPRINT("「그러고보니, 특수한 식재료를 사용한 『금단의 요리』라는 것도 있는 것 같은데…… 그만두는 편이 좋다고 생각해? 그런 걸 요리하는 건.」", FLAG:594)
+		CALL DQPRINT("「요리를 사람에게 대접하면 개개인의 기호에 따라 평가를 받을 수 있어.」", FLAG:594)
+		CALL DQPRINT("「요리의 만듦새는 주로, 『요리기능』과 『사용한 식재료』로 결정되지만, 『제철』인 요리나 『길한물건』의 요리는 더욱 높게 평가돼.」", FLAG:594)
+		CALL DQPRINT("「마음에 드는 아이가 좋아하기를 원한다면, 맛의 취향을 미리 체크해 두는 것이 좋을지도.」", FLAG:594)
+		CALL DQPRINT("「그리고 누군가와 함께 요리를 할 때, 그 사람의 『고유요리』가 있다면 옆에서 배울 수도 있어.」", FLAG:594)
+		CALL DQPRINT("「반복해서 배우면 너도 이윽고 외워서 그『고유요리』를 만들 수 있겠지?」", FLAG:594)
+		CALL DQPRINT("「만든 요리는 휴대할 수 있지만 시간이 지나면 맛이 떨어져 상하게 돼. 먹는다면 빨리 먹자.」", FLAG:594)
+		CALL DQPRINT("「『보온전기밥통』이 있으면 식지않고 유지할 수 있는 시간이 늘어나는데…… 감옥저택 어딘가에 아직도 있던가?」", FLAG:594)
+		CALL DQPRINT("「마지막으로, 조수의 어레인지등에 의해서 갖춰지는 특수한 효능을 설명할게.」", FLAG:594)
+		CALL DQPRINT("「약효 : 기력 회복량이 증가한다」", FLAG:594)
+		CALL DQPRINT("「정력 : 정력 회복량이 증가한다」", FLAG:594)
+		CALL DQPRINT("「약선 : 기력 회복량이 크게 증가하고, 일시적으로 기력 최대치가 증가한다」", FLAG:594)
+		CALL DQPRINT("「강정 : 정력 회복량이 크게 증가하고, 일시적으로 정력 최대치가 증가한다」", FLAG:594)
+		CALL DQPRINT("「기적·행운 : 운세가 좋아진다」", FLAG:594)
+;		CALL DQPRINT("「축복 : 임신율이 아주 조금 상승한다」", FLAG:594)
+;		CALL DQPRINT("「인챈트 : 탄막 승부시 자신의 주사위면이 증가한다」", FLAG:594)
+;		CALL DQPRINT("「가호 : 탄막 승부시 상대의 주사위면이 감소한다」", FLAG:594)
+		CALL DQPRINT("「풍요 : 채소 수확량이 증가한다」", FLAG:594)
+		CALL DQPRINT("「이상. 멋진 요리, 기대할게.」", FLAG:594)
+		チュート行数保管 += 19
+	;음악기능과 연주	
+	CASE 206
+		CALL DQPRINT("「악기를 찾았어? 그럼【연주한다】를 할 수 있겠네.」", FLAG:594)
+		CALL DQPRINT("「바이올린은 음악기능을 조금 더 갈고 닦지 않으면 연주하기는 어려웠던 것 같고,」", FLAG:594)
+		CALL DQPRINT("「피아노 역시 운반할 수 없기 때문에 특정 장소에 설치되어 있던 거 같아.」", FLAG:594)
+		CALL DQPRINT("「사람이 있는 장소에서는 자신의 연주를 들려줄 수 있어.」", FLAG:594)
+		CALL DQPRINT("「회화보다 넓고 많은 사람에게 말이나 마음을 전할 수 있단다?」", FLAG:594)
+		CALL DQPRINT("「이때, 연주를 잘한다는 칭찬을 받을 수 있을지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「반대로, 귀에 거슬리거나, 일하는 사람의 옆에서 연주해 버리면 큰일이 날지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「혼자 열심히 연습해서『음악기능』을 높인 후에 선보이면 좋을 거야.」", FLAG:594)
+		CALL DQPRINT("「연주경험을 차곡차곡 쌓아가면 언젠가는『악기지식』이나『상대음감』등을 익힐 수도 있을지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「어딘가에 있는『연주지도서』을 찾으면 경험이 많이 쌓여서 유익할 거야.」", FLAG:594)
+		CALL DQPRINT("「또한, 같이 있는 사람의 음악기능이 어느 정도 높으면 연주에 뛰어들어 참가해 줄지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「모두가 함께 하는 연주라. 옛날 생각이 나서 그립네.」", FLAG:594)
+		チュート行数保管 += 12
+	;낚시	
+	CASE 207
+		CALL DQPRINT("「『낚싯대』를 찾았어? 그럼【낚시】를 할 수 있게 돼.」", FLAG:594)
+		CALL DQPRINT("「저 호수는 예전부터 우리들 사이에서 낚시 스팟이었지.」", FLAG:594)
+		CALL DQPRINT("「낚시는『기다림』이 중요해. 언젠가 낚이겠지, 정도의 마음가짐으로 천천히 기다리자.」", FLAG:594)
+		CALL DQPRINT("「『물고기』나『맛있는물고기』가 낚이면 좋겠지만, 꽤 높은 비율로 쓰레기나 다른 게 올라오는 모양이야.」", FLAG:594)
+		CALL DQPRINT("「어쩌면, 날에 따라서는 전혀 낚이지 않는 날도 있을지도 몰라. 뭐 그런 날도 있는 걸로 생각하자.」", FLAG:594)
+		CALL DQPRINT("「한 번에 잘 되지 않아도 결국 낚일 때가 올 거야. 한가로이 낚싯줄을 드리워 보자.」", FLAG:594)
+		CALL DQPRINT("「날씨와 계절, 시간에 따라 물고기의 입질이 바뀌더라. 일반적으로 맑음보다는 흐림・비, 아침이나 저녁～밤이 잘 잡혔던가?」", FLAG:594)
+		CALL DQPRINT("「그리고 한정된 장소, 계절에만 낚을 수 있는 물고기도 있는 것 같으니,【잡은 물고기 리스트】를 잘 봐두면 좋을 거야.」", FLAG:594)
+		CALL DQPRINT("「어딘가에 있는『생선도감』을 찾으면 경험이 많이 쌓여서 유익할 거야.」", FLAG:594)
+		RESETCOLOR
+		CALL DQPRINT("「낚시 바보, 낚시광은 곧 칭찬 그 자체. 모든 것을 잊고 물가와 하나가 됩시다?」", FLAG:594)
+		SETCOLOR 0xE6E6FA
+		CALL DQPRINT("「나참…… 운디네의 대마녀, 너 대체 무슨 소리 하는 거야.」", FLAG:594)
+		チュート行数保管 += 11
+	;채집	
+	CASE 208
+		CALL DQPRINT("「지도 상의 특정 장소에서【채집】을 하는 게 가능해.」", FLAG:594)
+		CALL DQPRINT("「경험이 적어『채집기능』이 낮을 때는 굉장한 것은 채집하지 못할지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「채집한 건【조합】의 재료로 쓰거나 과일 종류라면 아이템으로서 먹을 수도 있어.」", FLAG:594)
+		CALL DQPRINT("「덧붙여서 장소별로 혹은 계절별로 채집할 수 있는 아이템이 달라.」", FLAG:594)
+		CALL DQPRINT("「어딘가에 있는『채집가이드』을 찾으면 채집할 수 있는 게 늘어나고, 경험이 많이 쌓여서 유익할 거야.」", FLAG:594)
+		CALL DQPRINT("「혼자서 하는 것보다 누군가에게 도움을 받으면 질・양・경험 전반적으로 좋을지도 모르겠네.」", FLAG:594)
+		チュート行数保管 += 6
+	;조제	
+	CASE 209
+		CALL DQPRINT("「『조제용품 세트』를 찾으면【조합】이 가능해져.」", FLAG:594)
+		CALL DQPRINT("「조제용품 세트를 가지고 있지 않아도 장소에 따라서는 조제 기구를 빌릴 수 있는 곳도 있어.」", FLAG:594)
+		CALL DQPRINT("「기본적으로는 채집 등을 통해 입수한 아이템을 소비하고, 새로운 아이템을 만들어 낼 수 있어.」", FLAG:594)
+		CALL DQPRINT("「조제 경험을 거듭함으로써『조제기능』이 오르면 조합 가능한 아이템이 늘어나고, 성공률이 높아져.」", FLAG:594)
+		CALL DQPRINT("「레시피에『물』이 필요한 아이템을 조제하는 경우에는【물긷기】를 해올 필요가 있으니 기억해.」", FLAG:594)
+		CALL DQPRINT("「필요한 아이템이 갖추어져 있으면 같은 아이템을 여러 개를 한 번에 조제하는 것도 가능해.」", FLAG:594)
+		CALL DQPRINT("「취득할 수 있는 경험량 등은 만든 개수만큼 늘지만, 조합 소요 시간을 줄일 수 있으니 가능한 한 한 번에 만드는 게 추천이야?」", FLAG:594)
+		CALL DQPRINT("「어딘가에 있는『약학교본』을 찾으면 조합품 레시피가 해방되고 경험이 많이 쌓여서 유익할 거야.」", FLAG:594)
+		CALL DQPRINT("「또, 함께 도와줄 사람이 있으면 효율적으로 조제할 수 있어.」", FLAG:594)
+		CALL DQPRINT("「참고로, 조합 레시피 중에는 특정인에게만 배울 수 있는 것도 존재해.」", FLAG:594)
+		CALL DQPRINT("「일단 여러 접점을 가지고 그 사람과『친밀』을 올리다보면 여러가지로 배울 수 있지 않을까?」", FLAG:594)
+		チュート行数保管 += 11
+	;텃밭
+	CASE 212
+		CALL DQPRINT("「『원예용품일식』과 야채 등의 씨앗을 찾았어? 그럼 텃밭을 가꿀 수 있어.」", FLAG:594)
+		CALL DQPRINT("「씨를 뿌리면 흙이 다 마르기 전에 물긷기를 하고 물을 뿌려 줘.」", FLAG:594)
+		CALL DQPRINT("「다음은 날이 지나면서 야채가 성장해. 농경은 시간만이 답이야.」", FLAG:594)
+		CALL DQPRINT("「흙이 마른 상태로 내버려 두면 채소가 말라 버려. 드물게 물을 주면 살아나는 경우도 있는 것 같지만, 그런 강한 생명력은 보기 어렵지.」", FLAG:594)
+		CALL DQPRINT("「『스프링 쿨러』를 찾으면 금방 물을 뿌릴 수 있게 되겠지만.」", FLAG:594)
+		CALL DQPRINT("「맑은 날이 계속되면 야채는 계속 자라지만, 비나 눈이 오면 성장이 느려져 버려.」", FLAG:594)
+		CALL DQPRINT("「『거름』을 찾거나【조합】으로 만들어서 뿌리면 식물의 성장을 앞당길 수 있어.」", FLAG:594)
+		CALL DQPRINT("「작물은（열매）나（익음）의 상태에서 수확하는 것이 가능해.」", FLAG:594)
+		CALL DQPRINT("「（익음）상태에서는 풍작과 함께 수확량이 늘어날 수 있어. 무심코 수확해버리는 일이 없도록 하자.」", FLAG:594)
+		チュート行数保管 += 9
+	;의뢰	
+	CASE 213
+		CALL DQPRINT("「가끔, 만난 사람으로부터 의뢰를 받는 일이 있어.」", FLAG:594)
+		CALL DQPRINT("「의뢰를 기일 내에 성공시키면 여러 가지 보수를 받을 수 있어.」", FLAG:594)
+		CALL DQPRINT("「반대로 기일 내에 끝내지 못하면 실패하게 되고 호감도나 신뢰도가 내려가 버려.」", FLAG:594)
+		CALL DQPRINT("「의뢰 내용은 다방면에 걸쳐 있으며 캐릭터에 따라 고유 의뢰도 있어.」", FLAG:594)
+		CALL DQPRINT("「좀 힘든 게『편지를 보낸다』『누군가의 분실물을 전한다』『분실물을 찾는다』정도 일까.」", FLAG:594)
+		CALL DQPRINT("「찾는 물건의 경우, 탐사를 잘하는 사람에게 물으면 도와줄지도 몰라.」", FLAG:594)
+		CALL DQPRINT("「의뢰를 완료하면 반드시【의뢰 보고】를 하자.」", FLAG:594)
+		チュート行数保管 += 7
+	;벌채에 대해
+	CASE 217
+		CALL DQPRINT("「특히 나무가 많고 자연이 풍부한 곳에서는【벌채】를 하는 게 가능해.」", FLAG:594)
+		CALL DQPRINT("「시간・기력을 많이 소비하기 때문에 제대로 몸을 단련해 두는 편이 좋아.」", FLAG:594)
+		CALL DQPRINT("「장소에 따라 나 있는 나무도 다르고 여러 가지 탐색을 해보는 것도 좋을 것 같네.」", FLAG:594)
+		CALL DQPRINT("「또한 벌채할 나무를 찾다 보면 가끔『큰 나무』나『거목』을 발견할 수도 있을 거야.」", FLAG:594)
+		CALL DQPRINT("「좋은 물건이지만, 베는 데 많은 시간과 노력이 들기 때문에 익숙하지 않을 때는 멀리하는 것도 나쁘진 않아.」", FLAG:594)
+		CALL DQPRINT("「손에 넣은『통나무』는 쪼개서『목재』로 만들 수도 있지만 별로 추천하지는 않아.」", FLAG:594)
+		CALL DQPRINT("「그리고, 둘이서 한다면 빨리 베어지겠지?」", FLAG:594)
+		CALL DQPRINT("「어딘가에 있는『나무꾼의 마음가짐서』을 찾으면 경험이 많이 쌓여서 유익할 거야.」", FLAG:594)
+		チュート行数保管 += 8
+	;덫사냥
+	CASE 218
+		CALL DQPRINT("「깨끗하고 동물이 많은 곳에서는【덫을 놓는다】가 가능해.」", FLAG:594)
+		CALL DQPRINT("「덫에는 세 가지 종류가 있는데, 각각 특징이 달라.」", FLAG:594)
+		CALL DQPRINT("「소형 덫은 작은 동물을, 대형 덫은 큰 짐승을 중심으로 포획할 수 있어. 중형은 그 중간인 만능형이야.」", FLAG:594)
+		CALL DQPRINT("「얼핏 보면 대형 함정이 만능처럼 보이기도 하지만, 새를 포획할 수 없다 등의 단점도 있어.」", FLAG:594)
+		CALL DQPRINT("「해체 시에 얻을 수 있는 고기의 양도 달라지니까, 잘 생각한 후 덫을 놓아 보자.」", FLAG:594)
+		CALL DQPRINT("「덫을 설치할 때 설치 예정 지점의 모습을 관찰할 수 있어.」", FLAG:594)
+		CALL DQPRINT("「동물이 남긴 흔적이 많거나, 새로운 흔적이 있는 곳에 덫을 놓으면 성과를 기대할 수 있을 것 같네.」", FLAG:594)
+		CALL DQPRINT("「덫을 놓으면 그저 기다릴 뿐이야. 며칠 간격으로 덫을 점검하러 가보자.」", FLAG:594)
+		CALL DQPRINT("「그렇다고는 해도, 덫에는 내구도가 있어 너무 방치해 두면 망가져 버려.」", FLAG:594)
+		CALL DQPRINT("「망가지기 전에 회수하면 덫을 재사용할 수 있어. 때로는 단념하는 것도 중요할지도 모르겠네.」", FLAG:594)
+		CALL DQPRINT("「덧붙여서 덫을 놓을 수 있는 곳은 1인당 3군데까지야. 그 이상은 아무래도 신경 못 쓰다가 사고가 터진 경우가 많아서.」", FLAG:594)
+		CALL DQPRINT("「또, 마법으로 인해 만들어진 환상의 동물…… 이라고 할까 괴물이라고 할까, 그러한 존재도 확인되고 있다는 소문이 있어.」", FLAG:594)
+		CALL DQPRINT("「희귀 동물 사냥꾼을 목표로 여러 가지 동물을 사냥해 가는 것도 좋을지도 모르겠네.」", FLAG:594)
+		CALL DQPRINT("「여하튼 운에 맡기고…… 아니, 동물에게 맡기는 거지만. 손해는 없으니까 한 번 해보자.」", FLAG:594)
+		チュート行数保管 += 14
+	CASE 996
+		IF FLAG:튜토리얼로그 == 0
+			CALL DQPRINT("「일단 확실히 정보량이 많으니까.」")
+			FLAG:튜토리얼로그 = 2
+			CALL DQPRINT("「……그럼 이건 어때? 여긴 너의 무의식이기도 하니까.」", FLAG:튜토리얼로그)
+			CLEARLINE 1
+		ELSE
+			CALL DQPRINT("「심플한 편이 좋아?」", FLAG:튜토리얼로그)
+			CLEARLINE 1
+			FLAG:튜토리얼로그 = 0
+			CALL DQPRINT("「머리가 좀 아플지도 모르지만, 자. 어때?」")
+		ENDIF
+	;行数の関係でログ残し処理の対象外とする
+	CASE 997
+		SIF FLAG:튜토리얼글속도 > -6
+			FLAG:튜토리얼글속도 -= 2
+		$LOOP_SpeedTest
+		CALL DQPRINT("「아아……　으음, 이 정도면 어떨까?」")
+		CALL ASK_M("조금 더 빠르게.",FLAG:튜토리얼글속도 > -8,"조금 더 느리게.",FLAG:튜토리얼글속도 < 6,"그걸로 좋다.",1)
+		SELECTCASE RESULT
+			CASE 0
+				CLEARLINE 4
+				IF FLAG:튜토리얼글속도 == -7
+					CALL DQPRINT("「이것도 꽤나 빠른 거야. 이 이상은 네게 무리가 가…… 응? 그걸 어떻게 아냐고?」")
+					CALL DQPRINT("「후후. 비밀인 거로.」")
+				ELSE
+					FLAG:튜토리얼글속도 = MAX(FLAG:튜토리얼글속도 - 2, -7)
+					GOTO LOOP_SpeedTest
+				ENDIF
+			CASE 1
+				CLEARLINE 4
+				FLAG:튜토리얼글속도 += 2
+				GOTO LOOP_SpeedTest
+			CASE 2
+				CLEARLINE 4
+				CALL DQPRINT("「까다로운 편이구나.」")
+		ENDSELECT
+	CASE 998
+		SELECTCASE RAND:7
+			CASE 0
+				CALL DQPRINT("「피곤해보이네.」", FLAG:594)
+				CALL DQPRINT("「확실히 여긴 여러모로 힘든 곳이니까.」", FLAG:594)
+				CALL DQPRINT("「그럼, 잘 자.」", FLAG:594)
+				チュート行数保管 ++
+			CASE 1
+				CALL DQPRINT("「기초 기본의 복습・확인은 중요해.」", FLAG:594)
+				CALL DQPRINT("「이러한 정보를 샅샅이 훑어보는 것은 좋은 습관이지.」", FLAG:594)
+			CASE 2
+				CALL DQPRINT("「느긋한 것 같다고?」", FLAG:594)
+				CALL DQPRINT("「후후. 시간을 신경쓰지 않은 지 좀 되어서.」", FLAG:594)
+				CALL DQPRINT("「인간도 수많은 시간이 흐른 뒤 언젠가는 우리를 이해할 수 있을지도 몰라.」", FLAG:594)
+				チュート行数保管 ++
+			CASE 3
+				CALL DQPRINT("「자장가라도 불러줄까?」", FLAG:594)
+				CALL DQPRINT("「아, 그럴 나이가 아니라고? 후후. 우리가 보기에는 아직도 어린아이인데.」", FLAG:594)
+			CASE 4
+				CALL DQPRINT("「응? 이건 악몽 아니냐고?」", FLAG:594)
+				CALL DQPRINT("「……글쎄. 어쩌면 그럴지도 몰라.」", FLAG:594)
+				CALL DQPRINT("「특히 네게 있어서는.」", FLAG:594)
+				チュート行数保管 ++
+			CASE 5
+				CALL DQPRINT("「올바른 생활을 좋아하는 편이야?」", FLAG:594)
+				CALL DQPRINT("「……후후, 그런 애들은 싫어하지 않아.」", FLAG:594)
+			CASEELSE
+				CALL DQPRINT("「……한 아이가 걱정되네.」", FLAG:594)
+				CALL DQPRINT("「좀 더 돌봐주다 올 수 있었다면, 하고 후회하는 마음이 있을지도 몰라.」", FLAG:594)
+		ENDSELECT
+		チュート行数保管 += 2
+	CASE 999
+		CALL TUTORIAL_BONUS()
+		GOTO TUTORIALEND
+	CASEELSE
+		CLEARLINE 1
+		CALL TUTORIAL_BONUS()
+		GOTO LOOP01
+ENDSELECT
+
+;ここでチュート行数の追加と、ログ表示時のクリアライン
+SIF FLAG:튜토리얼로그 != 0
+	CLEARLINE チュート行数保管
+
+FLAG:튜토리얼글누계 += チュート行数保管
+CALL TUTORIAL_BONUS()
+GOTO LOOP01
+
+$TUTORIALEND
+CALL DQPRINT("「돌아가는 거니?」")
+SELECTCASE RAND:2
+	CASE 0
+		CALL DQPRINT("「……그렇다면, 네가 오늘도 무너지지 않기를 바랄게.」", 1)
+	CASE 1
+		CALL DQPRINT("「그러면…… 오늘도 열심히 살아가기를 바랄게.」", 1)
+ENDSELECT
+PRINTL 
+RESETCOLOR
+RESETBGCOLOR
+;消去行数は今のところ固定（最初～））
+CLEARLINE 17
+PRINTL 
+RETURN
+
+;-------------------------------------------------
+;ド○クエっぽくテキストを流す
+;ARGS ""で括って文字列を入れる
+;ARG:0	0 = クリックしたら消える（省略時）
+;		1 = 消えない（改行つき）
+;		2 = 灰色にして残す(改行つき) FLAG:594を利用
+;ARG:1 テキスト表記・１文字あたりwait時間 省略可
+;-------------------------------------------------
+@DQPRINT(ARGS, ARG:0 = 0, ARG:1)
+#DIM 文字数
+#DIM 検索数
+
+LOCAL:0 = 0
+
+IF ARG:1 == 0
+	ARG:1 = 8 + FLAG:튜토리얼글속도
+ENDIF
+STRLENFORM %ARGS%
+文字数 = RESULT:0
+検索数 = 文字数 + 1
+
+FOR LOCAL:0, 0, 検索数
+	IF LOCAL:0 == 文字数
+		IF ARG:0
+			PRINTFORM %ARGS%
+		ELSE
+			REUSELASTLINE %ARGS%
+		ENDIF
+		WAIT
+	ELSE
+		SUBSTRING ARGS, 0, LOCAL:0
+		REUSELASTLINE %RESULTS:0%
+		TWAIT ARG:1, 1
+	ENDIF
+NEXT
+IF ARG:0 == 0
+	REUSELASTLINE 
+ELSEIF ARG:0 == 2
+	CLEARLINE 1
+	CALL COLORMESSAGE(@"%ARGS%", 0x696969, 1)
+ENDIF
+
+;-------------------------------------------------
+;チュートリアル読破ボーナス贈呈
+;-------------------------------------------------
+@TUTORIAL_BONUS()
+#DIM ボーナス内容
+#DIM 授与個数
+
+ボーナス内容 = 0
+
+IF FLAG:튜토리얼글누계 >= TB_TOTALLINES()
+	FLAG:튜토리얼보너스진행 ++
+	ボーナス内容 = FLAG:튜토리얼보너스진행
+ENDIF
+
+SIF ボーナス内容
+	TWAIT 2500, 1
+SELECTCASE ボーナス内容
+	CASE 1
+		CALL DQPRINT("「한 때, 마녀들은 이 섬에서 살았었지.」")
+		CALL DQPRINT("「인간들을 피해서 모이게 된 거였어.」")
+		CALL DQPRINT("「그렇다고 해도 마녀와 인간 사이에 교류가 없던 건 아니었지만.」")
+		CALL DQPRINT("「너는 그때의 사람들과 좀 닮았구나.」")
+	CASE 2
+		CALL DQPRINT("「인간들은 우리를 두려워했어.」")
+		CALL DQPRINT("「모습은 닮았지만, 너무나도 다른 능력을 가지고 있었으니까.」")
+		CALL DQPRINT("「수만 가지의 마법을 쓰는 우리의 모습을 보며 경외에 차 신이라 불렸고」")
+		CALL DQPRINT("「……어느 순간부터는 마녀라고 부르기 시작했지.」")
+	CASE 3
+		CALL DQPRINT("「끝이 올 거라는 건 모두가 알고 있었어.」")
+		CALL DQPRINT("「예언을 받았으니까.」")
+		CALL DQPRINT("「그래서 우리는 모여서 논의했단다.」")
+		CALL DQPRINT("")
+		CALL DQPRINT("「앞으로는, 어떻게 해야하는가.」")
+	CASE 4
+		CALL DQPRINT("「마녀에게는 미래가 없었어.」")
+		CALL DQPRINT("「마법으로 인해 부족함을 느끼지 않으니 발전이 없었고,」")
+		CALL DQPRINT("「발전이 없으니 미래가 없었지.」")
+	CASE 5
+		CALL DQPRINT("「그렇기에 끝없는 논의 끝에 마녀들은 받아들이기로 했어.」")
+		CALL DQPRINT("「곧 찾아올, 인간들에 의한」")
+		CALL DQPRINT("")
+		CALL DQPRINT("「멸망을.」")
+	CASE 6
+		CALL DQPRINT("「아니, 멸망이라는 말은 옳지 않을지도 몰라.」")
+		CALL DQPRINT("「너희들 입장에서는 우리는 멸종된 것이지만,」")
+		CALL DQPRINT("「우리들은 새로운 삶의 형태를 고른 것일 뿐이니까.」")
+		CALL DQPRINT("「이런 걸 육신의 한계를 벗어났다고 너희들은 표현하던가?」")
+		CALL DQPRINT("「후후. 재미있는 표현방식이라고 생각해.」")
+	CASE 7
+		CALL DQPRINT("「우리 중에 제일 어리면서도 재능이 가장 뛰어난 아이가 있었어.」")
+		CALL DQPRINT("「그 아이는 이런 우리 대마녀들의 선택을 이해하지 못한 모양이야.」")
+		CALL DQPRINT("「어린 아이였고, 미숙하고, 아직도 미숙하니까.」")
+	CASE 8
+		CALL DQPRINT("「그 아이의 옆에는 한 인간의 아이가 있었어.」")
+		CALL DQPRINT("「정말 걔한테는 미안하다는 말밖에 나오질 않아.」")
+		CALL DQPRINT("「서로가 서로를 지탱하고, 언젠가는 이 뜻을 이해해주길 바랬는데……」")
+	CASE 9
+		CALL DQPRINT("「그러니까, 부디 전해줬으면 해.」")
+		CALL DQPRINT("「그 아이에게. 그 아이를 그리워하는 얘한테도.」")
+		CALL DQPRINT("")
+		CALL DQPRINT("「섬의 대마녀들은, 복수를 바라지 않는다고.」")
+
+ENDSELECT
+
+[IF_DEBUG]
+IF ボーナス内容
+	SELECTCASE ボーナス内容
+		CASE 4
+			授与個数 = 1
+		CASE IS > 8
+			授与個数 = 8
+		CASE IS > 5
+			授与個数 = 5
+		CASEELSE
+			授与個数 = 3
+	ENDSELECT
+	IF ITEM:TB_ITEM() + 授与個数 > 99
+		ITEM:TB_ITEM() = 99
+	ELSE
+		ITEM:TB_ITEM() += 授与個数
+	ENDIF
+	IF ボーナス内容 == 4
+		CALL COLORMESSAGE(@"%ITEMNAME:TB_ITEM()%을 받았다!", C_YELLOW, 2, 1)
+	ELSE
+		CALL COLORMESSAGE(@"%ITEMNAME:TB_ITEM()%을 {授与個数}개 받았다!", C_YELLOW, 2, 1)
+	ENDIF
+	CLEARLINE 1
+ENDIF
+[ENDIF]
+
+;-------------------------------------------------
+;チュートリアル読破ボーナスと累計行数対応一覧
+;あとあと拡張する……かも？
+;-------------------------------------------------
+@TB_TOTALLINES()
+#FUNCTION
+
+SELECTCASE FLAG:튜토리얼보너스진행
+	CASE 0
+		RETURNF 150
+	CASE 1
+		RETURNF 200
+	CASE 2
+		RETURNF 250
+	CASE 3
+		RETURNF 300
+	CASE 4
+		RETURNF 600
+	CASE 5
+		RETURNF 1200
+	CASE 6
+		RETURNF 2400
+	CASE 7
+		RETURNF 4800
+	CASE 8
+		RETURNF 9600
+	CASEELSE
+		RETURNF 9999999
+ENDSELECT
+
+;-------------------------------------------------
+;チュートリアル読破ボーナス進行度と授与아이템対応一覧
+;あとあと拡張する……かも？
+;-------------------------------------------------
+@TB_ITEM()
+#FUNCTION
+
+SELECTCASE FLAG:592
+	CASE 1	;수면제
+		RETURNF 252
+	CASE 2	;약주
+		RETURNF 59
+	CASE 3	;다크매터
+		RETURNF 639
+	CASE 4	;스위티숙면배개
+		RETURNF 404
+	CASE 5	;외인
+		RETURNF 54
+	CASE 6	;다크매터
+		RETURNF 639
+	CASE 7	;숙성와인
+		RETURNF 569
+	CASE 8	;빈티지와인
+		RETURNF 570
+	CASE 9	;다크매터
+		RETURNF 639
+ENDSELECT
+

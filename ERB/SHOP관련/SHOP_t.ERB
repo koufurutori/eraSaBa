@@ -1,0 +1,564 @@
+﻿;FileName_SHOP.ERB -------------------------------- Rev1. 00
+;기상 전메뉴 화면 표시
+;CALL		SYSTEM
+;ARG		VOID
+;RETURN		VOID
+;COMMENT	
+;----------------------------------------------------------
+@SHOW_SHOP
+;기상 전화면 표시중 플래그
+TFLAG:100 = 0
+;---------------------
+;モブ店員画像を一度だけ作成。スマートなやり方ではない。もっといい場所はないだろうか
+;SIF !SPRITECREATED("顔絵_服_通常_MOB_0")
+;	CALL モブ店員画像作成
+;SPTALKで呼ばれたとき、画像がなければ作成にしました
+;---------------------
+;기상시간 자동 보정, 최저 수면 시간은 1시간
+LOCAL:1 = CFLAG:MASTER:취침시간 - DAY * 1440
+IF (TIME:3 >= LOCAL:1 && (TIME:3 - LOCAL:1) < 240) || (TIME:3 < 240 && (1440 + TIME:3 - LOCAL:1) < 240)
+	PRINTL 수면 시간이 너무 짧습니다. 적어도 1시간 이상은 자야 합니다
+	CALL 최저수면시간설정()
+	PRINTFORMW 기상시간을 (%시각표시(TIME:3)%)로 설정했습니다
+ENDIF
+;---------------------
+DRAWLINE
+;PRINTFORML {DAY}일째 (%GET_DAY()%) 소지금 :\\%TOSTR(MONEY,"#,###")%
+PRINTFORM {DAY}일째(
+CALL COLOR_YOUBI
+PRINTFORML )　
+PRINTL
+
+CALL BASE_BAR(MASTER, "체력", 28, "초록")
+PRINTFORM 　　
+CALL BASE_BAR(MASTER, "기력", 28, "파랑", "「개행」")
+;CALL BASE_BAR(MASTER, "TSP", 28, "물색")
+;PRINTFORM 　　
+CALL BASE_BAR(MASTER, "정력", 28, "노랑")
+PRINTFORML 
+
+;PRINT 체력
+;CALL PRINT_COLORBAR, BASE:MASTER:0, MAXBASE:MASTER:0, 26, UNICODE(0x2585), UNICODE(0x2585), BARCOLORSET("빨강"), RESULT:1
+;PRINTFORML  ({BASE:MASTER:체력, 5}/{MAXBASE:MASTER:체력, 5})  
+;PRINT 기력
+;CALL PRINT_COLORBAR, BASE:MASTER:1, MAXBASE:MASTER:1, 26, UNICODE(0x2585), UNICODE(0x2585), BARCOLORSET("초록"), RESULT:1
+;PRINTFORML  ({BASE:MASTER:1, 5}/{MAXBASE:MASTER:1, 5})  
+PRINTFORML 
+PRINTBUTTON "자택위치", 120
+PRINTFORM ：%GET_MAPNAME(MAIN_MAP)%
+IF FLAG:기절중단
+	PRINTFORML  (기절중) 	
+ELSE
+	PRINTFORML 
+ENDIF
+PRINTBUTTON "[기상시간]", 2400
+PRINTFORML ：%시각표시(TIME:3)%
+;CALL INFO_CLOCK_IMAGE(TIME:3, 500, "left")
+PRINTFORML 
+CALL TW_TIPS
+PRINTFORML 
+
+SETCOLOR 103,228,126
+PRINTL 【메인 메뉴】
+RESETCOLOR
+PRINTLC [100] - 기상
+SIF FLAG:기절중단
+	SETCOLOR C_GRAY
+PRINTLC [102] - 생활환경 설정
+RESETCOLOR
+IF CFLAG:MASTER:현재위치 != OMANEKIBEYA()
+	SIF FLAG:기절중단
+		SETCOLOR C_GRAY
+	RESETCOLOR
+ENDIF
+
+PRINTL
+PRINTL
+
+PRINTLC [101] - 능력 표시
+SIF FLAG:기절중단
+	SETCOLOR C_GRAY
+PRINTLC [104] - 소지 아이템 목록
+PRINTL
+IF FLAG:700
+	SIF FLAG:기절중단
+		SETCOLOR C_GRAY
+		PRINTLC [105] - 콜렉션
+	RESETCOLOR
+ENDIF
+
+PRINTLC [107] - 받은 선물
+PRINTL
+PRINTLC [108] - 잡은 물고기 리스트
+PRINTLC [109] - 사냥한 조수 리스트
+;PRINTLC [110] - 잡은 곤충 리스트
+PRINTFORML 
+PRINTLC [111] - 고유 요리 리스트
+PRINTL 
+PRINTL
+SIF FLAG:기절중단
+	SETCOLOR C_GRAY
+PRINTLC [150] - 실적 해제
+
+
+RESETCOLOR
+PRINTL
+PRINTL
+
+SETCOLOR 103,228,126
+PRINTL 【시스템 메뉴】
+RESETCOLOR
+SIF FLAG:기절중단
+	SETCOLOR C_GRAY
+PRINTLC [160] - 의뢰 리셋
+RESETCOLOR
+PRINTLC [161] - 의상 리셋
+PRINTL
+PRINTLC [400] - OPTION
+PRINTLC [410] - 채집 리스트
+;PRINTLC [411] - 출현 장소 리스트
+PRINTLC [420] - TUTORIAL
+RESETCOLOR
+
+PRINTL
+PRINTL
+
+PRINTLC [200] - SAVE
+PRINTLC [300] - LOAD
+SIF SAVESTR:본체버전 != eraTW_Version
+	SETCOLOR C_RED
+PRINTLC [500] - UPDATE
+RESETCOLOR
+
+
+;SIF DAY > 124 || FLAG:엔딩여부 ;KR판 오리지날, 엔딩여부 체크로 강하게 뉴게임 가능
+SETCOLOR 184, 38, 71
+SIF FLAG:낙오자발생
+	PRINTLC [999] -【사망회귀】
+;	HTML_PRINT @"<button value='999' title='【경고】1일째로 시간을 되돌린다. 그것이 올바르다면 이 목숨을 끊는 한이 있더라도.'>[999] -【사망회귀】</button>"
+RESETCOLOR
+
+
+PRINTL
+
+
+;record who have custon shop button
+CALL createKojoShopButtonTargetList()
+;show
+CALL showKojoShopButton()
+PRINTL
+
+DRAWLINE
+
+;FileName_SHOP.ERB -------------------------------- Rev1. 00
+;기상 전메뉴 RESULT 처리
+;CALL		SYSTEM
+;ARG		VOID
+;RETURN		VOID
+;COMMENT	
+;----------------------------------------------------------
+@USERSHOP
+;기상
+IF RESULT == 100
+	BEGIN TRAIN
+	RETURN 1
+;주거환경 설정
+ELSEIF RESULT == 102 && !FLAG:기절중단
+	CALL SCHEDULE
+
+;능력표시
+ELSEIF RESULT == 101
+	DEBUGCLEAR
+	CALL SHOW_CHARA_LIST("존재하는 캐릭터리스트", "체력 기력", "「정보 표시」 「조건 변경」")
+;	CALL SHOW_CHARADATA
+
+;소지 아이템 목록
+ELSEIF RESULT == 104
+	CALL SHOW_ALLITEM
+;콜렉션
+ELSEIF RESULT == 105 && FLAG:700 && !FLAG:기절중단
+	CALL SHOW_COLLECTION
+
+;받은 선물
+ELSEIF RESULT == 107
+	CALL SHOW_COLLECTION_GIFT
+;잡은 물고기 리스트
+ELSEIF RESULT == 108
+	CALL SHOW_COLLECTION_FISH
+;사냥한 조수 리스트
+ELSEIF RESULT == 109
+	CALL SHOW_COLLECTION_HUNTED
+
+;잡은 곤충 리스트
+;ELSEIF RESULT == 110
+;	CALL SHOW_COLLECTION_MUSHI
+;ELSEIF RESULT == 111
+;	CALL SHOW_SP_DISH_LIST
+
+
+;실적 해제
+ELSEIF RESULT == 150 && !FLAG:기절중단
+	CALL BONUS
+
+
+;의뢰 리셋
+ELSEIF RESULT == 160 && !FLAG:기절중단
+	CALL IRAI_RESET
+;의상 리셋
+ELSEIF RESULT == 161
+	CALL RESET_ALL_CLOTHES
+;OPTION
+ELSEIF RESULT == 400
+	CALL OPTION
+;채집 리스트
+ELSEIF RESULT == 410
+	CALL SHOW_GATHERING_LIST
+;출현 장소 리스트
+ELSEIF RESULT == 411
+	CALL SHOW_APPEAR_LIST
+;UPDATE
+ELSEIF RESULT == 500
+	CALL UPDATE
+;TUTORIAL
+ELSEIF RESULT == 420
+	CALL TUTORIAL_MAIN
+;SAVE
+ELSEIF RESULT == 200
+	;SAVEGAME
+	;KR판 추가수정, 저장용 커스텀 함수
+	CALL SAVEGAME_KR
+;LOAD
+ELSEIF RESULT == 300
+	;LOADGAME
+	;KR판 추가수정, 로드용 커스텀 함수
+	CALL LOADGAME_KR
+ELSEIF RESULT == 600
+	CALL CM_BALANCE
+;起床時間設定
+ELSEIF RESULT == 2400
+	CALL 기상시간설정()
+;custom shop button use
+ELSEIF RESULT == 797
+	CALL choiceButtonTarget()
+ELSEIF RESULT == 798
+	IF ShopButtonTargetId > 0
+		ShopButtonTargetId --
+		ShopButtonTarget = ShopButtonTargetList:ShopButtonTargetId
+	ENDIF
+ELSEIF RESULT == 799
+	IF ShopButtonTargetId + 1 < ShopButtonTargetNum
+		ShopButtonTargetId ++
+		ShopButtonTarget = ShopButtonTargetList:ShopButtonTargetId
+	ENDIF
+ELSEIF INRANGE(RESULT, 800, 800 + MAX_CUSTOM_SHOP)
+	CALL useKojoShopButton(RESULT - 800)
+
+
+;사망회귀
+ELSEIF RESULT == 999
+	TOOLTIP_SETDELAY 500
+	;IF DAY <= 124 && !FLAG:엔딩여부 ;KR판 오리지날, 엔딩여부 체크로 강하게 뉴게임 가능
+	IF !(FLAG:낙오자발생 || FLAG:해피엔딩도달)
+		REDRAW CURRENTREDRAW()
+		RETURN
+	ENDIF
+	CLEARLINE LINECOUNT
+	IF FLAG:해피엔딩도달
+		PRINTFORML
+		SETBGCOLOR 339, 49, 45
+		SETCOLOR 0xE6E6FA
+		PRINTFORML 「【그녀】는 이미 한 번 해피엔딩에 도달한 적이 있어.」
+		PRINTFORMW 「그럼에도 불구하고 다시 시간을 돌리겠다고 하는 것은【화면 앞에 있는 당신】의 욕심일 뿐이지.」
+		PRINTFORML
+		PRINTFORML 「그래도 시간을 돌려서 1일째로 되돌아가고 싶은 거야?」
+		RESETCOLOR
+		PRINTL 
+		PRINTL [0] 아니오
+		PRINTL [1] 예
+		INPUT
+	ELSEIF !FLAG:사망회귀확인
+		SETBGCOLOR 0, 0, 102
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「……도와줄 수 있다고 했었지.」
+		PRINTFORMW 「오늘 아침이 아닌 처음 이곳에서 눈을 떴을 때로 돌아가게 해 줄 수 있다고.」
+		RESETCOLOR
+		PRINTFORML 
+		PRINTFORMW 목소리에게 히로는 말을 건다.
+		PRINTFORMW 어쩌면 감옥에서 일어나고 있는 모든 상황이 히로를 몰아넣고 있던 걸지도 모른다.
+		PRINTFORML 
+		SETCOLOR 0xE6E6FA
+		PRINTFORMW 「응.」
+		PRINTFORMW 「하지만 자살은 너의【금기】」
+		PRINTFORMW 「【금기】를 범한다면 너라도 마녀화를 피할 수 없겠지.」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「……」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 0xE6E6FA
+		PRINTFORMW 「그러니, 눈을 떴을 때는 아마 이런 저런 기억이 잘 안 날 거야.」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「기억이…… 모호할 거라고?」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 0xE6E6FA
+		PRINTFORMW 「마녀화는 정신적인 부하로부터 일어나는 거니까. 정말 기억하지 못한다면 실제 있어났던 일이라도 스트레스를 받지 않는 것처럼.」
+		PRINTFORMW 「네가【사망회귀】를 하더라도 마녀화하지 않도록 가지고 돌아갈 수 있는 기억에 제한을 둘 거야.」
+		PRINTFORMW 「아마 스스로가 사망회귀했다는 것 정도는 기억하겠지. 그 감각만큼은 잊어버리기 어려우니까.」
+		PRINTFORMW 「그리고 너라면 네가 소중하게 여긴 것들도 잊지 않을 거야.」
+		PRINTFORMW 「그건 소위 인간들이 말하는ㅡ 영혼에 새겼다, 는 것이니까.」
+		PRINTFORML
+		PRINTFORMW 「다른 아이들도 마찬가지야.」
+		PRINTFORMW 「너와 깊은 인연을 가졌다면, 설령 그 아이들에게 있어 너와 처음 만난 것으로 되더라도 인연만큼은 계속해서 남아있을 거야.」
+		PRINTFORMW 「왜 그런 느낌을 받는 건지는 본인들도 모를테지만.」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「……」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 0xE6E6FA
+		PRINTFORMW 「이 감옥에 와서 잊고 싶지 않은 게 생겼다면, 가슴 속 깊게 기억해두렴.」
+		PRINTFORMW 「마법조차도 네게서 빼앗아가지 못하도록.」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「그런 건…… 없어.」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 0xE6E6FA
+		PRINTFORMW 「그러니?」
+		RESETCOLOR
+		PRINTFORML 
+		PRINTFORMW 히로도 목소리도 그 말이 거짓말이라는 것 정도는 알고 있었다.
+		PRINTFORMW 짧은 시간에도 정은 생기는 법이다. 그러나 그것을 인정할 수는 없었다.
+		PRINTFORMW 인정한다면 분명, 돌아갈 수 없게 되어버릴테니까.
+		PRINTFORML 
+		SETCOLOR 0xE6E6FA
+		PRINTFORMW 「……자, 사망회귀의 마법을 계승한 아이야.」
+		PRINTFORMW 「어떻게 할 거야?」
+		RESETCOLOR
+		PRINTFORML 
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「나는ㅡㅡ」
+		RESETCOLOR
+		
+		FLAG:사망회귀확인 = 1
+		
+		PRINTL 
+		PRINTL [0] 돌아가지 않는다.
+		PRINTL [1] 돌아간다.
+		INPUT
+	ELSE
+		SETBGCOLOR 0, 0, 102
+		PRINTFORML 
+		SETCOLOR 0xE6E6FA
+		PRINTFORMW 「사망회귀, 할 거야?」
+		RESETCOLOR
+		PRINTFORML 
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「나는ㅡㅡ」
+		RESETCOLOR
+		PRINTL 
+		PRINTL [0] 돌아가지 않는다.
+		PRINTL [1] 돌아간다.
+		INPUT
+	ENDIF
+	IF RESULT == 1
+		IF FLAG:해피엔딩도달
+			PRINTFORMW
+			SETCOLOR 0xE6E6FA
+			PRINTFORMW 「……그것이 당신의 선택이라면야.」
+			RESETCOLOR
+			PRINTFORML 
+		ELSE
+			PRINTFORML 
+			SETCOLOR 184, 38, 71
+			PRINTFORMW 「……아아. 돌아가겠어.」
+			PRINTFORMW 「더 이상 여기서는『올바른』미래가 오지 않을 테니까.」
+			RESETCOLOR
+			PRINTFORML 
+			SETCOLOR 0xE6E6FA
+			PRINTFORML 「그래.」
+			PRINTFORMW 「그렇다면, 다시 만나자.」
+			RESETCOLOR
+			PRINTFORML
+			PRINTFORMW 그 말을 끝으로 히로는 미리 챙겨두었던 유리조각을 손에 들었다.
+			PRINTFORMW 그리고 그렇게, 손에 든 유리조각은 그대로ㅡㅡㅡ
+			PRINTFORML 
+		ENDIF
+		RESETBGCOLOR
+		CLEARLINE LINECOUNT
+		CALL 강하게뉴게임
+	ELSE
+		PRINTFORML 
+		SETCOLOR 184, 38, 71
+		PRINTFORMW 「역시 됐어.」
+		PRINTFORMW 「아직, 나는 알아야만 하는 게 있으니까.」
+		RESETCOLOR
+		PRINTFORML 
+		SETCOLOR 0xE6E6FA
+		PRINTFORMW 「네 뜻이 그러하다면야.」
+		RESETCOLOR
+		PRINTFORML 
+		RESETBGCOLOR
+		CLEARLINE LINECOUNT
+	ENDIF
+ENDIF
+
+
+@TW_TIPS
+SETCOLOR C_YELLOW
+PRINTPLAIN TIPS:
+PRINTDATA
+	DATAFORM 특정 장소가 아니면 실행할 수 없는 명령어가 있다.
+	DATAFORM 이름 옆의 【★】을 클릭하면, 【쫓는다】명령어로 그 캐릭터가 있는 곳으로 이동할 수 있다.
+
+
+	DATAFORM 술은 어디선가 찾을 수 있을지도 모른다.
+
+	DATAFORM 눈이 내리면 작물이 자라기 어려워진다.
+
+	DATAFORM 일부 캐릭터는 고유 커맨드가 있다.
+	DATAFORM 전투능력 및 교양이 낮으면 호감도가 올라가기 어려워질 때가 있다.
+
+	DATAFORM 생활패턴은 대체적으로 비슷하지만, 일부 수감자들은 특이하게 생활하니 기상시간을 잘 활용해보자.
+	DATAFORM 커맨드가 표시되지 않는다? 필터가 걸렸는지 봐봐.
+	DATAFORM 무능력자라면 다양한 커맨드를 사용할 수 없지만 덮쳐지기 쉬워진다.
+	DATAFORM 캐릭터의 업무는 돕는 데에 조건이 있거나 애초에 돕지 못하는 것도 있다.
+	DATAFORM 요리하려면 식재료가 필요.
+
+	DATAFORM 놀랍게도 로터는 텃밭에서 만들 수 있다.
+	DATAFORM 더러움 내성이 높으면 청소가 엉성하게 된다.
+
+	DATAFORM 일부 장소는 능력 및 특정 인물과의 친교 등, 조건을 충족해야 들어갈 수 있다.
+	DATAFORM 공부나 훈련은 다른 사람과 함께 하는 편이 효율적.
+	DATAFORM 애태우기 모드는 부위 쾌락이 들어가기 어려워지는 대신에 절정을 억제한다. 다중 절정에 다소 도움이 된다.
+
+	DATAFORM 해피엔딩에 도달할 수 없는 상태가 되면【사망회귀】를 통해 일부 능력을 계승해 주회 가능하다.
+	;DATAFORM 1년 이상 플레이하면 옵션의 바이처 더스트로 일부 능력을 계승해 주회 가능하다.
+	DATAFORM 동시 절정하면 호감도 상승치나 절정·피사정에 따른 소스 추가에 보너스가 들어간다.
+
+	DATAFORM 요리평가가 80점 이상이라면 기분이 좋아지고, 35점 이하라면 나빠진다.
+
+	DATAFORM 신뢰도가 너무 낮으면 호감도가 올라가기 어려워진다. 데이트 중이라면 이 제약은 사라진다.
+
+	DATAFORM 조제 세트를 소지하고 있지 않아도, 조제 가능한 장소가 몇개인가 있다.
+	DATAFORM 조제 성공율에는 조제 Lv 외에 교양도 영향을 준다.
+	DATAFORM 특정 계절에만 채집할 수 있는 소재가 있다.
+	DATAFORM 고급 재료를 채집하고 싶다면, 채집 레벨을 올려라.
+	DATAFORM 일하는 사람 앞에서 연주하지 말자.
+
+
+	DATAFORM 일등의 예정은 능력 화면이나 캘린더에서 확인할 수 있다.
+	DATAFORM 캐릭터에 따라서는 능력화면이나 화상 설정으로 다른 화상으로 변경할 수 있다.
+	DATAFORM 타깃으로 하고 있는 캐릭터를 클릭하면 버튼 하나로 스탠딩과 얼굴 화상을 전환할 수 있다。
+
+
+	DATAFORM 【푸짐】한 요리는 포만도가 높고,【가벼운】요리는 적다。
+ENDDATA
+PRINTFORML 
+
+;虫リストを参考に
+@SHOW_SP_DISH_LIST
+#DIM C_ID
+#DIM START,10
+#DIM ページ
+#DIM 最後のページ
+#DIM P調整
+#DIM L調整
+#DIM LASTNUM
+#DIM CONST MAXLINE = 20
+;各ページの頭番を設定する
+IF !START
+	P調整 = 0
+	L調整 = 0
+	LASTNUM = 0
+	FOR LOCAL, 1, CHARANUM
+		RESULT = 0
+		TRYCALLFORM SPECIAL_MENU_{LOCAL}
+		SIF !RESULT
+			CONTINUE
+		L調整 ++
+		IF L調整 > MAXLINE
+			P調整 ++
+			START:P調整 = LOCAL
+			L調整 = 1
+		ENDIF
+		LASTNUM = LOCAL
+	NEXT
+	START = 1
+	ページ = 1
+	;最後のページと最後のページの頭番を設定
+	最後のページ = P調整 + 1
+	START:最後のページ = LASTNUM + 1
+ENDIF
+
+VARSET LOCAL
+PRINTFORML ◆고유요리 리스트 PAGE.{ページ}
+DRAWLINE
+FOR LOCAL, START, START:ページ
+	RESULT = 0
+	TRYCALLFORM SPECIAL_MENU_{LOCAL}
+	SIF !RESULT
+		CONTINUE
+	SIF LEARNED_MENU:LOCAL > 100
+		SETCOLOR C_YELLOW
+	PRINTFORM  [{LOCAL, 3}] %CALLNAME:LOCAL, 16, LEFT%
+	PRINTFORML %DISH_NAME% （%RESULTS%）
+	LOCAL:1 ++
+	RESETCOLOR
+NEXT
+WHILE LOCAL:1 < MAXLINE
+	PRINTL 
+	LOCAL:1 ++
+WEND
+DRAWLINE
+PRINTL [999] 다음페이지
+PRINTL [998] 이전페이지
+PRINTL [  0] 돌아간다
+INPUT
+;戻る
+IF !RESULT
+	VARSET START
+	RETURN
+;次のページ
+ELSEIF RESULT == 999
+	ページ ++
+	IF ページ > 最後のページ
+		ページ = 1
+		START = 1
+	ELSE
+		START = START:(ページ - 1)
+	ENDIF
+;前のページ
+ELSEIF RESULT == 998
+	ページ --
+	IF ページ < 1
+		ページ = 最後のページ
+		START = START:(最後のページ - 1)
+	ELSEIF ページ == 1
+		START = 1
+	ELSE
+		START = START:(ページ - 1)
+	ENDIF
+ELSEIF INRANGE(RESULT, 1, CHARANUM)
+	C_ID = RESULT
+	RESULT = 0
+	TRYCALLFORM SPECIAL_MENU_{C_ID}
+	IF RESULT
+		PRINTFORML 【%DISH_NAME%】%DISH_COMMENT%
+		CALL SHOW_TASTE(DISH_TASTE, "DISH_DATA")
+		PRINTFORMW 
+		CLEARLINE 3
+	ENDIF
+ENDIF
+CALL RESET_DISH
+CLEARLINE (MAXLINE + 7)
+RESTART

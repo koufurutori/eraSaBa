@@ -1,0 +1,101 @@
+﻿;-------------------------------------------------
+;함수명 :TINKO
+;개요:두 번 달이고 상등
+;인수 :ARG…캐릭터등록번호
+;반환값:
+;비고:문중 함수
+;사용예:%TINKO(PLAYER)%
+;-------------------------------------------------
+@TINKO(ARG)
+#FUNCTIONS
+VARSET LOCALS
+SIF !ARG
+	ARG = MASTER
+;지문과 앞뒤 맞댐이 필요해서 우선 더러운 묘사는 보류
+[SKIPSTART]
+IF GETBIT(STAIN:ARG:2, 64)
+	LOCALS = 파과혈
+	LOCAL ++
+ENDIF
+IF GETBIT(STAIN:ARG:2, 8)
+	SIF LOCAL
+		LOCALS += "와 "
+	LOCALS += "장액"
+	LOCAL ++
+ENDIF
+IF GETBIT(STAIN:ARG:2, 4)
+	SIF LOCAL
+		LOCALS += "와 "
+	LOCALS += "정액"
+	LOCAL ++
+ENDIF
+IF GETBIT(STAIN:ARG:2, 1)
+	SIF LOCAL
+		LOCALS += "와 "
+	LOCALS += "애액"
+	LOCAL ++
+ENDIF
+SIF LOCAL
+	LOCALS += "으로 범벅된 "
+[SKIPEND]
+SIF !(TALENT:ARG:2 & 2)
+	LOCALS = 페니스밴드
+RETURNF LOCALS
+
+
+@TINKO_VSOURCE(ARG)
+
+SELECTCASE TALENT:(TEQUIP:ARG:50):형상
+	CASE 5
+	;돌기 부착
+		CUP:ARG:쾌V /= 4
+	CASE 2
+	;조말
+		CUP:ARG:쾌V /= 2
+	CASE 10
+	;말 보통
+		CUP:ARG:쾌V *= 2
+ENDSELECT
+SIF 삽입불가(ARG) == -1 && ABL:ARG:질 < 2
+	CUP:ARG:쾌V = CUP:ARG:쾌V * 4 / 5
+SIF 삽입불가(ARG) == -2 && ABL:ARG:질 < 3
+	CUP:ARG:쾌V /= 2
+@TINKO_ASOURCE(ARG)
+
+SELECTCASE TALENT:(TEQUIP:ARG:51):형상
+	CASE 5
+	;돌기 부착
+		CUP:ARG:쾌A /= 4
+	CASE 2
+	;조말
+		CUP:ARG:쾌A /= 2
+	CASE 10
+	;말 보통
+		CUP:ARG:쾌A *= 2
+SIF 삽입불가(ARG) == -1 && ABL:ARG:애널 < 2
+	CUP:ARG:쾌A = CUP:ARG:쾌V * 4 / 5
+SIF 삽입불가(ARG) == -2 && ABL:ARG:애널 < 3
+	CUP:ARG:쾌A /= 2
+ENDSELECT
+
+@TINKO_SIMPLE(ARG)
+#FUNCTIONS
+VARSET LOCALS
+SELECTCASE TALENT:ARG:형상
+	CASE 1
+		LOCALS = 어린 
+	CASE 2
+		LOCALS = 허접한 
+	CASE 3
+		LOCALS = 튼실한 
+	CASE 4
+		LOCALS = 빛나는 
+	CASE 5
+		LOCALS = 흉악한 
+	CASE 6
+		LOCALS = 대담한 
+	CASE 10
+		LOCALS = 말 수준의 
+ENDSELECT
+LOCALS += " 페니스"
+RETURNF LOCALS

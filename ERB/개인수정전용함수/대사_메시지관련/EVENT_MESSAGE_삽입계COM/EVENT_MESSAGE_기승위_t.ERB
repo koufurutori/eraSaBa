@@ -1,0 +1,27 @@
+﻿;-------------------------------------------------
+;65, 기승위
+;-------------------------------------------------
+@MESSAGE_COM65
+;뽑지 않고
+IF TCVAR:100 == PLAYER && TARGET == TFLAG:103
+	IF TEQUIP:체위2 == 3
+		PRINTFORML %타겟은% 삽입된 채로의 %TINKO(PLAYER)%를 단단히 조여 다시 허리를 움직이기 시작했다…
+	ELSE
+		PRINTFORML 질내로부터 뽑지 않고 %타겟을% 안아 올려 아래로부터 허리를 밀어 올렸다…
+	ENDIF
+ELSE
+	IF TALENT:처녀 == 1
+		PRINTFORM %타겟은% %CALLNAME:PLAYER%의 위에 걸터앉아, 천천히 앉아
+		;처녀＋작은 체형
+		IF TALENT:체형 < 0
+			PRINTFORML , 미개척의 어린 균열로 %TINKO(PLAYER)%를 삼켜 갔다…
+		;처녀
+		ELSE
+			PRINTFORML , 미개척의 비렬로 %TINKO(PLAYER)%를 삼켜 갔다…
+		ENDIF
+	ELSEIF MASTER_POSE(SET_V, SET_P, 1) && MASTER_POSE(SET_V, SET_P, 1) != TARGET
+		PRINTFORML %타겟은% %CALLNAME:(MASTER_POSE(SET_V, SET_P, 1))%가 해방한 %TINKO(PLAYER)%를 스스로의 질내에 천천히 거두어 갔다…
+	ELSE
+		PRINTFORML %타겟은% %CALLNAME:PLAYER%의 위에 걸터앉아, 천천히 앉아 갔다…
+	ENDIF
+ENDIF

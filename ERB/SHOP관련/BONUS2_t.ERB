@@ -1,0 +1,993 @@
+﻿@BONUS
+#DIM PAGE
+#DIM CONST MAXPAGE = 4
+;PAGE 0=호감도 1=팬티 2=함락 3=기능 4=어빌
+
+CALL 실적플래그이행
+CALL 보너스소질판정
+
+TRYCALLFORM PRINT_BONUS_{PAGE}
+
+DRAWLINE
+PRINTFORML 
+PRINTFORMC [998] 이전페이지
+PRINTFORMC 페이지 {PAGE + 1} / {MAXPAGE + 1}
+PRINTFORMC [999] 다음페이지
+PRINTL 
+PRINTC  
+PRINTFORMC [0] 돌아간다 [1000] 실적취득현황보존
+INPUT
+SELECTCASE RESULT
+	CASE 0
+		RETURN
+	CASE 998
+		PAGE --
+	CASE 999
+		PAGE ++
+	CASE 1000
+		PRINTFORMW 현재의 실적취득 현황을 글로벌 세이브에 저장합니다.
+		FOR LOCAL, 2, 10
+			GLOBAL_BONUS:LOCAL = FLAG:(LOCAL + 700)
+			SAVEGLOBAL
+		NEXT
+		;개인 임의수정, 한판 전용 기술보너스 인계를 위한 추가 저장절차
+		GLOBAL_BONUS_KR:0 = FLAG:(0 + 810)
+		SAVEGLOBAL
+	CASEELSE
+		TRYCALLFORM REWARD_BONUS_{PAGE}(RESULT)
+ENDSELECT
+SIF PAGE >= MAXPAGE + 1
+	PAGE = 0
+SIF PAGE < 0
+	PAGE = MAXPAGE
+RESTART
+
+@보너스소질판정(ARG)
+;안면 2, 위치짐작
+;IF GETBIT(FLAG:안면보너스취득상황, 2)
+;	SETBIT TALENT:MASTER:위치짐작, 0
+;ELSE
+;	CLEARBIT TALENT:MASTER:위치짐작, 0
+;ENDIF
+
+;안면 3, 집합
+;TALENT:MASTER:집합 = GETBIT(FLAG:안면보너스취득상황, 3)
+
+;안면 4, 위치짐작Ⅱ
+;IF GETBIT(FLAG:안면보너스취득상황, 4)
+;	SETBIT TALENT:MASTER:위치짐작, 1
+;ELSE
+;	CLEARBIT TALENT:MASTER:위치짐작, 1
+;ENDIF
+
+;안면 5, 천객만래
+;TALENT:MASTER:천객만래 = GETBIT(FLAG:안면보너스취득상황, 5)
+
+
+
+;호감도 3, 오방짐작
+TALENT:MASTER:오방짐작 = GETBIT(FLAG:호감도보너스취득상황, 3)
+
+;호감도 4, 팬티밀수
+TALENT:MASTER:팬티밀수 = GETBIT(FLAG:호감도보너스취득상황, 4)
+
+;호감도 6, 붉은실 ;KR판 오리지날, 일판은 폴리아모리
+TALENT:MASTER:붉은실 = GETBIT(FLAG:호감도보너스취득상황, 6)
+
+
+
+;팬티2, 정욕감지
+IF GETBIT(FLAG:팬티보너스취득상황, 2)
+	SETBIT TALENT:MASTER:정욕감지, 0
+ELSE
+	CLEARBIT TALENT:MASTER:정욕감지, 0
+ENDIF
+
+;팬티 5, 정욕감지Ⅱ
+IF GETBIT(FLAG:팬티보너스취득상황, 5)
+	SETBIT TALENT:MASTER:정욕감지, 1
+ELSE
+	CLEARBIT TALENT:MASTER:정욕감지, 1
+ENDIF
+
+;팬티 8, 절륜 ;KR판 오리지날 또는 구잔재
+TALENT:MASTER:절륜 = GETBIT(FLAG:팬티보너스취득상황, 8)
+
+
+
+
+
+;함락 1, 일광욕 ;KR판 오리지날 또는 구잔재
+TALENT:MASTER:일광욕 = GETBIT(FLAG:함락보너스취득상황, 1)
+
+;함락 3, 수수께끼의매력
+TALENT:MASTER:수수께끼의매력 = GETBIT(FLAG:함락보너스취득상황, 3)
+
+;함락 4, 회복 빠름
+TALENT:MASTER:회복속도 = GETBIT(FLAG:함락보너스취득상황, 4)
+
+;함락 5, 생리주기가시화
+FLAG:1007 = GETBIT(FLAG:함락보너스취득상황, 5)
+
+;함락 6, 월광욕 ;KR판 오리지날 또는 구잔재
+TALENT:MASTER:월광욕 = GETBIT(FLAG:함락보너스취득상황, 6)
+
+;함락 7, 매력
+TALENT:MASTER:매력 = GETBIT(FLAG:함락보너스취득상황, 7)
+
+
+
+
+
+;잉태 10, 금단의지식
+;TALENT:MASTER:금단의지식 = GETBIT(FLAG:잉태보너스취득상황, 10)
+
+
+;잉태 13, 조합지식 ;KR판 오리지날 또는 구잔재
+;TALENT:MASTER:조합지식 = GETBIT(FLAG:잉태보너스취득상황, 13)
+
+;기능 1, C둔감무시
+TALENT:MASTER:C둔감무시 = GETBIT(FLAG:기능보너스취득상황, 1)
+
+;기능 2, B둔감무시
+TALENT:MASTER:B둔감무시 = GETBIT(FLAG:기능보너스취득상황, 2)
+
+;기능 3, V둔감무시
+TALENT:MASTER:V둔감무시 = GETBIT(FLAG:기능보너스취득상황, 3)
+
+;기능 4, A둔감무시
+TALENT:MASTER:A둔감무시 = GETBIT(FLAG:기능보너스취득상황, 4)
+
+;기능 5, 매혹
+TALENT:MASTER:매혹 = GETBIT(FLAG:기능보너스취득상황, 5)
+
+
+
+;기술 1, 방중술
+TALENT:MASTER:방중술 = GETBIT(FLAG:기술보너스취득상황, 1)
+
+;기술 2, 달변
+TALENT:MASTER:달변 = GETBIT(FLAG:기술보너스취득상황, 2)
+
+;기술 3, 채음보양
+IF GETBIT(FLAG:기술보너스취득상황, 3)
+	SETBIT TALENT:MASTER:179,2
+ELSE
+	CLEARBIT TALENT:MASTER:179,2
+ENDIF
+
+;기술 6, 습득빠름
+TALENT:MASTER:습득속도 = GETBIT(FLAG:기술보너스취득상황, 6)
+
+;기술 7, 채양보음 
+IF GETBIT(FLAG:기술보너스취득상황,7)
+	SETBIT TALENT:MASTER:179,3
+ELSE
+	CLEARBIT TALENT:MASTER:179,3
+ENDIF
+
+
+@BONUS_CAUTION
+CALL COLORMESSAGE(@"지금 단계에서 이 실적을 되돌리면 재취득할 수 없습니다", C_ORANGE, 1)
+CALL COLORMESSAGE(@"정말 되돌려도 되겠습니까? ", C_ORANGE, 1)
+CALL ASK_YN
+RETURN RESULT
+
+
+@안면카운트
+#FUNCTION
+#DIM 안면카운트
+안면카운트 = 0
+FOR LOCAL, 1, CHARANUM
+	SIF CFLAG:LOCAL:안면
+		안면카운트 ++
+NEXT
+RETURNF 안면카운트
+;----------------------------------------
+;호감도보너스
+;----------------------------------------
+
+@PRINT_BONUS_0
+#DIMS BONUSTEXT
+VARSET RESULT
+
+PRINTFORML ★현재의 최대호감도：{최대호감도(), 7}\@ RESULT:1 ?  (%CALLNAME:(RESULT:1)%) # \@
+FOR LOCAL, 1,7
+	BONUSTEXT '= @"호감도 {CONDITION_호감도보너스(LOCAL)} 돌파 보너스 - %BONUS_NAME_0(LOCAL)%"
+	IF !GETBIT (FLAG:호감도보너스취득상황, LOCAL) && !CONDITION_호감도보너스(LOCAL, 1)
+		PRINTPLAINFORM [{LOCAL}] - 해방 조건：호감도 {CONDITION_호감도보너스(LOCAL)} 돌파 - %BONUS_NAME_0(LOCAL)%
+	ELSE
+		IF GETBIT (FLAG:호감도보너스취득상황, LOCAL)
+			IF !REMOVABLE_BONUS_0(LOCAL)
+				SETCOLOR 100, 100, 100
+				PRINTPLAINFORM [{LOCAL}] - %BONUSTEXT% 【완료】
+			ELSE
+				IF !CONDITION_호감도보너스(LOCAL, 1)
+					SETCOLOR C_ORANGE
+				ELSE
+					SETCOLOR C_P_BLUE
+				ENDIF
+				PRINTFORM [{LOCAL}] - %BONUSTEXT% 【완료】
+			ENDIF
+		ELSE
+			SETCOLOR C_AQUA
+			PRINTFORM [{LOCAL}] - %BONUSTEXT%
+		ENDIF
+		RESETCOLOR
+	ENDIF
+	PRINTFORML 
+NEXT
+
+@CONDITION_호감도보너스(ARG, ARG:1)
+;ARG:1이 진이라면 호감도보너스 잡힐까 돌려준다
+#FUNCTION
+#DIM 필요호감도
+SELECTCASE ARG
+	CASE 1
+		필요호감도 = 1000
+	CASE 2
+		필요호감도 = 10000
+	CASE 3
+		필요호감도 = 30000
+	CASE 4
+		필요호감도 = 50000
+	CASE 5
+		필요호감도 = 100000
+	CASE 6 ;KR판 수치조정, 일판 1000000
+		필요호감도 = 500000
+ENDSELECT
+
+IF ARG:1
+	IF 최대호감도() >= 필요호감도 || GETBIT (GLOBAL_BONUS:2, ARG)
+		RETURNF 1
+	ELSE
+		RETURNF 0
+	ENDIF
+ELSE
+	RETURNF 필요호감도
+ENDIF
+
+@REWARD_BONUS_0(ARG)
+SIF GETBIT (FLAG:호감도보너스취득상황, ARG) && !REMOVABLE_BONUS_0(ARG)
+	RETURN
+IF !CONDITION_호감도보너스(ARG, 1)
+	;주회 후, 채우지 않지만 취득하고 있는 상태
+	IF GETBIT (FLAG:호감도보너스취득상황, ARG)
+		CALL BONUS_CAUTION
+		SIF RESULT
+			RETURN
+	ELSE
+		RETURN
+	ENDIF
+ENDIF
+INVERTBIT FLAG:호감도보너스취득상황, ARG
+SIF !GETBIT (FLAG:호감도보너스취득상황, ARG)
+	RETURN
+SELECTCASE ARG
+	CASE 1 ;KR판 오리지날, 일판은 체력상한 100 증가
+		PRINTW 회화경험이 올랐습니다
+		exp:MASTER:회화경험 += 50
+	CASE 2 
+		ITEM:브랜디VSOP += 10
+	CASE 3
+		PRINTFORML 감옥 내의 마법이 폭주한 탓인가?
+		PRINTFORMW %마스터는% 【더러운 방을 짐작하는 마법】을 얻었다
+	CASE 4
+		PRINTW 【팬티밀수】를 얻었습니다. 몸 검사를 회피하기 쉬워집니다.
+	CASE 5 ;KR판 오리지날 또는 구잔재, 일판은 정력 100 증가
+		PRINTFORMW 기교가 올랐습니다.
+		ABL:MASTER:기교 += 1
+	CASE 6 ;KR판 오리지날
+		PRINTW 【붉은실】을 얻었습니다. 데이트시 낮은 확률로 좋은 일이 생길지도?
+	CASEELSE
+		RETURN
+ENDSELECT
+
+@BONUS_NAME_0(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+	CASE 1
+		RETURNF "회화경험 +50"
+	CASE 2
+		RETURNF "브랜디VSOP 10개"
+	CASE 3
+		RETURNF "【더러운 방을 짐작하는 마법】"
+	CASE 4
+		RETURNF "【팬티밀수】"
+	CASE 5
+		RETURNF "기교 UP"
+	CASE 6
+		RETURNF "【붉은실】"
+ENDSELECT
+
+@REMOVABLE_BONUS_0(ARG)
+#FUNCTION
+SELECTCASE ARG
+	CASE 3, 4, 6
+		RETURNF 1
+	CASEELSE
+		RETURNF 0
+ENDSELECT
+
+@최대호감도
+#FUNCTION
+#DIM 최대호감도
+FOR LOCAL, 1, CHARANUM - 1
+	IF CFLAG:LOCAL:호감도 > 최대호감도
+		최대호감도 = CFLAG:LOCAL:호감도
+		RESULT:1 = LOCAL
+	ENDIF
+NEXT
+RETURNF 최대호감도
+;----------------------------------------
+;팬티 보너스
+;----------------------------------------
+
+@CONDITION_팬티보너스(ARG, ARG:1)
+;ARG:1이 진이라면 보너스 잡힐까 돌려준다
+#FUNCTION
+#DIM 필요종수
+SELECTCASE ARG
+	CASE 1
+		필요종수 = 5
+	CASE 2
+		필요종수 = 10
+	CASE 3
+		필요종수 = 30
+	CASE 4
+		필요종수 = 50
+	CASE 5 ;KR판 수치조정, 일판 750
+		필요종수 = 100
+	CASE 6
+		필요종수 = 150
+	CASEELSE
+		필요종수 = 9999
+ENDSELECT
+
+IF ARG:1
+	IF FLAG:획득팬티총수 >= 필요종수 || GETBIT (GLOBAL_BONUS:3, ARG)
+		RETURNF 1
+	ELSE
+		RETURNF 0
+	ENDIF
+ELSE
+	RETURNF 필요종수
+ENDIF
+
+@PRINT_BONUS_1
+#DIMS BONUSTEXT
+PRINTFORML ★현재의 획득 팬티 종류수：{FLAG:획득팬티총수, 3}종
+FOR LOCAL, 1,7
+	BONUSTEXT '= @"팬티 {CONDITION_팬티보너스(LOCAL)}종 수집 보너스 - %BONUS_NAME_1(LOCAL)%"
+	IF !GETBIT (FLAG:팬티보너스취득상황, LOCAL) && !CONDITION_팬티보너스(LOCAL, 1)
+		PRINTPLAINFORM [{LOCAL}] - 해방 조건：팬티를 {CONDITION_팬티보너스(LOCAL)}종 모은다 - %BONUS_NAME_1(LOCAL)%
+	ELSE
+		IF GETBIT (FLAG:팬티보너스취득상황, LOCAL)
+			IF !REMOVABLE_BONUS_1(LOCAL)
+				SETCOLOR 100, 100, 100
+				PRINTPLAINFORM [{LOCAL}] - %BONUSTEXT% 【완료】
+			ELSE
+				IF !CONDITION_팬티보너스(LOCAL, 1)
+					SETCOLOR C_ORANGE
+				ELSE
+					SETCOLOR C_P_BLUE
+				ENDIF
+				PRINTFORM [{LOCAL}] - %BONUSTEXT% 【완료】
+			ENDIF
+		ELSE
+			SETCOLOR C_AQUA
+			PRINTFORM [{LOCAL}] - %BONUSTEXT%
+		ENDIF
+		RESETCOLOR
+	ENDIF
+	PRINTL 
+NEXT
+
+@REWARD_BONUS_1(ARG)
+SIF GETBIT (FLAG:팬티보너스취득상황, ARG) && !REMOVABLE_BONUS_1(ARG)
+	RETURN
+IF !CONDITION_팬티보너스(ARG, 1)
+	;주회 후, 채우지 않지만 취득하고 있는 상태(팬티는 인계되므로 현재는 관계없다)
+	IF GETBIT (FLAG:팬티보너스취득상황, ARG)
+		CALL BONUS_CAUTION
+		SIF RESULT
+			RETURN
+	ELSE
+		RETURN
+	ENDIF
+ENDIF
+INVERTBIT FLAG:팬티보너스취득상황, ARG
+SIF !GETBIT (FLAG:팬티보너스취득상황, ARG)
+	RETURN
+SELECTCASE ARG
+	CASE 1
+		CALL AddEXP("청소경험", MASTER, 30)
+	CASE 2
+		PRINTFORML 어째서인가, %마스터는% 청소(?)를 계속한 끝에 이상한 마법을 깨우친 것 같다
+		PRINTFORMW %마스터는% 【성욕을 주체 못하고 있는 소녀를 간파하는 마법】을 얻었다
+	CASE 3 
+		PRINTW 기교가 올랐습니다.
+		ABL:MASTER:기교 ++
+	CASE 4
+		PRINTFORML 어째서인가, %마스터는% 청소(?)를 계속한 끝에 이상한 마법을 깨우친 것 같다
+		PRINTFORMW %마스터는% 【성욕을 주체 못하고 있는 소녀를 찾아내는 마법】을 얻었다
+	CASE 5 
+		PRINTW 기교가 올랐습니다.
+		ABL:MASTER:기교 ++
+	CASE 6 
+		;회복 빠름은 연인에 이행, 대신에 새롭게 정력 업
+		PRINTW 정력의 상한이 올랐습니다.
+		MAXBASE:MASTER:정력 = MIN(MAXBASE:MASTER:정력*3/2, 3000)
+ENDSELECT
+
+@BONUS_NAME_1(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+	CASE 1
+		RETURNF "청소경험 +30"
+	CASE 2
+		RETURNF "【성욕을 주체 못하고 있는 소녀를 간파하는 마법】"
+	CASE 3
+		RETURNF "기교 UP"
+	CASE 4
+		RETURNF "【성욕을 주체 못하고 있는 소녀를 찾아내는 마법】"
+	CASE 5
+		RETURNF "기교 UP"
+	CASE 6
+		RETURNF "최대 정력×1.5 (3000까지)"
+ENDSELECT
+
+@REMOVABLE_BONUS_1(ARG)
+#FUNCTION
+SELECTCASE ARG
+	CASE 2, 4
+		RETURNF 1
+	CASEELSE
+		RETURNF 0
+ENDSELECT
+
+;----------------------------------------
+;함락 보너스
+;----------------------------------------
+@PRINT_BONUS_2
+
+#DIM 연모카운트
+#DIM 섹프카운트
+#DIM 위험일삽입
+#DIM 순애파
+#DIM 합의없음
+#DIM 합의Get
+
+연모카운트 = 0
+섹프카운트 = 0
+위험일삽입 = 0
+순애파 = 0
+합의Get = 0
+
+VARSET BONUS_2_ABLE
+
+
+FOR LOCAL, 1, CHARANUM
+	SIF TALENT:LOCAL:연모
+		연모카운트 ++
+	SIF TALENT:LOCAL:섹프
+		섹프카운트 ++
+	SIF CFLAG:LOCAL:생해금 >= 2
+		위험일삽입 ++
+	SIF CFLAG:LOCAL:깨끗한교제
+		순애파 ++
+	SIF CFLAG:LOCAL:대주고말았다
+		합의없음 ++
+	SIF CFLAG:LOCAL:기정사실 & 합의_우후후
+		합의Get ++
+NEXT
+
+BONUS_2_DESCRIPTION:1 = 연모 취득 
+SIF 연모카운트 >= 1
+	BONUS_2_ABLE:1 = 1
+
+BONUS_2_DESCRIPTION:2 = 연모 3명 
+SIF 연모카운트 >= 3
+	BONUS_2_ABLE:2 = 1
+
+BONUS_2_DESCRIPTION:3 = 연모 5명 
+SIF 연모카운트 >= 5
+	BONUS_2_ABLE:3 = 1
+
+BONUS_2_DESCRIPTION:4 = 연인 취득 
+SIF TALENT:MASTER:연인
+	BONUS_2_ABLE:4 = 1
+
+BONUS_2_DESCRIPTION:5 = 합의를 얻지 않고 의식이 있는 상대와 행위에 이른다 
+SIF 합의없음
+	BONUS_2_ABLE:5 = 1
+
+BONUS_2_DESCRIPTION:6 = 섹프 취득 
+SIF 섹프카운트 >= 1
+	BONUS_2_ABLE:6 = 1
+
+BONUS_2_DESCRIPTION:7 = 섹프 3명 
+SIF 섹프카운트 >= 3
+	BONUS_2_ABLE:7 = 1
+
+BONUS_2_DESCRIPTION:8 = 섹프 5명 
+SIF 섹프카운트 >= 5
+	BONUS_2_ABLE:8 = 1
+
+BONUS_2_DESCRIPTION:9 = 범하지 않고 연모 취득 
+SIF 순애파
+	BONUS_2_ABLE:9 = 1	
+
+BONUS_2_DESCRIPTION:10 = 섹스의 합의를 얻는다 
+SIF 합의Get
+	BONUS_2_ABLE:10 = 1
+
+
+FOR LOCAL,1, 11
+	SIF GETBIT (GLOBAL_BONUS:6, LOCAL)
+		BONUS_2_ABLE:LOCAL = 1
+NEXT
+
+PRINTFORML ★현재의 연모：{연모카운트, 3}명/섹프：{섹프카운트, 3}명
+FOR LOCAL, 1,11
+	IF !BONUS_2_ABLE:LOCAL && !GETBIT (FLAG:함락보너스취득상황, LOCAL)
+		PRINTPLAINFORM [{LOCAL}] - 해방 조건：%BONUS_2_DESCRIPTION:LOCAL% - %BONUS_NAME_2(LOCAL)%
+	ELSE
+		IF GETBIT (FLAG:함락보너스취득상황, LOCAL)
+			IF !REMOVABLE_BONUS_2(LOCAL)
+				SETCOLOR 100, 100, 100
+				PRINTPLAINFORM [{LOCAL}] - %BONUS_2_DESCRIPTION:LOCAL%보너스【완료】%BONUS_NAME_2(LOCAL)%
+			ELSE
+				IF !BONUS_2_ABLE:LOCAL
+					SETCOLOR C_ORANGE
+				ELSE
+					SETCOLOR C_P_BLUE
+				ENDIF
+				PRINTFORM [{LOCAL}] - %BONUS_2_DESCRIPTION:LOCAL%보너스【완료】%BONUS_NAME_2(LOCAL)%
+			ENDIF
+		ELSE
+			SETCOLOR C_AQUA
+			PRINTFORM [{LOCAL}] - %BONUS_2_DESCRIPTION:LOCAL%보너스 - %BONUS_NAME_2(LOCAL)%
+		ENDIF
+		RESETCOLOR
+	ENDIF
+	PRINTL 
+NEXT
+
+@REWARD_BONUS_2(ARG)
+SIF GETBIT (FLAG:함락보너스취득상황, ARG) && !REMOVABLE_BONUS_2(ARG)
+	RETURN
+IF !BONUS_2_ABLE:ARG
+	;주회 후, 채우지 않지만 취득하고 있는 상태
+	IF GETBIT (FLAG:함락보너스취득상황, ARG)
+		CALL BONUS_CAUTION
+		SIF RESULT
+			RETURN
+	ELSE
+		RETURN
+	ENDIF
+ENDIF
+INVERTBIT FLAG:함락보너스취득상황, ARG
+SIF !GETBIT (FLAG:함락보너스취득상황, ARG)
+	RETURN
+SELECTCASE ARG
+	CASE 1 ;KR판 오리지날, 일판은 기력상한 100 증가
+		PRINTW 【일광욕】을 얻었습니다.
+	CASE 2 ;KR판 오리지날, 일판은 기력상한 300 증가
+		;생리주기는 생해금에 이행
+		;연모 보너스 3번째였던 것을 2번째에 이행
+		PRINTW 기교가 올랐습니다.
+		ABL:MASTER:기교 ++
+	CASE 3
+		;4번째로부터 수수께끼의매력을 이행
+		;기력 업은 2번째에 이행
+		PRINTW 【수수께끼의매력】을 얻었습니다.
+	CASE 4
+		;팬티 보너스로부터 이행
+		PRINTW 【회복 빠름】을 얻었습니다.
+	CASE 5
+		PRINTW 생리주기를 알 수 있게 되었습니다.
+	CASE 6 ;KR판 오리지날, 일판은 정력 100 증가	
+		PRINTW 【월광욕】을 얻었습니다.
+	CASE 7
+		;신규
+		PRINTW 【매력】을 얻었습니다.
+	CASE 8 ;KR판 오리지날, 일판은 정력상한 100 증가
+		;신규
+		PRINTW 기교가 올랐습니다.
+		ABL:MASTER:기교 ++
+	CASE 9
+		PRINTW 기력 상한이 300 증가했습니다.
+		MAXBASE:MASTER:기력 += 300
+	CASE 10
+		PRINTW 체력 상한이 100 증가했습니다.
+		MAXBASE:MASTER:체력 += 100
+ENDSELECT
+
+@BONUS_NAME_2(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+	CASE 1
+		RETURNF "【일광욕】"
+	CASE 2
+		RETURNF "기교 UP"
+	CASE 3
+		RETURNF "【수수께끼의매력】"
+	CASE 4
+		RETURNF "【회복 빠름】"
+	CASE 5
+		RETURNF "생리주기가시화"
+	CASE 6
+		RETURNF "【월광욕】"
+	CASE 7
+		RETURNF "【매력】"
+	CASE 8
+		RETURNF "기교 UP"
+	CASE 9
+		RETURNF "기력 상한 +300"
+	CASE 10
+		RETURNF "체력 상한 +100"
+ENDSELECT
+
+@REMOVABLE_BONUS_2(ARG)
+#FUNCTION
+SELECTCASE ARG
+	CASE 1,3, 4, 5,6, 7
+		RETURNF 1
+	CASEELSE
+		RETURNF 0
+ENDSELECT
+
+;----------------------------------------
+;기능 보너스
+;----------------------------------------
+
+@PRINT_BONUS_3
+
+#DIM 음유인원수
+#DIM 음호인원수
+#DIM 항문광인원수
+#DIM 키스마인원수
+#DIM 자위중독인원수
+음유인원수 = 0
+음호인원수 = 0
+항문광인원수 = 0
+키스마인원수 = 0
+자위중독인원수 = 0
+
+VARSET BONUS_3_ABLE
+
+FOR LOCAL,1,CHARANUM
+	SIF TALENT:LOCAL:음유 || GETBIT (CFLAG:LOCAL:인계, 5)
+		음유인원수 ++
+	SIF TALENT:LOCAL:음호 || GETBIT (CFLAG:LOCAL:인계, 3)
+		음호인원수 ++
+	SIF TALENT:LOCAL:항문광 || GETBIT (CFLAG:LOCAL:인계, 4)
+		항문광인원수 ++
+	SIF TALENT:LOCAL:키스마 || GETBIT (CFLAG:LOCAL:인계, 6)
+		키스마인원수 ++
+	SIF TALENT:LOCAL:자위중독
+		자위중독인원수 ++
+NEXT
+
+BONUS_3_DESCRIPTION:1 = 자위중독 3명
+SIF 자위중독인원수 >= 3
+	BONUS_3_ABLE:1 = 1
+
+BONUS_3_DESCRIPTION:2 = 음유 3명
+SIF 음유인원수 >= 3
+	BONUS_3_ABLE:2 = 1
+
+BONUS_3_DESCRIPTION:3 = 음호 3명
+SIF 음호인원수 >= 3
+	BONUS_3_ABLE:3 = 1
+
+BONUS_3_DESCRIPTION:4 = 항문광 3명
+SIF 항문광인원수 >= 3
+	BONUS_3_ABLE:4 = 1
+
+BONUS_3_DESCRIPTION:5 = 키스마 3명
+SIF 키스마인원수 >= 3
+	BONUS_3_ABLE:5 = 1
+
+FOR LOCAL,1, 6
+	SIF GETBIT (GLOBAL_BONUS:8, LOCAL)
+		BONUS_3_ABLE:LOCAL = 1
+NEXT
+
+PRINTFORML ★현재의 자위중독：{자위중독인원수, 3}명/음유：{음유인원수, 3}명/음호：{음호인원수, 3}명/항문광：{항문광인원수, 3}명/키스마：{키스마인원수, 3}명
+SIF FLAG:주회수
+	PRINTFORML 　(자위중독 이외는 과거에 취득한 것이 있는 캐릭터도 포함됩니다)
+FOR LOCAL,1,6
+	IF !BONUS_3_ABLE:LOCAL && !GETBIT (FLAG:기능보너스취득상황, LOCAL)
+		PRINTPLAINFORM [{LOCAL}] - 해방 조건：%BONUS_3_DESCRIPTION:LOCAL% - %BONUS_NAME_3(LOCAL)%
+	ELSE
+		IF GETBIT (FLAG:기능보너스취득상황, LOCAL)
+			IF !REMOVABLE_BONUS_3(LOCAL)
+				SETCOLOR 100, 100, 100
+				PRINTPLAINFORM [{LOCAL}] - %BONUS_3_DESCRIPTION:LOCAL%보너스【완료】%BONUS_NAME_3(LOCAL)%
+			ELSE
+				IF !BONUS_3_ABLE:LOCAL
+					SETCOLOR C_ORANGE
+				ELSE
+					SETCOLOR C_P_BLUE
+				ENDIF
+				PRINTFORM [{LOCAL}] - %BONUS_3_DESCRIPTION:LOCAL%보너스【완료】%BONUS_NAME_3(LOCAL)%
+			ENDIF
+		ELSE
+			SETCOLOR C_AQUA
+			PRINTFORM [{LOCAL}] - %BONUS_3_DESCRIPTION:LOCAL%
+		ENDIF
+		RESETCOLOR
+	ENDIF
+	PRINTL 
+NEXT
+
+@REWARD_BONUS_3(ARG)
+SIF GETBIT (FLAG:기능보너스취득상황, ARG) && !REMOVABLE_BONUS_3(ARG)
+	RETURN
+IF !BONUS_3_ABLE:ARG
+	;주회 후, 채우지 않지만 취득하고 있는 상태
+	IF GETBIT (FLAG:기능보너스취득상황, ARG)
+		CALL BONUS_CAUTION
+		SIF RESULT
+			RETURN
+	ELSE
+		RETURN
+	ENDIF
+ENDIF
+INVERTBIT FLAG:기능보너스취득상황, ARG
+SIF !GETBIT (FLAG:기능보너스취득상황, ARG)
+	RETURN
+SELECTCASE ARG
+	CASE 1
+		PRINTW 【C둔감무시】를 얻었습니다.
+	CASE 2
+		PRINTW 【B둔감무시】를 얻었습니다.
+	CASE 3
+		PRINTW 【V둔감무시】를 얻었습니다.
+	CASE 4
+		PRINTW 【A둔감무시】를 얻었습니다.
+	CASE 5
+		PRINTW 【매혹】을 얻었습니다.
+ENDSELECT
+
+@BONUS_NAME_3(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+	CASE 1
+		RETURNF "【C둔감무시】"
+	CASE 2
+		RETURNF "【B둔감무시】"
+	CASE 3
+		RETURNF "【V둔감무시】"
+	CASE 4
+		RETURNF "【A둔감무시】"
+	CASE 5
+		RETURNF "【매혹】"
+ENDSELECT
+
+@REMOVABLE_BONUS_3(ARG)
+#FUNCTION
+;모두 1
+RETURNF 1
+
+SELECTCASE ARG
+	CASE 0
+		RETURNF 0
+	CASEELSE
+ENDSELECT
+
+;----------------------------------------
+;KR판 오리지날, 기술보너스
+;----------------------------------------
+
+@PRINT_BONUS_4
+VARSET BONUS_4_ABLE
+
+
+BONUS_4_DESCRIPTION:1 = 교양 5이상
+SIF ABL:MASTER:교양 >= 5
+	BONUS_4_ABLE:1 = 1
+
+BONUS_4_DESCRIPTION:2 = 화술기능 5이상
+SIF ABL:MASTER:화술기능 >= 5
+	BONUS_4_ABLE:2 = 1
+
+BONUS_4_DESCRIPTION:3 = 전투능력 5이상
+SIF ABL:MASTER:전투능력 >= 5
+	BONUS_4_ABLE:3 = 1
+
+BONUS_4_DESCRIPTION:4 = 청소기능 5이상
+SIF ABL:MASTER:청소기능 >= 5
+	BONUS_4_ABLE:4 = 1
+
+BONUS_4_DESCRIPTION:5 = 요리기능 5이상
+SIF ABL:MASTER:요리기능 >= 5
+	BONUS_4_ABLE:5 = 1
+
+BONUS_4_DESCRIPTION:6 = 음악기능 5이상
+SIF ABL:MASTER:음악기능 >=5
+	BONUS_4_ABLE:6 = 1
+
+BONUS_4_DESCRIPTION:7 = 허리기술 5이상
+SIF ABL:MASTER:허리 >= 5
+	BONUS_4_ABLE:7 = 1
+
+FOR LOCAL,1, 8
+	SIF GETBIT (GLOBAL_BONUS_KR:0, LOCAL)
+		BONUS_4_ABLE:LOCAL = 1
+NEXT
+
+PRINTFORML ★교양: {ABL:MASTER:교양} / 화술기능: {ABL:MASTER:화술기능} / 전투능력: {ABL:MASTER:전투능력} / 청소기능: {ABL:MASTER:청소기능} / 음악기능: {ABL:MASTER:음악기능} / 허리기술: {ABL:MASTER:허리}
+FOR LOCAL, 1,8
+	IF !BONUS_4_ABLE:LOCAL && !GETBIT (FLAG:기술보너스취득상황, LOCAL)
+		PRINTPLAINFORM [{LOCAL}] - 해방 조건：%BONUS_4_DESCRIPTION:LOCAL%  - %BONUS_NAME_4(LOCAL)%
+	ELSE
+		IF GETBIT (FLAG:기술보너스취득상황, LOCAL)
+			IF !REMOVABLE_BONUS_4(LOCAL)
+				SETCOLOR 100, 100, 100
+				PRINTPLAINFORM [{LOCAL}] - %BONUS_4_DESCRIPTION:LOCAL%보너스【완료】%BONUS_NAME_4(LOCAL)%
+			ELSE
+				IF !BONUS_4_ABLE:LOCAL
+					SETCOLOR C_ORANGE
+				ELSE
+					SETCOLOR C_P_BLUE
+				ENDIF
+				PRINTFORM [{LOCAL}] - %BONUS_4_DESCRIPTION:LOCAL%보너스【완료】%BONUS_NAME_4(LOCAL)%
+			ENDIF
+		ELSE
+			SETCOLOR C_AQUA
+			PRINTFORM [{LOCAL}] - %BONUS_4_DESCRIPTION:LOCAL%보너스 - %BONUS_NAME_4(LOCAL)%
+		ENDIF
+		RESETCOLOR
+	ENDIF
+	PRINTL 
+NEXT
+
+@REWARD_BONUS_4(ARG)
+SIF GETBIT (FLAG:기술보너스취득상황, ARG) && !REMOVABLE_BONUS_4(ARG)
+	RETURN
+IF !BONUS_4_ABLE:ARG
+	;주회 후, 채우지 않지만 취득하고 있는 상태
+	IF GETBIT (FLAG:기술보너스취득상황, ARG)
+		CALL BONUS_CAUTION
+		SIF RESULT
+			RETURN
+	ELSE
+		RETURN
+	ENDIF
+ENDIF
+INVERTBIT FLAG:기술보너스취득상황, ARG
+SIF !GETBIT (FLAG:기술보너스취득상황, ARG)
+	RETURN
+SELECTCASE ARG
+	;CASE 1
+	;	PRINTL 【방중술】을 얻었습니다.
+	;	PRINTW 사정시 사정자와 피사정자의 기력이 소량 회복되며 총 기력이 소량 증가합니다.
+	CASE 2
+		PRINTL 【달변】를 얻었습니다.
+		PRINTW 대화하다가 어색해지지 않습니다.
+	;CASE 3
+	;	PRINTL 【채음보양】를 얻었습니다.
+	;	PRINTW 사정시 피사정자의 체력을 사정자가 일부 가져가며 사정자의 총 체력이 오릅니다.
+	CASE 4
+		PRINTL 청소기를 감옥으로부터 지급받았다.
+		PRINTW 청소 시간이 빨라집니다
+		ITEM:910 = 1
+	;CASE 5
+	;	PRINTL 간편 요리 도구를 얻었습니다.
+	;	PRINTW 어디서든 요리할 수 있습니다. 단, 경식만 가능합니다.
+	;	ITEM:911 = 1
+	CASE 6
+		PRINTW 【습득 빠름】를 얻었습니다.
+	;CASE 7
+	;	PRINTL 【채양보음】를 얻었습니다.
+	;	PRINTW 사정시 사정자의 체력을 피사정자에게 나눠주며 피사정자의 총 체력이 오릅니다.
+ENDSELECT
+
+@BONUS_NAME_4(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+	;CASE 1
+	;	RETURNF "【방중술】"
+	CASE 2
+		RETURNF "【달변】"
+	;CASE 3
+	;	RETURNF "【채음보양】"
+	CASE 4
+		RETURNF "청소기"
+	;CASE 5
+	;	RETURNF "간편 요리 도구"
+	CASE 6
+		RETURNF "【습득 빠름】"
+	;CASE 7
+	;	RETURNF "【채양보음】"
+ENDSELECT
+
+@REMOVABLE_BONUS_4(ARG)
+#FUNCTION
+SELECTCASE ARG
+	;거의 모두 1이므로 ELSE가 외와는 역
+	CASE 4
+		RETURNF 0
+	CASEELSE
+		RETURNF 1
+ENDSELECT
+
+;----------------------------------------
+
+@실적플래그이행
+SIF GETBIT (FLAG:701,0)
+	SETBIT FLAG:호감도보너스취득상황, 1
+SIF GETBIT (FLAG:701,12)
+	SETBIT FLAG:호감도보너스취득상황, 2
+SIF GETBIT (FLAG:701,2)
+	SETBIT FLAG:호감도보너스취득상황, 3
+;호감도보너스의 위치짐작은 안면 30명에게 이동
+;SIF GETBIT (FLAG:701,3)
+;	SETBIT FLAG:호감도보너스취득상황, 4
+SIF GETBIT (FLAG:701,5)
+	SETBIT FLAG:호감도보너스취득상황, 5
+SIF GETBIT (FLAG:701,9)
+	SETBIT FLAG:호감도보너스취득상황, 6
+
+;위치짐작
+SIF GETBIT (FLAG:701,3)
+	SETBIT FLAG:안면보너스취득상황, 2
+;집합
+SIF GETBIT (FLAG:701,10)
+	SETBIT FLAG:안면보너스취득상황, 3
+
+;천객만래는 안면에
+SIF GETBIT (FLAG:701,8)
+	SETBIT FLAG:안면보너스취득상황, 5
+
+SIF GETBIT (FLAG:701,1)
+	SETBIT FLAG:팬티보너스취득상황, 1
+SIF GETBIT (FLAG:701,16)
+	SETBIT FLAG:팬티보너스취득상황, 2
+SIF GETBIT (FLAG:701,4)
+	SETBIT FLAG:팬티보너스취득상황, 3
+SIF GETBIT (FLAG:701,13)
+	SETBIT FLAG:팬티보너스취득상황, 4
+SIF GETBIT (FLAG:701,15)
+	SETBIT FLAG:팬티보너스취득상황, 5
+IF GETBIT (FLAG:701,7)
+	SETBIT FLAG:팬티보너스취득상황, 6
+	SETBIT FLAG:팬티보너스취득상황, 8
+ENDIF
+;회복 빠름은 연인에
+SIF GETBIT (FLAG:701,6)
+	SETBIT FLAG:함락보너스취득상황, 4
+;연모 5명의 가시화는 생해금에
+SIF GETBIT (FLAG:702,10)
+	SETBIT FLAG:함락보너스취득상황, 5
+
+;시간경험 100으로부터 섹프에
+SIF GETBIT (FLAG:702,8)
+	SETBIT FLAG:함락보너스취득상황, 6
+
+;지설 3
+SIF GETBIT (FLAG:702,0)
+	SETBIT FLAG:기능보너스취득상황, 1
+;음유 5
+SIF GETBIT (FLAG:702,1)
+	SETBIT FLAG:기능보너스취득상황, 2
+;음호 5명
+SIF GETBIT (FLAG:702,2)
+	SETBIT FLAG:기능보너스취득상황, 3
+;항문광 5명
+SIF GETBIT (FLAG:702,3)
+	SETBIT FLAG:기능보너스취득상황, 4
+;키스마 5
+SIF GETBIT (FLAG:702,4)
+	SETBIT FLAG:기능보너스취득상황, 5
+
+SIF GETBIT (FLAG:702,5)
+	SETBIT FLAG:함락보너스취득상황, 1
+;가시화는 보존하고 있지 않기 때문에 2는 스킵
+SIF GETBIT (FLAG:702,6)
+	SETBIT FLAG:함락보너스취득상황, 3
+SIF GETBIT (FLAG:702,7)
+	SETBIT FLAG:함락보너스취득상황, 4

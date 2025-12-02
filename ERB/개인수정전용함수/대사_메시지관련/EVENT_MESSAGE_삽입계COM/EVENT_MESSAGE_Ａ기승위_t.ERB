@@ -1,0 +1,86 @@
+﻿;-------------------------------------------------
+;94, A기승위한다
+;-------------------------------------------------
+@MESSAGE_COM94
+;뽑지 않고
+IF CFLAG:MASTER:장난 == 2
+	IF TCVAR:PLAYER:101 == TARGET && TARGET == TFLAG:103
+		PRINTFORML %조교자는% 자고 있는 %CALLNAME:TARGET%의 %TINKO(TARGET)%를 밖으로 내놓지 않고, 다시 허리를 움직이기 시작했다…
+	ELSE
+		PRINTFORML %조교자는% 자고 있는 %타겟을% 위를 향해 눕히고 허리 위에 올라타 
+		SIF TEQUIP:PLAYER:0 & 2
+			PRINTFORM %SHOW_BOTTOM(PLAYER, 2)%의 틈새로부터 
+		IF EXP:PLAYER:A경험 >= EXPLV:4
+			PRINTFORML 이미 부드럽게 녹아 있는 애널로 %TINKO(TARGET)%를 삼켰다
+		ELSEIF EXP:PLAYER:A경험 >= EXPLV:3
+			PRINTFORML 벌어지기 시작한 애널로 %TINKO(TARGET)%를 삼켰다
+		ELSE
+			PRINTFORML 아직도 이물을 거절하려고 하는 애널로 %TINKO(TARGET)%를 삼켰다
+		ENDIF
+		;ちんちん
+		IF TALENT:TARGET:2 & 2
+			PRINTFORM 열을 띤 %CALLNAME:TARGET%의 %TINKO(TARGET)%가 
+		;에 처세의 재능응
+		ELSE
+			PRINTFORM 무기질적인 페니스밴드가 
+		ENDIF
+		PRINTFORML 장벽을 도려내 범하는 감각에, %조교자는% 허덕이고 있다…
+	ENDIF
+ELSE
+	IF TCVAR:PLAYER:101 == TARGET && TARGET == TFLAG:103
+		PRINTFORM %조교자는% %CALLNAME:TARGET%의 
+		IF TALENT:TARGET:2 & 2
+			PRINTFORM %TINKO(TARGET)%
+		;에 처세의 재능응
+		ELSE
+			PRINTFORM 페니스밴드
+		ENDIF
+		PRINTFORML 를 단단히 조이면서, 추잡하게 허리를 털고 있다
+	ELSE
+		PRINTFORM %조교자는% %CALLNAME:TARGET%에게
+		IF ABL:새드끼 >= 3
+			PRINTFORM 명령 받은 대로 
+		ELSE
+			PRINTFORM 부탁 받은 대로 
+		ENDIF
+		PRINTFORM 허리 위에 걸터앉아, 항문을 
+		IF TALENT:TARGET:2 & 2
+			PRINTFORM %TINKO(TARGET)%
+		;에 처세의 재능응
+		ELSE
+			PRINTFORM 페니스밴드
+		ENDIF
+		PRINTFORML 의 끝에 억눌렀다
+		SIF TEQUIP:PLAYER:0 & 2
+			PRINTFORM %SHOW_BOTTOM(PLAYER, 2)%의 틈새로부터 
+		IF EXP:PLAYER:A경험 >= EXPLV:4
+			PRINTFORM 이미 부드럽게 녹아 있는 애널이, %CALLNAME:TARGET%의 
+			IF TALENT:TARGET:2 & 2
+				PRINTFORM %TINKO(TARGET)%
+			;에 처세의 재능응
+			ELSE
+				PRINTFORM 페니스밴드
+			ENDIF
+			PRINTFORML 살짝 깨물듯이 물어 간다
+		ELSEIF EXP:PLAYER:A경험 >= EXPLV:3
+			PRINTFORM 벌어지기 시작한 애널에 천천히 
+			IF TALENT:TARGET:2 & 2
+				PRINTFORM %TINKO(TARGET)%
+			;에 처세의 재능응
+			ELSE
+				PRINTFORM 페니스밴드
+			ENDIF
+			PRINTFORML 가 삽입되어 온다
+		ELSE
+			PRINTFORML 아직도 이물에 익숙하지 않은 애널을 억지로 관철해져 %마스터는% 괴로운 듯한 소리를 냈다
+		ENDIF
+		;ちんちん
+		IF TALENT:TARGET:2 & 2
+			PRINTFORM 열을 띤 %CALLNAME:TARGET%의 %TINKO(TARGET)%가
+		;에 처세의 재능응
+		ELSE
+			PRINTFORM 무기질적인 페니스밴드가
+		ENDIF
+		PRINTFORML 장벽을 도려내 범하는 감각에, %조교자는% 허덕이고 있다…
+	ENDIF
+ENDIF
