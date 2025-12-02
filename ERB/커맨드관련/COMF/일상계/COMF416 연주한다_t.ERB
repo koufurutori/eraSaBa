@@ -1,0 +1,395 @@
+﻿;-------------------------------------------------
+;연주한다
+;일상계 커맨드, 레벨 1
+;-------------------------------------------------
+@COM416
+#DIM DYNAMIC NOW_TARGET
+#DIM DYNAMIC NUM_TARGET
+#DIM DYNAMIC MUSIC_BONUS
+#DIM DYNAMIC BAND_BONUS
+#DIM DYNAMIC DANCE_BONUS
+#DIM OHINERI
+#DIM INTERRUPTED
+#DIM OMAKE, 20 = 40,120,195,212,213,214,215,216,500,510,520,521,600,601,610,611,612,636,642,706
+#DIM CHOSEN_OMAKE
+
+TFLAG:사용악기 = 0
+IF 연회장소재판정(MASTER)
+;IF CFLAG:MASTER:현재위치 == TFLAG:연회장 && MASTER != TARGET && DAY >= FLAG:개시일 && TIME >= FLAG:33 && FLAG:참가인수
+	IF ABL:MASTER:음악기능 < 3
+		PRINTL 지금의 음악기능으로는 연회에 걸맞은 연주를 할 자신이 없다……
+		RETURN -1
+	ELSEIF ABL:MASTER:음악기능 <= ABL:TARGET:전투능력 - TALENT:TARGET:기분
+		PRINTFORML 잘 연주하지 않으면 %조사처리(CALLNAME:TARGET, "는")% 돌을 던질 것 같\@ TALENT:TARGET:기분 < 0 ? 이 기분이 나빠보인다 # 다 \@
+	ELSEIF ABL:MASTER:음악기능 < 5
+		PRINTL 서투른 연주를 하다간 돌이 날아올지도 모른다
+	ELSE
+		PRINTL 연회를 어떤 악기로 흥을 돋울까……
+	ENDIF
+ELSE
+	PRINTL 무엇을 사용할까……
+ENDIF
+{
+	CALL ASK_M(
+		"돌아간다", 1,
+		ITEMNAME:30, MUSIC_ABLE(30),
+		ITEMNAME:31, MUSIC_ABLE(31),
+		ITEMNAME:32, MUSIC_ABLE(32),
+		ITEMNAME:33, MUSIC_ABLE(33),
+		ITEMNAME:34, MUSIC_ABLE(34)
+	)
+}
+TFLAG:사용악기 = RESULT
+SIF ITEM:연주지도서 && !RAND:2
+	EXP:MASTER:연주경험 ++
+SIF !TFLAG:사용악기
+	RETURN -1
+INTERRUPTED = 0
+FOR LOCAL,1,CHARANUM
+	SIF CFLAG:LOCAL:현재위치 != CFLAG:MASTER:현재위치
+		CONTINUE
+	SIF CFLAG:LOCAL:행동 != 5
+		CONTINUE
+	IF GROUPMATCH(CFLAG:LOCAL:직종, JOB_음악, JOB_놀이, JOB_연회참가, JOB_꽐라된)
+		PRINTFORML 「시끄러워！」
+		CALL THROW_STONE(LOCAL)
+	ELSEIF CFLAG:LOCAL:직종 == JOB_연회참가 && !ACCOMPANY_ABLE(LOCAL)
+		EXP:MASTER:연주경험 ++
+		SIF ABL:LOCAL:전투능력 >= 4
+			EXP:MASTER:연주경험 ++
+		IF ABL:MASTER:음악기능 + TALENT:LOCAL:기분 >= ABL:LOCAL:전투능력
+			PRINTFORML %조사처리(CALLNAME:LOCAL,"는")% %TEXTR("황홀해한다/눈을 반짝였다/당신의 연주를 칭찬했다")%
+			PRINTPLAIN *짤랑*
+			IF !RAND:7
+				IF !RAND:2
+					;はずれくじ
+					CHOSEN_OMAKE = 131
+				ELSE
+					CHOSEN_OMAKE = OMAKE:(RAND:20)
+				ENDIF
+				CALL COLORMESSAGE(@"%조사처리(ITEMNAME:(CHOSEN_OMAKE),"가")% 날아왔다！",C_YELLOW,1)
+				ITEM:CHOSEN_OMAKE ++
+			ENDIF
+		ELSE
+			PRINTFORML 「%TEXTR("시끄러워！/꺼져！/존나못해！")%」
+			CALL THROW_STONE(LOCAL)
+		ENDIF
+	ENDIF
+	SIF RESULT == -1
+		INTERRUPTED ++
+NEXT
+IF INTERRUPTED
+	SETCOLOR 184, 38, 71
+	PRINTFORML 「……그 정도로 별로인가?」
+	RESETCOLOR
+	PRINTFORML 
+	CALL COLORMESSAGE(@"%마스터는% 연주를 중단했다",C_YELLOW,1)
+	RETURN -1
+ENDIF
+
+SELECTCASE TFLAG:192
+	;통상
+	CASE 0
+		LOCAL = RAND:100
+		LOCAL:1 = 90 + GET_SUCCESS_RATE() / 5
+		SIF LOCAL:1 > 99
+			LOCAL:1 = 99
+		IF LOCAL <= (9 + ABL:MASTER:음악기능)
+			;10%로 대성공
+			EXP:MASTER:연주경험 ++
+			EXP:MASTER:연주경험 += 5
+			TFLAG:193 = 1
+		ELSEIF LOCAL >= LOCAL:1
+			;10~1%로 실패
+			TFLAG:193 = -1
+		ELSE
+			;나머지는 성공
+			EXP:MASTER:연주경험 ++
+			TFLAG:193 = 0
+		ENDIF
+	;강제 성공 or대성공
+	CASE 1
+		IF RAND:100 <= (9 + ABL:MASTER:음악기능)
+			;10%로 대성공
+			EXP:MASTER:연주경험 ++
+			EXP:MASTER:연주경험 += 5
+			TFLAG:193 = 1
+		ELSE
+			;나머지는 성공
+			EXP:MASTER:연주경험 ++
+			TFLAG:193 = 0
+		ENDIF
+	;강제 실패
+	CASE -1
+		TFLAG:193 = -1
+	;커맨드 종료
+	CASE -2
+		TFLAG:193 = -1
+		RETURN 0
+ENDSELECT
+
+IF BASE:MASTER:기력 > 0
+	DOWNBASE:MASTER:기력 += 300
+ELSE
+	DOWNBASE:MASTER:체력 += 150
+ENDIF
+
+
+;그 자리에 있는 TARGET 전원이 돌린다
+NOW_TARGET = TARGET
+NUM_TARGET = GET_TARGETNUM()
+CVARSET TCVAR, GETNUM(TCVAR, "연주참가"), 0
+
+FOR LOCAL, 1, NUM_TARGET + 1
+	SIF !SHIRAHU(TARGET:LOCAL)
+		CONTINUE
+	TARGET = TARGET:LOCAL
+	CALL COM416_1
+	SELECTCASE TCVAR:연주참가
+	CASE 1, 2
+		MUSIC_BONUS += ABL:음악기능 + 2 * TALENT:음감
+	CASE 3
+		DANCE_BONUS += ABL:음악기능
+	ENDSELECT
+NEXT
+
+BAND_BONUS = CMATCH(TCVAR:연주참가, 1, 1) + CMATCH(TCVAR:연주참가, 2, 1)
+IF TFLAG:193 < 0
+	FOR LOCAL, 1, NUM_TARGET + 1
+		SOURCE:(TARGET:LOCAL):반감 += MUSIC_BONUS * ABL:(TARGET:LOCAL):음악기능
+		SIF TCVAR:(TARGET:LOCAL):연주참가
+			SOURCE:(TARGET:LOCAL):울굴 += 3 * MUSIC_BONUS * ABL:음악기능
+		SOURCE:(TARGET:LOCAL):반감 = SOURCE:(TARGET:LOCAL):반감 * (2 + BAND_BONUS + DANCE_BONUS) / 2
+		SOURCE:(TARGET:LOCAL):울굴 = SOURCE:(TARGET:LOCAL):울굴 * (2 + BAND_BONUS + DANCE_BONUS) / 2
+		SOURCE:(TARGET:LOCAL):환락 = SOURCE:(TARGET:LOCAL):환락 * 2 / (2 + BAND_BONUS + DANCE_BONUS)
+		SOURCE:(TARGET:LOCAL):정복 = SOURCE:(TARGET:LOCAL):정복 * 2 / (2 + BAND_BONUS + DANCE_BONUS)
+		;이 손의 개별 처리는 없는 편이 좋지만 생각나 버린 것은 어쩔 수 없다
+		;레이아
+		SIF TCVAR:[[레이아]]:연주참가
+			TIMES SOURCE:(TARGET:LOCAL):울굴, 1.1
+	NEXT
+ELSE
+	BAND_BONUS += TFLAG:193
+	BAND_BONUS += MAX(SQRT(MUSIC_BONUS) - 1, 0)
+	FOR LOCAL, 1, NUM_TARGET + 1
+		SIF !SHIRAHU(TARGET:LOCAL)
+			CONTINUE
+		SOURCE:(TARGET:LOCAL):환락 += MUSIC_BONUS * 15
+		SOURCE:(TARGET:LOCAL):정복 += MUSIC_BONUS * 10
+		SOURCE:(TARGET:LOCAL):환락 = MAX(0, SOURCE:(TARGET:LOCAL):환락 * (2 + BAND_BONUS + DANCE_BONUS) / 2)
+		SOURCE:(TARGET:LOCAL):정복 = MAX(0, SOURCE:(TARGET:LOCAL):정복 * (2 + BAND_BONUS + DANCE_BONUS) / 2)
+		;레이아
+		SIF TCVAR:[[레이아]]:연주참가
+			TIMES SOURCE:(TARGET:LOCAL):환락, 1.1
+	NEXT
+ENDIF
+
+TFLAG:호감도보너스 = BAND_BONUS * 50
+TARGET = NOW_TARGET
+
+TIME += 30
+RETURN 1
+
+
+@COM416_1
+
+DOWNBASE:기력 += 100
+
+;환락 강도
+SOURCE:환락 = 700 + ABL:MASTER:음악기능 * 300 + ABL:친밀 * 50
+;정복 강도
+SOURCE:정복 = 100 * (ABL:MASTER:음악기능 + 1) + ABL:친밀 * 30
+
+IF TFLAG:193 == -1
+	TIMES SOURCE:환락 , 0.10
+	TIMES SOURCE:정복 , 0.50
+ELSEIF TFLAG:193 == 0
+	TIMES SOURCE:환락 , 1.00
+	TIMES SOURCE:정복 , 1.00
+ELSE
+	TIMES SOURCE:환락 , 2.00
+	TIMES SOURCE:정복 , 2.00
+ENDIF
+;음악기능으로 환락이 한층 더 증감
+IF ABL:MASTER:음악기능 >= 5
+	TIMES SOURCE:환락 , 2.00
+ELSEIF ABL:MASTER:음악기능 == 4
+	TIMES SOURCE:환락 , 1.50
+ELSEIF ABL:MASTER:음악기능 == 3
+	TIMES SOURCE:환락 , 1.00
+ELSEIF ABL:MASTER:음악기능 == 2
+	TIMES SOURCE:환락 , 0.50
+ELSE
+	TIMES SOURCE:환락 , 0.10
+ENDIF
+;[음악지식]을 가지고 있는 경우, 환락 증가
+SIF TALENT:MASTER:음악지식
+	TIMES SOURCE:환락 , 1.50
+;음감의 있고 없음으로 좀 더 증감
+IF TALENT:MASTER:음감 == 2
+	TIMES SOURCE:환락 , 2.00
+ELSEIF TALENT:MASTER:음감 == 1
+	TIMES SOURCE:환락 , 1.50
+ELSEIF TALENT:MASTER:음감 == -1
+	TIMES SOURCE:환락, 0.50
+ENDIF
+
+SIF TARGET <= 0
+	RETURN 1
+SELECTCASE TALENT:TARGET:음악지식
+;악기 소유 캐릭터가 TARGET
+CASE 1
+	EXP:MASTER:연주경험 ++
+	IF ACCOMPANY_ABLE(TARGET)
+		TCVAR:연주일시 = TIME
+		IF BASE:기력 > 0
+			DOWNBASE:기력 += 200
+		ELSE
+			DOWNBASE:체력 += 50
+		ENDIF
+		TIMES SOURCE:환락 , 2.00
+		TCVAR:연주참가 = 1
+		EXP:연주경험 ++
+		PRINTFORMW %타겟은% 악기를 연주하기 시작했다!
+		IF ABL:MASTER:음악기능 >= ABL:TARGET:음악기능
+			EXP:연주경험 ++
+			TIMES SOURCE:정복 , 1.50
+		ENDIF
+	ENDIF
+;가창 캐릭터, 레이아가 TARGET
+CASE 2
+	EXP:MASTER:연주경험 ++
+	IF ACCOMPANY_ABLE(TARGET)
+		TCVAR:연주일시 = TIME
+		IF BASE:기력 > 0
+			DOWNBASE:기력 += 200
+		ELSE
+			DOWNBASE:체력 += 50
+		ENDIF
+		TIMES SOURCE:환락 , 2.00
+		TCVAR:연주참가 = 2
+		EXP:가창경험 ++
+		PRINTFORMW %타겟은% %CALLNAME:MASTER%의 선율에 맞추어 노래하기 시작했다!
+		IF ABL:MASTER:음악기능 >= ABL:TARGET:음악기능
+			EXP:가창경험 ++
+			TIMES SOURCE:정복 , 1.50
+		ENDIF
+	ENDIF
+;무도 캐릭터, 레이아
+CASE 3
+	EXP:MASTER:연주경험 ++
+	IF ACCOMPANY_ABLE(TARGET)
+		TCVAR:연주일시 = TIME
+		IF BASE:기력 > 0
+			DOWNBASE:기력 += 200
+		ELSE
+			DOWNBASE:체력 += 50
+		ENDIF
+		TIMES SOURCE:환락 , 2.00
+		TCVAR:연주참가 = 3
+		EXP:무도경험 ++
+		PRINTFORMW %타겟은% %CALLNAME:MASTER%의 선율에 맞추어 활약하기 시작했다!
+		IF ABL:MASTER:음악기능 >= ABL:TARGET:음악기능
+			EXP:무도경험 ++
+			TIMES SOURCE:정복 , 1.50
+		ENDIF
+	ENDIF
+CASEELSE
+	SIF ABL:MASTER:음악기능 <= ABL:TARGET:음악기능 || TALENT:TARGET:음악지식
+		EXP:MASTER:연주경험 ++
+ENDSELECT
+RETURN 1
+
+;-------------------------------------------------
+;실행 판정
+;-------------------------------------------------
+@COM_ABLE416
+;연주 실행 판정
+SIF !TFLAG:100
+	RETURN 0
+;일괄관리
+SIF GLOBAL_COMABLE(416)
+	RETURN RESULT
+	
+;어느 악기(30~34)도 사용할 수 없다
+LOCAL:1 = 0
+FOR LOCAL,30,35
+	SIF MUSIC_ABLE(LOCAL)
+		LOCAL:1 ++
+NEXT
+SIF !LOCAL:1
+	RETURN 0
+
+SIF (IN_TOILET(CFLAG:MASTER:현재위치) || BATHCHECK(CFLAG:MASTER:현재위치)) && GET_MAPID(CFLAG:MASTER:현재위치) == MAIN_MAP
+	RETURN 0
+;기력 0
+SIF BASE:MASTER:기력 <= 0
+	RETURN 0
+SIF CFLAG:우후후 == 2
+	RETURN 0
+;수면중
+;차라리 억지로 기상시킨다고 하는 안도 있거나
+SIF CFLAG:수면 && !CFLAG:동침중 || CFLAG:동침중
+	RETURN 0
+;업무중
+SIF CFLAG:행동 == 5 && CFLAG:직종 != JOB_연회참가
+	RETURN 0
+
+RETURN 1
+
+@MUSIC_ABLE(ARG)
+#FUNCTION
+SIF !ITEM:ARG
+	RETURNF 0
+SELECTCASE ARG
+;키보드
+;응접실에는 간단한 키보드가 있다.
+	CASE 30
+		SIF GROUPMATCH(CFLAG:MASTER:현재위치, P38응접실)
+			RETURNF 1
+
+;기타, 애완동물
+;일단 이쪽은 막아두는 거로	
+	CASE 32,33
+		RETURNF 0
+;피아노
+;오락실에는 영화 대신에 피아노가 있어!
+	CASE 31
+		SIF GROUPMATCH(CFLAG:MASTER:현재위치, P71오락실)
+			RETURNF 1
+
+;바이올린
+;대마녀의 방에서는 바이올린의 소리가 들려왔다 카더라
+	CASE 34
+		SIF GROUPMATCH(CFLAG:MASTER:현재위치, P79대마녀방)
+			RETURNF 1
+	CASEELSE
+		RETURNF 0
+ENDSELECT
+RETURNF 0
+
+@ACCOMPANY_ABLE(ARG)
+#FUNCTION
+SIF BASE:ARG:기력 < 200
+	RETURNF 0
+SIF TIME_PROGRESS(TCVAR:ARG:연주일시) < 90
+	RETURNF 0
+SIF ABL:MASTER:음악기능 < 3
+	RETURNF 0
+SIF !SHIRAHU(ARG)
+	RETURNF 0
+SIF CFLAG:ARG:행동 == 5
+	RETURNF 0
+
+RETURNF 1
+
+@THROW_STONE(ARG)
+#DIM LISTENER_P
+CALL COLORMESSAGE(@"%ARG는% 돌을 던졌다",C_YELLOW,1)
+LISTENER_P = ABL:ARG:전투능력
+IF RAND:(ABL:MASTER:전투능력 * (2 + CFLAG:ARG:탄막승부승리) + 1) > LISTENER_P
+	CALL COLORMESSAGE(@"%마스터는% 화려하게 공격을 회피했다",C_YELLOW,1)
+ELSE
+	CALL RECOVER(MASTER, (LISTENER_P + 1) * (-150), "체력", @"%CALLNAME:ARG%의 투석")
+	RETURN -1
+ENDIF

@@ -1,0 +1,34 @@
+﻿;-------------------------------------------------
+;기다린다
+;일상계 커맨드, 레벨 1
+;-------------------------------------------------
+@COM440
+DOWNBASE:MASTER:기력 = 50
+
+TIME += 20
+RETURN 1
+
+;호감도 변화 없음으로...
+SIF TARGET
+	TFLAG:13 = 1
+
+;기다린다
+@COM_ABLE440
+;숍 화면에서는 불가
+SIF !TFLAG:100
+	RETURN 0
+;일괄관리
+SIF GLOBAL_COMABLE(440)
+	RETURN RESULT
+;기력 0에서는 불가
+
+;우후후중은 불가
+SIF CFLAG:우후후
+	RETURN 0
+SIF !IN_HOME(CFLAG:MASTER:현재위치) 
+	RETURN 0
+;거점내는 거점 입구 이외는 불가
+SIF IN_HOME(CFLAG:MASTER:현재위치) && !CHK_ENTRANCE(CFLAG:MASTER:현재위치, MAIN_MAP)
+	RETURN 0
+
+RETURN 1

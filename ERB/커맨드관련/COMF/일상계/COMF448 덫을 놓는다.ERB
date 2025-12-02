@@ -1,0 +1,1017 @@
+﻿;덫을 놓는다 / 덫의 모양을 본다
+;캐릭터의 기능이나 경험 의존이 아니라 플레이어의 안력으로 수렵물 외장 여부를 판정하는 느낌의 디자인.
+;벌레 트랩과 겸용
+@COM448
+;둘 다 가능하다면 선택
+IF HUNTING_SPOT(CFLAG:MASTER:현재위치)
+	CALL TRAP_HUNTING
+ELSE
+	RETURN -1
+ENDIF
+RETURN RESULT
+
+@TRAP_HUNTING
+#DIM CHARA
+#DIM Hunt_Power
+#DIM Serch
+#DIM 서식밀도
+#DIM 탐색횟수
+#DIM 삭제행수
+#DIM 결과
+#DIM 수렵물
+
+수렵물 = 0
+탐색횟수 = 0
+
+;저녁~밤 사냥은 그만두다
+IF TIME:2 >= 5 
+	DRAWLINE
+	PRINTFORML 이런 시간대에 사냥을 하다가는 완전히 어두컴컴해져 버리고 만다…
+	RETURN -1
+ENDIF
+;大雨、吹雪のときはやめる(天候パッチ)強風時もやめる
+IF GROUPMATCH(날씨, 5, 9) || GROUPMATCH(FLAG:이상기상, 9, 10) || WIND_VELOCITY >= 1
+	DRAWLINE
+	PRINTFORML 이 날씨에 덫사냥은 위험할 것이다
+	RETURN -1
+ENDIF
+
+
+;참가자 판정
+IF FLAG:데이트상대 
+	CHARA = FLAG:데이트상대
+ELSEIF TARGET && ABL:TARGET:친밀 >= 5 && SHIRAHU(TARGET) && CFLAG:TARGET:동행 != 5
+	CHARA = TARGET
+ELSE
+	CHARA = 0
+ENDIF
+
+TFLAG:무드상승억제 = 1
+
+;◆덫을 놓은 경우는 상황을 본다
+IF GROUPMATCH(CFLAG:MASTER:현재위치, TRAP_POINT:1, TRAP_POINT:2, TRAP_POINT:3)
+	;①덫이 파손되었을 경우
+	IF TRAP_DURABILITY:(TP_TO_PLACE()) == 0
+		PRINTFORML 함정이 부서져버렸다…
+		IF DAY:0 - TRAP_CAPTUREDATA:(TP_TO_PLACE()) >= 30
+			PRINTFORMW 수렵물은 걸린 것 같은데 시간이 너무 흘러버린 것 같다…
+		ELSEIF TRAP_CAPTUREDATA:(TP_TO_PLACE())
+			PRINTFORMW 수렵물은 걸린 것 같은데 도망간 것 같다…
+		ELSE
+			PRINTFORMW 가망이 없을 것 같으면 회수해서 다시 세팅하는 편이 좋았을지도 모른다
+		ENDIF
+		;변수를 리셋
+		CALL TRAP_V_RESET(TP_TO_PLACE())
+		TFLAG:193 = -1
+		
+	;②수렵물 이 덫에 걸린 경우
+	ELSEIF TRAP_CAPTURE:(TP_TO_PLACE())
+		수렵물 = TRAP_CAPTURE:(TP_TO_PLACE())
+		CAPTURE_RECORD:수렵물 ++ 
+		;짐승의 각종 변수를 세트
+		CALL CRITTER_DATA(수렵물)
+		PRINTL 
+		PRINTFORMW ………！
+		PRINTFORMW 수렵물이 잡혔다！
+		PRINTL 
+		DRAWLINE
+		PRINTFORML 　【포획된 수렵물】
+		PRINTFORM 　　
+		CALL SPOIL_TEXT(SPOIL_ENHANCEMENT(수렵물), 0, 1)
+		PRINTFORML 　　%CritterIntro%
+		DRAWLINE
+		PRINTW 
+		
+		;일부 캐릭터라면 봐주자, 에
+		IF SPOIL_RELEASE(CHARA, 수렵물) == 1 
+			PRINTFORML %CALLNAME:CHARA%쪽에서 뭔가 말하고 싶은듯한 눈으로 이쪽을 바라봐온다…
+			PRINTFORM 더는 버틸 수 없어서, %마스터는%
+
+			$RELEASE
+			CALL SPOIL_TEXT(SPOIL_ENHANCEMENT(수렵물), 2, 0)
+			PRINTFORML 을(를) 놓아 주었다
+			
+			LOCALS = %ITEMNAME:(TRAP_TYPE:TP_TO_PLACE())%
+			CALL GET_ITEM(LOCALS, 1, 2)
+			수렵물 = 0
+			;변수를 리셋
+			CALL TRAP_V_RESET(TP_TO_PLACE())
+		ELSE
+			PRINTFORML 이 수렵물을 해체할까요？
+			CALL ASK_YN("해체한다", "놓아준다")
+			IF !RESULT
+				CLEARLINE 4
+			ELSE
+				GOTO RELEASE
+			ENDIF
+			
+			IF CHARA
+				PRINTFORMW %마스터는% %CALLNAME:CHARA%와 협력하여, 수렵물의 처치・해체를 진행했다…	
+			ELSE
+				PRINTFORMW %마스터는% 수렵물의 처치・해체를 진행했다…
+			ENDIF
+			LOCALS = %ITEMNAME:(TRAP_TYPE:TP_TO_PLACE())%
+			CALL GET_ITEM(LOCALS, 1, 1)
+		ENDIF
+	;③아직 아무것도 안 걸렸어
+	ELSE
+		PRINTFORML 파 놓은 덫은 아직 아무것도 걸리지 않은 것 같다
+		IF TRAP_DURABILITY:(TP_TO_PLACE()) < 21
+			PRINTFORML 덫을 검사해 보자, 부품이 조금 느슨해져 있다…
+		ELSEIF TRAP_DURABILITY:(TP_TO_PLACE()) < 11
+			PRINTFORML 덫을 검사해 보자, 상당히 파손된 것 같다…
+		ENDIF
+		PRINTFORML 덫을 회수합니까？
+		PRINTL 
+		$INPUT_LOOP02
+		PRINTFORML 　[0] 그대로 둔다
+		PRINTFORML 　[1] 덫을 회수한다
+		INPUT
+		SELECTCASE RESULT
+			CASE 0
+				RETURN -1
+			CASE 1
+				PRINTFORML 덫을 회수하기로 했다
+				;덫을 아이템으로 되돌려 놓다
+				LOCALS = %ITEMNAME:(TRAP_TYPE:TP_TO_PLACE())%
+				CALL GET_ITEM(LOCALS, 1, 2)
+				;변수를 리셋
+				CALL TRAP_V_RESET(TP_TO_PLACE())
+			CASEELSE
+				CLEARLINE 3
+				GOTO INPUT_LOOP02
+		ENDSELECT
+	ENDIF
+;◆덫을 놓다
+ELSE
+	;덫이 없다면 리턴
+	IF !ITEM:덫사냥용품【소형】 && !ITEM:덫사냥용품【중형】 && !ITEM:덫사냥용품【대형】
+		DRAWLINE
+		PRINTFORML 덫을 준비하지 않으면
+		RETURN -1
+	;3곳에 장치되어 있다.
+	ELSEIF TRAP_POINT:1 && TRAP_POINT:2 && TRAP_POINT:3
+		DRAWLINE
+		PRINTFORML 함정을 세 군데에 걸쳐 파놓았으니, 더 이상은 안 되겠지
+		RETURN -1
+	ELSE
+		;①먼저 각종 계수를 산출
+		;기초 파워 1~110 정도
+		Hunt_Power = MAX((ABL:MASTER:교양 * 2) + (ABL:MASTER:전투능력 * 2) + (TFLAG:행운보정 * 10) + (CFLAG:MASTER:오늘의운세 / 20), 1)
+
+		;참가자가 있을 때는 사냥 파워 추가 2명이 단순히 눈이 2배이기 때문에 좋은 결과를 뽑기 쉬운
+		SIF CHARA 
+		Hunt_Power += MAX((ABL:CHARA:교양 * 2) + (ABL:CHARA:전투능력 * 2) + (FLAG:일일이벤트 / 20), 1)
+
+		$LOOP_SELECT
+	
+		탐색횟수 ++
+		;오지를 파고드는 이미지로
+		SIF 탐색횟수 != 1
+			Hunt_Power += RAND:16
+		
+		;②탐색횟수가 10회를 넘었을 경우는 무한 루프를 피하기 위해 리턴한다.
+		IF 탐색횟수 >= 10
+			PRINTFORMW ……너무 열중하고 있으면 헤맬 것 같으니까, 이번은 이 정도로 해 두자
+			GOTO AFTER
+		ENDIF
+
+		REPEAT 5
+			REUSELASTLINE  \@ CHARA ? %CALLNAME:CHARA% 와 함께 #  \@ 짐승의 흔적을 수색 중.%"." * COUNT%
+			TWAIT 150, 1
+		REND
+
+		;③사냥 파워에서 서치값을 고정하고 서식밀도를 세팅하여、필드 사인 텍스트(힌트)를 내보낸다.
+		Serch = RAND:Hunt_Power
+		IF Serch
+			서식밀도 = Serch / 10
+		ELSE
+			서식밀도 = 0
+		ENDIF
+		PRINTL 
+		PRINTFORML ◇현재의 모습◇
+		PRINT 　
+		CALL FIELDSIGN(Serch)
+		DRAWLINE
+		;④어떤 덫을 놓을까 선택
+		PRINTFORML 여기에 덫을 놓으시겠습니까？
+		PRINTL 
+		$INPUT_LOOP01
+		삭제행수 = 0
+		FOR LOCAL, 132, 135
+			삭제행수 ++
+			IF ITEM:LOCAL == 0
+				SETCOLOR C_GRAY
+				PRINTPLAINFORM 　[{LOCAL}]%ITEMNAME:LOCAL%
+			ELSE
+				PRINTFORM 　[{LOCAL}]%ITEMNAME:LOCAL%
+			ENDIF
+			SELECTCASE LOCAL
+				CASE 132
+					PRINTFORML …입문자용 염가품, 내구도는 낮음. 소형~중형 짐승을 포획할 수 있다
+				CASE 133
+					PRINTFORML …입문자부터 베테랑까지, 내구도는 적당히. 소형~대형 짐승까지 폭넓게 포획할 수 있다
+				CASE 134
+					PRINTFORML …거물을 겨냥한 숙련된 사냥꾼용, 내구면에도 만전. 중대형~대형 짐승을 포획할 수 있다
+				CASEELSE
+					PRINTFORML 
+			ENDSELECT
+			RESETCOLOR
+		NEXT
+		PRINTL 
+		PRINTFORML 　[998]탐색을 계속한다
+		PRINTFORML 　[999]덫사냥을 그만둔다
+		삭제행수 += 3
+		
+		INPUT
+		
+		결과 = RESULT
+		SELECTCASE 결과
+			CASE 132 TO 134
+				IF ITEM:결과 == 0
+					CLEARLINE 삭제행수 + 1
+					GOTO INPUT_LOOP01
+				;⑤덫을 씌우는 처리
+				ELSE
+					CALL TRAP_FLAVORTEXT(결과)
+					PRINTFORML %ITEMNAME:결과%를 장치했다　잠시 후 상황을 보러 오자
+					TFLAG:193 = 0
+					ITEM:결과 -= 1
+					FOR LOCAL, 1, 4
+						;비어있는 가장 낮은 번호에 각종 변수 삽입
+						IF TRAP_POINT:LOCAL == 0
+							TRAP_POINT:LOCAL = CFLAG:MASTER:현재위치
+							TRAP_SETUPDATA:LOCAL = DAY:0
+							TRAP_TYPE:LOCAL = 결과
+							TRAP_ALERTNESS:LOCAL = 75
+							TRAP_DENSITY:LOCAL = 서식밀도
+							;함정에 따라 내구도를 세트
+							SELECTCASE 결과
+								CASE 132
+									TRAP_DURABILITY:LOCAL = 25
+								CASE 133
+									TRAP_DURABILITY:LOCAL = 40
+								CASE 134
+									TRAP_DURABILITY:LOCAL = 55
+								CASEELSE
+									TRAP_DURABILITY:LOCAL = 30
+							ENDSELECT
+							BREAK
+						ENDIF
+					NEXT
+				ENDIF
+			CASE 998
+				CLEARLINE 삭제행수 + 8
+				GOTO LOOP_SELECT
+			CASE 999
+				PRINTL 
+			CASEELSE
+				CLEARLINE 삭제행수 + 1
+				GOTO INPUT_LOOP01
+		ENDSELECT
+	ENDIF
+ENDIF
+
+$AFTER
+;◆ 덫을 놓았다 or 수렵물을 해체했다 (성공취급) or 덫이 부서졌다 (실패취급)
+;시간경과와 체력 소비、공복시각과 참가자의 피로도
+
+IF 수렵물
+	DOWNBASE:MASTER:체력 = MAX((CritterEffort * 3) - (ABL:MASTER:전투능력 * 10), 40)
+	DOWNBASE:MASTER:기력 = CritterEffort * 2
+	TIME += CritterEffort
+	TCVAR:MASTER:공복시각 -= 25
+	IF CHARA
+		TCVAR:CHARA:공복시각 -= 25
+		CALL ADD_TIRED(CHARA, CritterEffort)
+	ENDIF
+ELSEIF 탐색횟수 == 0 && 수렵물 == 0
+	DOWNBASE:MASTER:체력 = 100
+	DOWNBASE:MASTER:기력 = 50
+	TIME += 45
+	TCVAR:MASTER:공복시각 -= 10
+	IF CHARA
+		TCVAR:CHARA:공복시각 -= 10
+		CALL ADD_TIRED(CHARA, 50)
+	ENDIF
+ELSE
+	IF TP_TO_PLACE()
+		DOWNBASE:MASTER:체력 = 120 + 탐색횟수 * 5
+		DOWNBASE:MASTER:기력 = 60 + 탐색횟수 * 3
+		TIME += 30 + 탐색횟수 * 6
+	ELSE
+		DOWNBASE:MASTER:체력 = 탐색횟수 * 5
+		DOWNBASE:MASTER:기력 = 탐색횟수 * 3
+		TIME += 탐색횟수 * 6
+	ENDIF
+ENDIF
+
+
+;데이트경험
+IF CHK_DATENOW(CFLAG:CHARA:데이트중) && CHARA > 0
+	EXP:MASTER:데이트경험 ++
+	EXP:CHARA:데이트경험 ++
+ENDIF
+
+;아이템 입수 처리
+IF 수렵물
+	TFLAG:193 = 1
+	TFLAG:194 = 수렵물
+	LOCALS = %ITEMNAME:(CritterMeat)%
+	CALL GET_ITEM(LOCALS, (CritterMeat_Value + SPOIL_ENHANCEMENT(수렵물)), 2)
+	;덫의 각종 변수 리셋
+	CALL TRAP_V_RESET(TP_TO_PLACE())
+ENDIF
+PRINTL 
+
+;참가자소스, 함정이 부서져 있으면반감
+IF CHARA > 0
+	;고정으로 획득하는 소스
+	SOURCE:CHARA:환락 = 400
+	SOURCE:CHARA:사랑 = 100
+	
+	;ABL:순종을 보다
+	IF ABL:순종 <= 1
+		SOURCE:CHARA:환락 += (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += (ABL:친밀 * 20)
+	ELSEIF ABL:순종 <= 3
+		SOURCE:CHARA:환락 += 200 + (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += 50 + (ABL:친밀 * 30)
+	ELSEIF ABL:순종 <= 5
+		SOURCE:CHARA:환락 += 500 + (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += 200 + (ABL:친밀 * 30)
+	ELSEIF ABL:순종 <= 8
+		SOURCE:CHARA:환락 += 750 + (ABL:순종 * 60)
+		SOURCE:CHARA:사랑 += 300 + (ABL:친밀 * 40)
+	ELSEIF ABL:순종 <= 11
+		SOURCE:CHARA:환락 += 1000 + (ABL:순종 * 60)
+		SOURCE:CHARA:사랑 += 600 + (ABL:친밀 * 40)
+	ELSE
+		SOURCE:CHARA:환락 += 1600 + (ABL:순종 * 30)
+		SOURCE:CHARA:사랑 += 1000 + (ABL:친밀 * 20)
+	ENDIF
+	SIF CHARA != FLAG:데이트상대 
+		SOURCE:CHARA:사랑 = 0
+	
+	;호감도는 볼 수 없다
+	
+	SOURCE:CHARA:수동 = 200 + 100 * ABL:순종
+	SOURCE:CHARA:정복 = 200 + 100 * ABL:새드끼
+	
+	;수렵물을 보다
+	IF 수렵물
+		;デスワーム。達成感はあるが、食べるのこれ？
+		IF 수렵물 == 23
+			TIMES SOURCE:CHARA:환락 , 0.70
+			TIMES SOURCE:CHARA:수동 , 0.70
+			TIMES SOURCE:CHARA:정복 , 0.70
+			SOURCE:CHARA:달성 = 300
+		ELSEIF STRCOUNT(CritterTribe, "희소/")
+			TIMES SOURCE:CHARA:환락 , 2.25
+			TIMES SOURCE:CHARA:수동 , 2.25
+			TIMES SOURCE:CHARA:정복 , 2.00
+			SOURCE:CHARA:달성 = 350
+		;ツキノワグマ。ショウブあった！
+		ELSEIF 수렵물 == 19
+			TIMES SOURCE:CHARA:환락 , 2.00
+			TIMES SOURCE:CHARA:수동 , 2.00
+			TIMES SOURCE:CHARA:정복 , 1.75
+			SOURCE:CHARA:달성 = 300
+		ELSEIF STRCOUNT(CritterTribe, "수수께끼/")
+			TIMES SOURCE:CHARA:환락 , 1.00
+			TIMES SOURCE:CHARA:수동 , 1.00
+			TIMES SOURCE:CHARA:정복 , 1.00
+			SOURCE:CHARA:달성 = 80
+		ELSEIF STRCOUNT(CritterTribe, "소형/")
+			TIMES SOURCE:CHARA:환락 , 1.10
+			TIMES SOURCE:CHARA:수동 , 1.10
+			TIMES SOURCE:CHARA:정복 , 1.10
+			SOURCE:CHARA:달성 = 115
+		ELSEIF STRCOUNT(CritterTribe, "중형/")
+			TIMES SOURCE:CHARA:환락 , 1.25
+			TIMES SOURCE:CHARA:수동 , 1.25
+			TIMES SOURCE:CHARA:정복 , 1.15
+			SOURCE:CHARA:달성 = 125
+		ELSEIF STRCOUNT(CritterTribe, "대형/")
+			TIMES SOURCE:CHARA:환락 , 1.50
+			TIMES SOURCE:CHARA:수동 , 1.50
+			TIMES SOURCE:CHARA:정복 , 1.25
+			SOURCE:CHARA:달성 = 150
+		ENDIF
+	;덫이 부서져 있었다
+	ELSEIF TFLAG:193 == -1
+		TIMES SOURCE:CHARA:환락 , 0.50
+		TIMES SOURCE:CHARA:수동 , 0.50
+		TIMES SOURCE:CHARA:정복 , 0.50
+	;덫을 놓았다
+	ELSEIF TP_TO_PLACE()
+		SOURCE:CHARA:달성 = 70
+	;解体せず逃がしたか、罠を回収した
+	ELSEIF 탐색횟수 == 0 && 수렵물 == 0
+		TIMES SOURCE:CHARA:환락 , 1.10
+		TIMES SOURCE:CHARA:수동 , 1.10
+		TIMES SOURCE:CHARA:정복 , 1.05
+		SOURCE:CHARA:달성 = 110
+	ENDIF
+	;수렵물의 캐릭터에 따른 고유 반응（덮어쓰기）
+
+	;獣関連の変数をリセット
+	CALL CRITTER_V_RESET
+ENDIF
+RETURN 1
+
+;-------------------------------------------------
+;실행가능판정
+;-------------------------------------------------
+;덫을놓다
+@COM_ABLE448
+SIF !TFLAG:100
+	RETURN 0
+;일괄 관리
+SIF GLOBAL_COMABLE(448)
+	RETURN RESULT
+SIF CFLAG:우후후
+	RETURN 0
+;덫 사냥 가능한 곳 
+SIF !HUNTING_SPOT(CFLAG:MASTER:현재위치)
+	RETURN 0
+
+;데이트 중에는 데이트상대하고만
+SIF FLAG:데이트상대 && TARGET != FLAG:데이트상대
+	RETURN 0
+;수면중
+SIF CFLAG:MASTER:수면
+	RETURN 0
+;체력・기력부족
+;은 일단 없애겠다. 먹고 살아야지
+;SIF BASE:MASTER:기력 < 800 || BASE:MASTER:체력 < 800
+;	RETURN 0
+RETURN 1
+
+;-----------------------------------------------------------
+;현재위치에서 사냥 지점을 찾아내는 함수
+;ARG 기본은 CFLAG:MASTER:현재위치
+; 덫 발동 판정시 TRAP_POINT:X
+;-----------------------------------------------------------
+@HUNTING_SPOT(ARG)
+#FUNCTION
+
+	SELECTCASE ARG
+		CASE P26감옥저택앞
+			RETURNF 1
+		CASE P57꽃밭앞
+			RETURNF 2
+		CASE P24호수가는길
+			RETURNF 3
+		CASE P64창고앞
+			RETURNF 4
+		CASE P58꽃밭
+			RETURNF 5
+		CASE P53호수앞
+			RETURNF 6
+	ENDSELECT
+
+RETURNF 0
+
+;-----------------------------------------------------------
+;토지 번호에 스포트 이름을 대입하는 함수
+;ARG 기본은 TRAP_POINT:X
+;-----------------------------------------------------------
+@猟場名(ARG)
+#FUNCTIONS
+
+	SELECTCASE ARG
+		CASE P26감옥저택앞
+			LOCALS = 【감옥저택 앞】 주변
+		CASE P57꽃밭앞
+			LOCALS = 【꽃밭 앞】 주변
+		CASE P24호수가는길
+			LOCALS = 【호수 가는 길】 주변
+		CASE P64창고앞
+			LOCALS = 【창고 앞】 주변
+		CASE P58꽃밭
+			LOCALS = 【꽃밭】 주변
+		CASE P53호수앞
+			LOCALS = 【호수 앞】 주변
+		CASEELSE
+			LOCALS = エラーメイン
+	ENDSELECT
+
+RETURNF LOCALS
+;-----------------------------------------------------------
+;사냥하는 곳에 서식하는 짐승을 찾아내는 함수
+;ARG:0 HUNTING_SPOT
+;ARG:1 덫아이템번호 132소 133중 134대
+;-----------------------------------------------------------
+@CRITTER_SPECIES(HUNTING_SPOT, 덫번호)
+#DIM C_ID
+#DIM HUNTING_SPOT
+#DIM 덫번호
+#DIM 계절
+
+;계절 이변에 관한 보정
+계절 = DAY:2
+SIF GatheringSeason
+	계절 = GatheringSeason
+
+$LOOP
+
+C_ID = 1 + RAND:60
+;변수를 불러오기
+CALL CRITTER_V_RESET
+CALL CRITTER_DATA(C_ID)
+;無名（未登録）ならリターン
+SIF CritterName == ""
+	GOTO LOOP
+;タグ上の無登録はリターン
+SIF !STRCOUNT(CritterTribe, "짐승/") && !STRCOUNT(CritterTribe, "새/")
+	GOTO LOOP
+;[希少][猛禽]は１／２で再抽選に
+SIF (STRCOUNT(CritterTribe, "희소/") || STRCOUNT(CritterTribe, "맹금/")) && RAND:2
+	GOTO LOOP
+;지저 이외에서 동면하고 있는 생물은 튕긴다.
+SIF 계절 == 4 && STRCOUNT(CritterTribe, "동면/") && HUNTING_SPOT != 6
+	GOTO LOOP
+;夏鳥、冬鳥両持ちの対応
+IF (DAY:2 == 2 && STRCOUNT(CritterTribe, "여름새/")) || (DAY:2 == 4 && STRCOUNT(CritterTribe, "겨울새/"))
+
+;夏以外の夏鳥を弾く（渡ってきてるので１日限定の季節異変は避ける）
+ELSEIF DAY:2 != 2 && STRCOUNT(CritterTribe, "여름새/")
+	GOTO LOOP
+;冬以外の冬鳥を弾く
+ELSEIF DAY:2 != 4 && STRCOUNT(CritterTribe, "겨울새/")
+	GOTO LOOP
+ENDIF
+;罠に応じて捕獲できる獲物のレンジを変える  小…基本の肉の量が2以下  中…肉の量が2～6  大…肉の量が4以上
+SELECTCASE 덫번호
+	CASE 132
+		SIF CritterMeat_Value > 3
+			GOTO LOOP
+	CASE 133
+		SIF CritterMeat_Value > 6 || CritterMeat_Value == 1
+			GOTO LOOP
+	CASE 134
+		SIF CritterMeat_Value < 4
+			GOTO LOOP
+ENDSELECT
+SELECTCASE HUNTING_SPOT
+	CASE 1;보통 산짐승과 산새들. 유니크는 츠지노코,야베오오츠노지카,일본늑대
+		SIF STRCOUNT(CritterTribe, "")
+			RETURN C_ID
+	CASE 2;산토끼 축제 대형 짐승은 적다. 유니크는 츠지노코
+		SIF RAND:3 == 0
+			RETURN 13
+		SIF STRCOUNT(CritterTribe, "")
+			RETURN C_ID
+	CASE 3;다양. 색다른 것도 조금. 유니크는 마탕고
+		SIF STRCOUNT(CritterTribe, "")
+			RETURN C_ID
+	CASE 4;다양. 유니크는 츠지노코
+		SIF STRCOUNT(CritterTribe, "")
+			RETURN C_ID
+	CASE 5;소형 짐승이 조금 줄어든다. 유니크는 하나이즈미모리우시
+		SIF STRCOUNT(CritterTribe, "")
+			RETURN C_ID
+	CASE 6;특이한 것이 잡힌다. 유니크는 데스웜.
+		SIF STRCOUNT(CritterTribe, "")
+			RETURN C_ID
+	CASEELSE
+		;오류로 인한 무한 루프 제거
+		RETURN C_ID
+ENDSELECT
+;짐승관련변수리셋
+CALL CRITTER_V_RESET
+GOTO LOOP
+
+;-----------------------------------------------------------
+;필드 사인 텍스트 반환 함수
+;계절, 함정 사냥 장소를 참조하여 교재를 바꾸다
+;-----------------------------------------------------------
+@FIELDSIGN(Serch)
+#DIM Serch
+#DIM 계절
+
+;계절이변에 관한 보정
+계절 = DAY:2
+SIF GatheringSeason
+	계절 = GatheringSeason
+
+
+SELECTCASE Serch
+	CASE 0 TO 19
+		SETCOLOR 0x00D787
+		;地底だけ特殊
+		IF HUNTING_SPOT(CFLAG:MASTER:현재위치) == 6
+			PRINTDATAL
+				DATAFORM 특별히 단서가 되는 것은 눈에 띄지 않는다…
+				DATAFORM 별 볼일 없는 발자국이 계속되고 있다…
+				DATAFORM 바위 표면에서 스며 나온 물이 가느다란 흐름을 만들고 있다…
+				DATAFORM 바짝 마른 똥이 여기저기 뒹굴고 있다…
+				DATAFORM 얼마 안되는 흙 위에는 이끼가 끼어 있다
+				DATAFORM 생물의 기척이 없는 암석의 벽을, 천천히 넘어간다…
+				DATAFORM 빛이 적은 세상은, 정경과 별반 다르지 않다…
+			ENDDATA
+		ELSE
+			PRINTDATAL
+				DATAFORM 특별히 단서가 되는 것은 눈에 띄지 않는다…
+				DATAFORM 별 볼일 없는 오솔길이 이어지고 있다…
+				DATAFORM \@ 계절 == 4 ? 아름다운 설원이 이어지고 있다… # 걷기 좋은 초원이 이어지고 있다… \@
+				DATAFORM \@ 계절 == 4 ? 잎을 늘어뜨린 가지 사이로 하늘이 보인다… # 가지와 잎에 가려 경치가 보이지 않는다… \@
+				DATAFORM 작은 계곡이 흐르고 있다…
+				DATAFORM \@ 계절 == 4 ? 눈에 뒤덮인 숲이 이어지고 있다… # 이끼 낀 숲이 이어져 있다… \@
+				DATAFORM 바짝 마른 똥이 여기저기 뒹굴고 있다…
+				DATAFORM 무너진 낙엽에 덮여 숨겨진 듯한 발자국이 있다…
+				DATAFORM \@ 계절 == 4 ? 눈 위에 불분명한 발자국 같은 움푹 들어간 자국이 보인다… # 가지와 잎에 파묻힌 발자국 같은 것을 발견했다… \@
+				DATAFORM \@ 계절 == 4 ? 매끄러운 설면에 부자연스러운 함몰이 발견되었다… # 지면을 파낸 자국이 있으나 이미 말라 있다… \@
+				DATAFORM 나무에 문질러진 털 같은 것이 희미하게 눈에 띄었다…
+				DATAFORM \@ 계절 == 3 ? 갉아먹힌 버섯이 사방에 흩어져 있다… # 가지와 잎이 꺾여 말라 비틀어진 관목이 있다… \@
+				DATAFORM \@ 계절 == 4 ? 살을 에는 듯한 찬바람이 불고 있다… # 나무 사이를 스치는 바람이 나뭇가지 끝을 흔들며 달려간다… \@
+				DATAFORM 안개가 끼기 시작했네… 길을 잃어버리겠다…
+			ENDDATA
+		ENDIF
+	CASE 20 TO 39
+		SETCOLOR 0x5EE555
+		IF HUNTING_SPOT(CFLAG:MASTER:현재위치) == 6
+			PRINTDATAL
+				DATAFORM 똥이 떨어지고 있다… 많이 말라서 형태가 무너지고 있다
+				DATAFORM 암석 위에 메마른 흙 발자국이 나 있다…
+				DATAFORM 작은 물이 모여 웅덩이 같은 것이 생겨있다…
+				DATAFORM 바위 위에 무엇인가가 눌러붙어 마른 자국 같은 것이 있다
+				DATAFORM 약간 이끼 낀 흔적이 있다
+				DATAFORM 바위에 문질러진 털 같은 것이 희미하게 눈에 띄었다…
+				DATAFORM 갉아먹힌 버섯?이 사방에 흩어져 있다…
+				DATAFORM 큰 암반이 앞을 가로막고 있다… 오르기가 만만치 않다
+			ENDDATA
+		ELSE
+			PRINTDATAL
+				DATAFORM 똥이 떨어지고 있다… 많이 말라서 형태가 무너지고 있다
+				DATAFORM 주위와 비교해서, 초목이 얇은 발자국이 띄엄띄엄 이어져 있다…
+				DATAFORM \@ 계절 == 4 ? 쫓는 자 쫓기는 자, 이중의 발자국이 눈 위에 남아 있다… # 부서진 낙엽이 담긴 발자국을 발견했다… \@
+				DATAFORM \@ 계절 == 4 ? 가지의 껍질이 뜯어먹히고、벗겨진 자국들이 드문드문 보인다… # 덤불 속에 진흙 자국이 있다… 이미 말라 있는 것 같다 \@
+				DATAFORM \@ 계절 == 4 ? 풍화되기 시작한 눈 위의 발자국을 발견했다… # 상당히 윤곽이 무너진 발자국을 찾아냈다… \@
+				DATAFORM \@ 계절 == 4 ? 깊이 쌓인 눈에 빠졌는지 눈이 패인 곳이 있다… # 드문드문 땅을 파헤친 흔적이 있다…\@
+				DATAFORM \@ 계절 == 3 ? 갉아먹힌 버섯이 있는데, 꽤 상한 것 같다… # 관목의 잎을 헤집어먹은 흔적이 있다. 씹은 자국은 마르기 시작했다… \@
+				DATAFORM 돌에 붙은 이끼가 드문드문 벗겨져 시들어 가고 있다…
+				DATAFORM 몇 안 되는 발판을 의지하여, 사람이 지나가기에는 어려운 경사면을 올라가고 있다…
+				DATAFORM 나뭇가지가 부러져서 뭉쳐져 있다… 인위적인 걸까, 아니면?
+				DATAFORM 잡초에 가려진 구덩이에 발이 묶여 하마터면 넘어질 뻔했다…
+			ENDDATA
+		ENDIF
+	CASE 40 TO 59
+		SETCOLOR 0xA3F030
+		IF HUNTING_SPOT(CFLAG:MASTER:현재위치) == 6
+			PRINTDATAL
+				DATAFORM 똥이 떨어지고 있다… 조금 마르기 시작했지만, 형태는 유지하고 있다
+				DATAFORM 암석 위에 흙 발자국이 덕지덕지 찍혀 있다… 왕래가 있는 것 같다
+				DATAFORM 맑은 샘물이 있다… 이건 고마운데
+				DATAFORM 바위 위에 뭔가 점성이 있는 것이 움직인 흔적이 있다
+				DATAFORM 이끼가 벗겨진 흔적이 있다… 아직 시든지 얼마 안된 느낌이다
+				DATAFORM 바위와 바위틈으로 움집 같은 공간이 펼쳐져 있다…
+				DATAFORM 갉아먹힌 버섯이 있는데, 꽤 상한 것 같다…
+				DATAFORM 아래에서 보면、깎아지른 듯이 솟은 바위들이 등반을 어렵게 하고 있다…
+			ENDDATA
+		ELSE
+			PRINTDATAL
+				DATAFORM 똥이 떨어지고 있다… 조금 마르기 시작했지만, 형태는 유지하고 있다
+				DATAFORM 주위와 비교해서 낙엽이나 초목이 조금 찢어진 발자국이 이어지고 있다…
+				DATAFORM \@ 계절 == 4 ? 눈 위의 희미한 발자국이 능선을 향해 이어지고 있다… # 물이 고인 발자국을 발견했다… \@
+				DATAFORM \@ 계절 == 4 ? 조금 남은 가지와 잎을 갉아먹은 흔적이 보인다… # 진흙으로 탁해진 웅덩이가 남아있다… 진흙탕으로 쓰였던 것 같다 \@
+				DATAFORM \@ 계절 == 4 ? 눈 위에 엎드린 듯한 자국이 남아 있다… # 초목을 짓밟아 구부린 자국이 남아 있다… \@
+				DATAFORM \@ 계절 == 4 ? 두 마리의 짐승이 뛰논 듯한、눈이 거칠어진 부분이 있다 # 땅을 파헤친 자국을 많은 개미가 몹시 당황하여 이리저리 뛰어다니고 있다… \@
+				DATAFORM 돌에 낀 이끼가 긁힌 자국이 있다… 벗겨진 것이 말라 가고 있다
+				DATAFORM 짐승의 그림자를 인지한 암벽에 올라、눈 아래쪽 광경을 내려다본다… 무섭다
+				DATAFORM 누군가의 멀리서 울부짖는 소리가 산야에 메아리쳤다…
+			ENDDATA
+		ENDIF
+	CASE 60 TO 79
+		SETCOLOR 0xE7FB0C
+		IF HUNTING_SPOT(CFLAG:MASTER:현재위치) == 6
+			PRINTDATAL
+				DATAFORM 똥이 떨어지고 있다… 비교적 새것 같다
+				DATAFORM 암석 위에 흙 발자국이 무수히 나 있다
+				DATAFORM 암반에 희끗희끗한 것이 띠 모양으로 펼쳐져 있다… 암염 같다
+				DATAFORM 바위 위에 뭔가 꿈틀거린 것 같은 점액이 남아 있다
+				DATAFORM 펼쳐진 이끼가 부자연스럽게 뜯겨 있다… 아직 싱싱하다
+				DATAFORM 어디선가 딱, 하고 돌이 튀어 부딪치는 소리가 났다…
+				DATAFORM 벌레 먹은 모양으로 갉아먹힌 버섯이 원형을 그대로 둔 채 부러져 남아 있다…
+				DATAFORM 상당히 지상에 가까운지 빛이 약간 비치고 있다…
+				DATAFORM 끼긱, 하고 칠판을 할퀴는 것 같은 귀에 거슬리는 소리가 머리 위에서 울려 온다…
+			ENDDATA
+		ELSE
+			PRINTDATAL
+				DATAFORM 똥이 떨어지고 있다… 비교적 새것 같다
+				DATAFORM 부스럭하고 나뭇가지가 스치는 소리가 들린 것 같다…
+				DATAFORM \@ 계절 == 4 ? 눈 위의 발자국이 나무숲을 향해 이어지고 있다… 몇 번 왕복한 듯 하다 # 발자국이 덤불 속으로 이어져 가는 것이 뚜렷히 보인다… \@
+				DATAFORM \@ 계절 == 4 ? 몰아치는 바람이 갑자기 가라앉았다… 지형상, 훌륭하게 바람막이가 되어 있는 것 같다 # 덤불 속에 진흙탕이 생겨 있다… 쓰이고 있는 것이겠지 \@
+				DATAFORM \@ 계절 == 4 ? 또렷한 윤곽의 눈 위의 발자국을 발견했다… # 비교적 또렷한 발자국을 발견했다… \@
+				DATAFORM \@ 계절 == 4 ? 눈을 밀어내고 지나간 듯한, 새 눈의 표면에 움푹 패인 곳이 발견되었다… # 막 땅을 파헤친 새로운 흔적이 곳곳에서 보인다… \@
+				DATAFORM 돌에 붙은 이끼가 깎인 자국이 있다…… 아직 녹색을 띄고 있으므로, 비교적 새것 같다
+				DATAFORM 뭔가 시선을 느낀 것 같아서 뒤돌아봐도、\@ 계절 == 4 ? 눈의 반사광이 따갑기만 했다… # 뒤덮힌 울창한 가지와 잎사귀만 보일 뿐이었다… \@
+				DATAFORM 멀리서부터 들려오는 가늘고 날카로운 울음소리가 교대로 부르듯 서로 울리고 있다…
+				DATAFORM 올려다봐도 뒤돌아봐도 산과 나무들… 인적미답으로 보이는 원시림을 걸어 간다
+				DATAFORM 하늘을 찌를 듯한 큰 나무 옆으로 돌았다…… 줄기에 뚫린 이슬은 사람 한 사람을 족히 삼킬 정도로 크다
+				DATAFORM 소리를 내지도 않고, 은밀한 한 줄기 폭포가 도랑에 삼켜져 있다…
+			ENDDATA
+		ENDIF
+	CASEELSE
+		SETCOLOR C_YELLOW
+		IF HUNTING_SPOT(CFLAG:MASTER:현재위치) == 6
+			PRINTDATAL
+				DATAFORM 똥이 뭉쳐서 떨어지고 있다… 꽤 최근 것 같다
+				DATAFORM 암석 위에、진흙 발자국이 선명하게 남아있다… 아직 새 것이다
+				DATAFORM 얼마 안되는 흙 위에 뚜렷이 발자국이 남아 있다…
+				DATAFORM 바위 위에 끈적끈적한 점액이 늘러붙어 있다… 이끼인가 뭔가를 갉아먹은 자국인 것 같다
+				DATAFORM 벽을 타고 나무 뿌리라고 생각되는 것이 빽빽이 내려와 있는 공간으로 나왔다… 꽤 기분이 나쁘다
+				DATAFORM 털썩, 하고 암석이 머리 위에서 떨어져내렸다… 위험해, 위험해
+				DATAFORM 버섯이 헤집어먹힌 자국이 남아있다… 아직 새 것이다
+				DATAFORM 암석의 갈라진 틈으로부터 지표의 빛이 비치는 이상한 공간으로 나왔다… 약간 녹음이 숨쉬고 있다
+				DATAFORM 땅울림과 같은 낮고 긴 신음소리가 들린… 기분이 들었다
+				DATAFORM 삐걱, 하고 무엇인가 스치는 듯한 소리가 바위틈의 여기저기에서 들린다
+			ENDDATA
+		ELSE
+			PRINTDATAL
+				DATAFORM 똥이 뭉쳐서 떨어지고 있다… 꽤 최근 것 같다
+				DATAFORM 나무가 우거진 숲 한가운데、뚜렷히 짐승이 지나간 길이 보이고 있다
+				DATAFORM 부스럭부스럭, 여기저기서 가지와 잎이 스치는 소리가 들려온다…
+				DATAFORM 담쟁이덩굴과 풀이 깔려 눌린 듯한 흔적이 있다…
+				DATAFORM 지면이 서클 모양으로 다듬어진 흔적이 있다…
+				DATAFORM \@ 계절 == 4 ? 무리가 움직였는지 겹겹이 쌓인 눈 위의 발자국이 보인다… # 뚜렷한 윤곽의 발자국이 겹겹이 발견되었다… \@
+				DATAFORM \@ 계절 == 4 ? 비교적 눈이 얇고 지나가기 쉬운 장소에 발자국이 집중되어 있다… # 덤불 속에 진흙탕이 있다… 방금 전까지도 쓰였던 것 같은 방식으로 진흙이 튀어 있다 \@
+				DATAFORM \@ 계절 == 4 ? 나뭇가지 껍질을 벗긴 자국이 보인다… 아직 새 것이다 # 녹색의 가지와 잎이 뜯긴 자국이 있다… 아직도 새 것이다\@
+				DATAFORM \@ 계절 == 4 ? 눈이 파헤쳐져, 땅이 노출되어 있다… # 땅을 파낸 자국이 있다… 아직도 축축하다. 갓 파낸 것 같다 \@
+				DATAFORM 돌에 붙어 있던 이끼가, 벗겨져 떨어져 나가 있다… 아직도 녹색을 띄고 있어, 최근 벗겨진 것 같다
+				DATAFORM \@ 계절 == 4 ? 움푹 패인 곳에서、눈이 흩날리지 않고 가만히 있다… 묘하게 온화하다 # 울창한 삼림 한가운데 묘하게 탁 트인 잔잔한 잔디가 펼쳐져 있다… \@
+				DATAFORM 고요한 산중의 분위기 때문일까, 으슬으슬, 하고 소름이 끼쳤다…
+				DATAFORM 누군가 수군거리는 것 같은 「목소리」가 들려… 이런 곳에서？　설마…
+				DATAFORM 구름 사이로、계곡 바닥에서、바람 소리와는 확연히 다른、신음 소리 같은「부르는 소리」가 들린다…
+			ENDDATA
+		ENDIF
+ENDSELECT
+RESETCOLOR
+PRINTL 
+
+;-----------------------------------------------------------
+;덫 소개의 플레이버 텍스트를 보내다
+;소개는 6행으로 고정
+;-----------------------------------------------------------
+@TRAP_FLAVORTEXT(결과)
+#DIM 결과
+
+SELECTCASE 결과
+	CASE 132
+		PRINTDATAL
+			DATALIST
+				DATAFORM 　　┌─────────────────────── ─┐
+				DATAFORM 　　│■상자덫　　　　　　　　　　　　　　　　　　　 　│
+				DATAFORM 　　│　상자 속으로 수렵물을 유인하여, 들어가면　　　    │
+				DATAFORM 　　│　침입구의 문이 닫혀 수렵물을 가둔다　　　       　 │
+				DATAFORM 　　│　소형으로 휴대하기 쉽고, 설치하기 쉽다      　　    │
+				DATAFORM 　　└────────────────────────┘
+			ENDLIST
+		ENDDATA
+	CASE 133
+		PRINTDATAL
+			DATALIST
+				DATAFORM 　　┌───────────────────────┐
+				DATAFORM 　　│■올가미덫　　　　　　　　　　　　　　　　　　│
+				DATAFORM 　　│　와이어의 한쪽 끝을 수목 등에 붙들어 맨다  　   │
+				DATAFORM 　　│　다른 쪽 끝에는 고리가 둘러져 있어、　    　　　│
+				DATAFORM 　　│　안에 수렵물의 발이 들어가면 죄어 구속된다  　 │
+				DATAFORM 　　└───────────────────────┘
+			ENDLIST
+			DATALIST
+				DATAFORM 　　┌───────────────────────┐
+				DATAFORM 　　│■벼락틀                     　　　　　　　　　　　　│
+				DATAFORM 　　│　틀 한 쪽을 땅에, 한쪽에 버팀목을 세워 놓고 │
+				DATAFORM 　　│　틀 밑에 먹이를 뿌려 수렵물을 유인한다　 　│
+				DATAFORM 　　│　먹이에 유혹된 수렵물을 틀을 떨궈 잡는다　│
+				DATAFORM 　　└───────────────────────┘
+			ENDLIST
+		ENDDATA
+	CASE 134
+		PRINTDATAL
+			DATALIST
+				DATAFORM 　　┌───────────────────────┐
+				DATAFORM 　　│■곰덫　　　　　　　　　　　　　　　　　         │
+				DATAFORM 　　│　덫 중앙판에 다리를 올리면, 금속판이　　　│
+				DATAFORM 　　│　튀어올라 다리를 강하게 끼워 넣는 함정    　　　　│
+				DATAFORM 　　│　현대 일본에서는 사용이 금지되어 있다 　　　　│
+				DATAFORM 　　└───────────────────────┘
+			ENDLIST
+			DATALIST
+				DATAFORM 　　┌───────────────────────┐
+				DATAFORM 　　│■아맛포　　　　　　　　　　　　　　　　　      │
+				DATAFORM 　　│　장치한 석궁의 방아쇠에 실을 걸고, 가까이의　　│
+				DATAFORM 　　│　수목등에 그 실을 붙여두다 지나가다           　　│
+				DATAFORM 　　│　수렵물이 그 실에 닿으면, 자동으로 화살을 쏜다  │
+				DATAFORM 　　└───────────────────────┘
+			ENDLIST
+		ENDDATA
+ENDSELECT
+CALL DQPRINT("…………", 1)
+CALL DQPRINT("………", 1)
+CALL DQPRINT("……", 1)
+
+;-----------------------------------------------------------
+;걸린 수렵물의 상태 보정을 하는 묘사 함수
+;같은 하루에는 (행운보정 변하지 않는 한) 몇 번 확인해도 같은 수를 반환한다
+;ARG TRAPTURE:X에서 빼기 수렵물의 ID
+;RETURN 0 보정 없음 1 조금 살쪘다 2 통통하게 살쪘다 3 제철에 기름기가 많다
+;-----------------------------------------------------------
+@SPOIL_ENHANCEMENT(ARG)
+#FUNCTION
+#DIM 계절
+
+;계절이변에 관한 보정
+계절 = DAY:2
+SIF GatheringSeason
+	계절 = GatheringSeason
+
+;제철을 먼저 판정
+SELECTCASE ARG
+	CASE 16, 17, 19, 27;사슴、영양、 반달가슴곰. 야베오오츠노지카는 가을
+		SIF 계절 == 3
+			RETURNF 3
+	CASE 15;멧돼지는 겨울
+		SIF 계절 == 4
+			RETURNF 3
+ENDSELECT
+
+RANDOMIZE DAY:0
+SELECTCASE MAX(RAND:100 + (TFLAG:행운보정 * 10), 0)
+	CASE 0 TO 40
+		RETURNF 0
+	CASE 41 TO 80
+		RETURNF 1
+	CASEELSE
+		RETURNF 2
+ENDSELECT
+
+;-----------------------------------------------------------
+;걸린 수렵물이름을 보정 텍스트와 함께 묘사
+;위의 함수를 이용
+;STYLE =  0,L  = 1,W =  =2, 개행무시
+;FONT = 0,なし = 1,太字
+;-----------------------------------------------------------
+@SPOIL_TEXT(수렵물, STYLE = 0, FONT = 0)
+#DIM 수렵물
+#DIM STYLE
+#DIM FONT
+
+SELECTCASE SPOIL_ENHANCEMENT(TRAP_CAPTURE:TP_TO_PLACE())
+	CASE 0
+		LOCALS = %CritterName%
+	CASE 1
+		LOCALS = 큰 %CritterName%
+	CASE 2
+		LOCALS = 통통하게 살이 오른 %CritterName%
+	CASE 3
+		LOCALS = 잘 살이 오른 %CritterName%
+	CASEELSE
+		LOCALS = %CritterName%
+ENDSELECT
+
+SIF FONT
+	FONTSTYLE 1
+
+SELECTCASE STYLE
+	CASE 1
+		SETCOLOR C_YELLOW
+		PRINTFORMW %LOCALS%
+	CASE 2
+		PRINTFORM  %LOCALS%
+	CASEELSE
+		SETCOLOR C_YELLOW
+		PRINTFORML %LOCALS%
+ENDSELECT
+FONTREGULAR
+RESETCOLOR
+
+;-----------------------------------------------------------
+;걸린 수렵물과 동행 캐릭터를 통해 강제 릴리즈 판정을 내리는 함수
+;RETURNF 1　에서 강제 릴리즈
+;-----------------------------------------------------------
+@SPOIL_RELEASE(CHARA, 수렵물)
+#FUNCTION
+#DIM CHARA
+#DIM 수렵물
+
+SELECTCASE CHARA
+	
+ENDSELECT
+RETURNF 0
+
+;-----------------------------------------------------------
+;현지점이 TRAP_POINT: X의 어딘가를 반환하는 함수
+;-----------------------------------------------------------
+@TP_TO_PLACE()
+#FUNCTION
+
+FOR LOCAL, 1, 4
+	SIF CFLAG:MASTER:현재위치 == TRAP_POINT:LOCAL
+		RETURNF LOCAL
+NEXT
+RETURNF 0
+
+;-----------------------------------------------------------
+;함정 관련 변수 전체 리셋
+;-----------------------------------------------------------
+@TRAP_V_ALLRESET
+
+VARSET TRAP_SETUPDATA
+VARSET TRAP_TYPE
+VARSET TRAP_ALERTNESS
+VARSET TRAP_DURABILITY
+VARSET TRAP_DENSITY
+VARSET TRAP_CAPTURE
+VARSET TRAP_CAPTUREDATA
+VARSET TRAP_POINT
+
+;-----------------------------------------------------------
+;지정한 덫 관련 변수 전체 리셋
+;ARG TP_TO_PLACE()
+;-----------------------------------------------------------
+@TRAP_V_RESET(ARG)
+
+TRAP_SETUPDATA:(ARG) = 0
+TRAP_TYPE:(ARG) = 0
+TRAP_ALERTNESS:(ARG) = 0
+TRAP_DURABILITY:(ARG) = 0
+TRAP_DENSITY:(ARG) = 0
+TRAP_CAPTURE:(ARG) = 0
+TRAP_CAPTUREDATA:(ARG) = 0
+TRAP_POINT:(ARG) = 0
+
+;-----------------------------------------------------------
+;짐승과 관련된 변수 리셋
+;-----------------------------------------------------------
+@CRITTER_V_RESET
+
+VARSET CritterName
+VARSET CritterMeat
+VARSET CritterMeat_Value
+VARSET CritterEffort
+VARSET CritterIntro
+VARSET CritterHint
+VARSET CritterTribe
+
+
+;-----------------------------------------------------------
+;덫의 일수 경과에 따른 변화에 대해 변수에 기입하다
+;-----------------------------------------------------------
+@TRAP_PROGRESS
+#DIM 트랩번호
+#DIM 기대치
+#DIM 서식밀도
+
+FOR 트랩번호, 1, 4
+	IF TRAP_POINT:트랩번호
+		;미포획의 경우
+		IF TRAP_CAPTURE:트랩번호 == 0 && TRAP_DENSITY:트랩번호 >= 1
+			;罠発動判定 서식밀도の回数繰り返し
+			FOR LOCAL:1, 1, TRAP_DENSITY:트랩번호 + 1
+				;기대치 1～…100 - 罠警戒度 + 행운보정*10(-50～+50) + 오늘의운세/20（0～50）+ RAND:(罠設置からの経過日数 * 10)
+				기대치 = MAX(100 - TRAP_ALERTNESS:트랩번호 + (TFLAG:행운보정 * 10) + (CFLAG:MASTER:오늘의운세 / 20) + RAND:((1 + DAY:0 - TRAP_SETUPDATA:트랩번호) * 8), 1)
+				DEBUGPRINTFORML 덫{트랩번호}　수렵물{LOCAL:1}　기대치…{기대치}
+				IF RAND:기대치 > 50
+					CALL CRITTER_SPECIES(HUNTING_SPOT(TRAP_POINT:트랩번호), TRAP_TYPE:트랩번호)
+					TRAP_CAPTURE:트랩번호 = RESULT
+					TRAP_CAPTUREDATA:트랩번호 = DAY:0
+					BREAK
+				ENDIF
+			NEXT
+		ENDIF
+		;時間経過に伴う罠の警戒度の変動　一日あたり－２
+		IF TRAP_ALERTNESS:트랩번호
+			TRAP_ALERTNESS:트랩번호 = MAX(TRAP_ALERTNESS:트랩번호 - 2, 0)
+			
+			;天候によってさらに低下
+			SIF !GROUPMATCH(TIME:5, 0, 1, 2, 3) && TRAP_ALERTNESS:트랩번호 > 0
+				TRAP_ALERTNESS:트랩번호 --
+		ENDIF
+		;時間経過に伴う罠の耐久度の変動
+		IF TRAP_DURABILITY:트랩번호 > 0
+			TRAP_DURABILITY:트랩번호 --
+			;悪天候でさらに低下
+			SIF GROUPMATCH(TIME:5, 5, 9) && TRAP_DURABILITY:트랩번호 > 0
+				TRAP_DURABILITY:트랩번호 --
+			;수렵물がかかっているとさらに低下
+			IF TRAP_CAPTURE:트랩번호 && TRAP_DURABILITY:트랩번호 > 0
+				CALL CRITTER_DATA(TRAP_CAPTURE:트랩번호)
+				TRAP_DURABILITY:트랩번호 --
+				;大型の수렵물がかかっているとさらに低下
+				SIF CritterMeat_Value >= 5 && TRAP_DURABILITY:트랩번호 > 0
+					TRAP_DURABILITY:트랩번호 --
+				CALL CRITTER_V_RESET
+			ENDIF
+		ENDIF
+		;獣の서식밀도の変動
+		TRAP_DENSITY:트랩번호 = MAX(TRAP_DENSITY:트랩번호 + RAND:4 - RAND:3, 0)
+		
+		DEBUGPRINTFORML 　덫{트랩번호}：{TRAP_CAPTURE:트랩번호}
+		DEBUGPRINTFORML 　　 　경계도：{TRAP_ALERTNESS:트랩번호}
+		DEBUGPRINTFORML 　　 　내구도：{TRAP_DURABILITY:트랩번호}
+		DEBUGPRINTFORML 　　 서식밀도：{TRAP_DENSITY:트랩번호}
+	ENDIF
+NEXT
+

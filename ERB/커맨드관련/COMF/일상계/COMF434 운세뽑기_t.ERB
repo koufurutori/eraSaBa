@@ -1,0 +1,104 @@
+﻿;-------------------------------------------------
+;제비
+;일상계 커맨드, 레벨 1
+;-------------------------------------------------
+;LOCAL
+@COM434
+VARSET LOCAL
+
+IF !GETBIT(FLAG:999, 0)
+
+	PRINTFORML 벽 앞에 못 보던 상자와 함께 벽보가 있다.
+	PRINTFORML ┌─────────┐
+	PRINTFORML ｜　　　　　　　　　｜
+	PRINTFORML ｜    　제비　　　　｜
+	PRINTFORML ｜　　시작했습니다　｜
+	PRINTFORML ｜　　　　　　　　　｜
+	PRINTFORML ｜　　　　　　　　　｜
+	PRINTFORML ｜　  　1일 1회     ｜
+	PRINTFORML ｜　　　　　　　　　｜
+	PRINTFORML ｜　　　　　　　　　｜
+	PRINTFORML └─────────┘
+	PRINTFORMW 
+	PRINTFORMW …
+	PRINTFORMW 수감자 중에서 누군가가 제비 뽑기라도 만들어둔 모양이다.
+	PRINTFORMW 아니면 이것도 사라지지 않는 마법의 일종인가?
+	PRINTFORML
+	SETCOLOR 184, 38, 71
+	PRINTFORMW (……뽑아보는 것도 나쁘진 않을 것 같군.)
+	RESETCOLOR
+	PRINTFORML
+
+
+	SETBIT FLAG:999, 0
+
+ENDIF
+
+IF GETBIT(FLAG:999, 1)
+	PRINTFORML 제비는 1일 1회입니다.
+	RETURN -1
+ENDIF
+
+
+PRINTFORML 제비는 하루에 1회 뿐인 것 같다. 어떻게 할까?
+PRINTFORML [1] 뽑아 본다
+PRINTFORML [0] 그만둔다
+PRINTFORML 
+INPUT
+SIF !RESULT
+	RETURN -1
+
+
+TIME += 2
+SETBIT FLAG:999, 1
+
+SELECTCASE RAND:15
+	CASE 0 TO 6
+		PRINTL 짝! 짝!
+		PRINTL 제비함 앞에서 손뼉을 쳤다.
+		PRINTW ……
+		PRINTL 그러자 팔랑팔랑 무엇인가가 떨어져 내렸다.
+		PRINTW 떨어진 것을 들어서 확인해봤더니, 아무래도 이게 제비인 것 같다.
+	CASE 7 TO 14
+		PRINTW (콩)
+		PRINTL 후두부에 무엇인가가 부딪쳤다.
+		PRINTL 뒤돌아보자, 발 밑에 무엇인가를 싼 종이가 떨어져 있었다.
+		PRINTW 열어 보면, 종이는 제비로……
+		PRINTW ……아니, 제비로 돌을 싸서 던지는 건 옳지 않다!
+ENDSELECT
+
+PRINTW 받은(?) 제비의 내용을 보았다.
+PRINTW …
+CALL FORTUNE
+
+;호감도 변화 없음으로...
+SIF TARGET
+	TFLAG:13 = 1
+
+RETURN 1
+
+;-------------------------------------------------
+;실행 판정
+;-------------------------------------------------
+;제비
+@COM_ABLE434
+;일괄관리
+SIF GLOBAL_COMABLE(434)
+	RETURN RESULT
+SIF !TFLAG:100
+	RETURN 0
+;기력 0에서는 불가
+
+;벽에 있는 제비뽑기 함이 아니면 못뽑는다
+SIF !OMIKUJI_SPOT(CFLAG:MASTER:현재위치)
+	RETURN 0
+SIF CFLAG:MASTER:현재위치 != P56벽앞
+	RETURN 0
+RETURN 1
+
+@OMIKUJI_SPOT(ARG)
+#FUNCTION
+;벽앞에 뒀다
+SIF ARG == P56벽앞
+	RETURNF 1
+RETURNF 0

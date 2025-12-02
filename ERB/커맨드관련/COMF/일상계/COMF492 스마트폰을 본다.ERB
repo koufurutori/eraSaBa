@@ -1,0 +1,235 @@
+﻿;-------------------------------------------------
+;アイテム画面
+;-------------------------------------------------
+@COM492
+#DIM MENU
+#DIM PAGE
+#DIM CHECK
+#DIM LINECO
+
+PAGE = 0
+MENU = 0
+CHECK = 0
+LINECO = 0
+
+
+WHILE 1
+DRAWLINE
+LINECO += 1
+	SELECTCASE MENU
+		CASE 0
+			CALL ASK_M("마녀도감", 1,"규칙", 1,"용어 설명", 1 , "전원을 끈다", 1)
+			LINECO += 5
+			SELECTCASE RESULT
+				CASE 0
+					MENU = 1
+					CHECK = 1
+				CASE 1
+					MENU = 2
+					CHECK = 1
+				CASE 2
+					MENU = 3
+					CHECK = 1
+				CASE 3
+					BREAK
+			ENDSELECT
+		CASE 1
+			SELECTCASE PAGE
+				CASE 0
+					CHECK = 0
+					PRINTFORML <마녀도감>
+					PRINTFORML 
+					PRINTFORML - NO.658 사쿠라바 에마
+					PRINTFORML - NO.659 니카이도 히로
+					PRINTFORML - NO.660 나츠메 안안
+					PRINTFORML - NO.661 죠가사키 노아
+					PRINTFORML - NO.662 하스미 레이아
+					PRINTFORML - NO.663 사에키 미리아
+					PRINTFORML - NO.664 호쇼 마고
+					PRINTFORML - NO.665 쿠로베 나노카
+					PRINTFORML - NO.666 시토 아리사
+					PRINTFORML - NO.667 타치바나 셰리
+					PRINTFORML - NO.668 토노 한나
+					PRINTFORML - NO.669 사와타리 코코
+					PRINTFORML - NO.670 히카미 메루루
+					LINECO += 15
+			ENDSELECT
+		CASE 2
+			SELECTCASE PAGE
+				CASE 0
+					CHECK = 0
+					PRINTFORML <규칙 Ⅰ> - 생활규칙
+					PRINTFORML 【감방 체류】
+					PRINTFORML 수감자는 자유 시간 외에는 지정된 죄수번호의 감방에 체류해야 한다.
+					PRINTFORML 자유 시간 외에 감방 밖에서 발견될 경우 즉시 징벌방으로 이송된다(2일간 징벌방 수용).
+					PRINTFORML 
+					PRINTFORML 【감시 체계】
+					PRINTFORML 교도관이 항상 순찰하며, 위반 행위가 확인된 수감자는 징벌방으로 송치된다.
+					PRINTFORML 
+					PRINTFORML 【의복 처리】
+					PRINTFORML 수감자의 의복은 매일 샤워실 내부에 있는 쓰레기 투입구로 폐기해야 한다.
+					PRINTFORML 소각로는 매주 월요일 15시에 가동되어 폐기물을 처리한다.
+					PRINTFORML 
+					PRINTFORML 【건강 이상·부상 시 대응】
+					PRINTFORML 구속 기간 중이라도 건강 이상이나 부상이 발생한 경우 의무실에서 휴식이 허용된다.
+					PRINTFORML 간병인 동반은 1인까지 허용한다.
+					PRINTFORML 
+					PRINTFORML 【식사 시간】
+					PRINTFORML 식사는 하루 3회, 매일 6시 ~ 9시 / 12시 ~ 14시 / 17시 ~ 21시 식당에서 취한다.
+					PRINTFORML 식사 시간을 지나면 식사권을 상실한다.
+					PRINTFORML 
+					PRINTFORML 【취침 규정】
+					PRINTFORML 밤 10시부터 아침 6시까지 감방 내에서 취침해야 한다.
+					PRINTFORML 소등 후, 수감자끼리 대화를 한 경우에도 처벌 대상이 된다.
+					LINECO += 23
+				CASE 1
+					CHECK = 0
+					PRINTFORML <규칙 Ⅱ> - 감시원의 순회
+					PRINTFORML 【정기 순찰】
+					PRINTFORML 감시원은 전 구역을 상시 순찰한다.
+					PRINTFORML 순찰 일정은 수감자에게 공지되지 않는다.
+					PRINTFORML 
+					PRINTFORML 【발견 시 처벌】
+					PRINTFORML 자유 시간 외 외출 : 징벌방 2일간.
+					PRINTFORML 간수에 대한 저항 : 폭력 행위가 있을 경우 즉시 처형.
+					LINECO += 8
+				CASE 2
+					CHECK = 0
+					PRINTFORML <규칙 Ⅲ> - 자유 시간 규칙
+					PRINTFORML 【자유 시간 범위】
+					PRINTFORML 수감자는 출입 가능한 구역에서 자유롭게 지낼 수 있다.
+					PRINTFORML 허가된 구역을 벗어날 경우 위반으로 간주된다.
+					PRINTFORML 
+					PRINTFORML 【허용되는 활동】
+					PRINTFORML 도서관에서의 독서.
+					PRINTFORML 오락실에서의 게임.
+					PRINTFORML 야외에서의 운동이나 산책.
+					PRINTFORML 
+					PRINTFORML ※허용되지 않는 활동 : 집단 항의, 탈주 준비.
+					LINECO += 11
+				CASE 3
+					CHECK = 0
+					PRINTFORML <규칙 Ⅳ> - 시간표
+					PRINTFORML 6:01 ~ 9:59
+					PRINTFORML 감방의 자물쇠가 열리고 자유 시간으로 출입이 가능하다.
+					PRINTFORML 
+					PRINTFORML 10:00 ~ 12:00
+					PRINTFORML 감방에서 시간을 보낸다.
+					PRINTFORML (간수가 순찰하며 관리 점검을 위해 정기적으로 설정되는 시간)
+					PRINTFORML 
+					PRINTFORML 12:01 ~ 14:59
+					PRINTFORML 감방의 자물쇠가 열리고 자유 시간으로 출입이 가능하다.
+					PRINTFORML 
+					PRINTFORML 15:00 ~ 17:00
+					PRINTFORML 감방에서 시간을 보낸다.
+					PRINTFORML (간수가 순찰하며 관리 점검을 위해 정기적으로 설정되는 시간)
+					PRINTFORML 
+					PRINTFORML 17:01 ~ 21:59
+					PRINTFORML 감방의 자물쇠가 열리고 자유 시간으로 출입이 가능하다.
+					PRINTFORML 샤워실은 17시 ~ 21시에만 사용 가능하다. 
+					PRINTFORML (이 시간 외에 온수가 나오지 않음)
+					PRINTFORML 
+					PRINTFORML 22:00 ~ 다음 날 6:00
+					PRINTFORML 외출 금지 시간.
+					LINECO += 22
+			ENDSELECT
+		CASE 3
+			SELECTCASE PAGE
+				CASE 0
+					CHECK = 0
+					PRINTFORML <용어 설명>
+					PRINTFORML 【마녀】
+					PRINTFORML 나라에 재앙을 가져오는 불사의 존재.
+					PRINTFORML 마녀가 될수록 살의나 망상에 지배당하게 된다.
+					IF FLAG:대마녀유키
+						PRINTFORML 
+						PRINTFORML 과거 실제로 존재했던, 마법을 자유자재로 다루는 종족. 인간에 멸망당할 때까지 섬에서 살았다.
+						PRINTFORML 
+						PRINTFORML 대마녀가 만든 저주로 마녀 인자를 이식받아 인간이 변이한 괴물 또한 【마녀】라고 불린다.
+						PRINTFORML 이 【마녀】는 제한적인 마법을 사용하며, 마녀인자에 지배된 끝에 【말로】가 된다.
+						LINECO += 5
+					ENDIF
+					PRINTFORML 
+					PRINTFORML 【마녀인자】
+					PRINTFORML 마녀가 되는 자가 지닌 인자.
+					PRINTFORML 전국적인 검사를 통해 비밀리에 조사되고 있다.
+					IF FLAG:대마녀유키
+						PRINTFORML 
+						PRINTFORML 대마녀가 세상에 퍼뜨린 저주.
+						LINECO += 2
+					ENDIF
+					PRINTFORML 
+					PRINTFORML 【감옥 저택】
+					PRINTFORML 소녀들이 죄수로서 수감되어 있는 시설.
+					PRINTFORML 
+					PRINTFORML 【대마녀】
+					IF !FLAG:대마녀유키
+						PRINTFORML 찾으면 어떠한 일이 일어나는 것 같다.
+						LINECO += 1
+					ELSE
+						PRINTFORML 마녀화 저주를 건 원흉이자 흑막.
+						PRINTFORML 
+						PRINTFORML 과거에 【츠키시로 유키】라는 이름으로 사쿠라바 에마와 니카이도 히로의 친구로 지냈다.
+						PRINTFORML 히로가 유학 중이던 도중 자살했다.
+						LINECO += 4
+					ENDIF
+					PRINTFORML 
+					PRINTFORML 【말로】
+					PRINTFORML 마녀가 된 자의 끝. 괴물.
+					PRINTFORML 순종하기 쉬운 자는 세뇌되어 감옥의 간수가 된다.
+					PRINTFORML 
+					PRINTFORML 【마녀화】
+					PRINTFORML 수감자들은 선천적으로 마녀인자를 지닌다.
+					PRINTFORML 강한 스트레스를 받으면 마녀인자가 활성화된다.
+					PRINTFORML 마녀인자의 활성화에 따라 수감자는 극도로 강한 살인충동을 느끼게 된다.
+					LINECO += 22
+			ENDSELECT
+	ENDSELECT
+DRAWLINE
+LINECO += 1
+			
+
+	IF !CHECK
+		;PAGE < 최대페이지 이다 규칙설명 최대페이지 확인하고 바꿔주라
+		CALL ASK_M("돌아간다", 1,"이전 페이지", MENU == 2 && PAGE > 0, "다음 페이지", MENU == 2 && PAGE < 3, "전원을 끈다", 1)
+		LINECO += 5
+		SELECTCASE RESULT
+			CASE 0
+				MENU = 0
+				PAGE = 0
+			CASE 1
+				PAGE -= 1
+			CASE 2
+				PAGE += 1
+			CASE 3
+				BREAK
+		ENDSELECT
+	ENDIF
+
+;화면 깨끗이
+CLEARLINE LINECO
+
+LINECO = 0
+
+WEND
+
+
+TIME += 3
+
+;호감도 변화 없음으로...
+SIF TARGET
+	TFLAG:13 = 1
+
+
+;실행판정
+@COM_ABLE492
+;맛폰 없으면 못해
+SIF ITEM:스마트폰 == 0
+	RETURN 0
+;移動実行判定
+SIF !TFLAG:100
+	RETURN 0
+;一括管理
+SIF GLOBAL_COMABLE(492)
+	RETURN RESULT
+RETURN 1

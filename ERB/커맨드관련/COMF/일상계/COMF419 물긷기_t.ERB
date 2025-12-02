@@ -1,0 +1,56 @@
+﻿;-------------------------------------------------
+;물긷기
+;일상계 커맨드, 레벨 1
+;-------------------------------------------------
+@COM419
+SELECTCASE CFLAG:MASTER:현재위치
+	CASE P31화장실
+		VAR_WATER = 변기 물
+
+	CASE P54호숫가
+		VAR_WATER = 호수의 물
+
+	CASE P78대마녀화장실
+		VAR_WATER = 변기 물
+
+	CASEELSE
+		VAR_WATER = 그냥 물
+ENDSELECT
+
+STAIN:MASTER:0 = 0
+STAIN:MASTER:1 = 0
+
+IF TARGET
+	STAIN:0 = 0
+	STAIN:1 = 0
+
+ENDIF
+PRINTFORML %조사처리(VAR_WATER,"를")% 퍼 올렸다
+IF GET_MAPID(CFLAG:MASTER:현재위치) != MAIN_MAP
+	PRINTL 가진 채로 걷는 것은 힘들기 때문에 귀가합니다
+	CALL 외출처로부터귀가
+ENDIF
+TIME += 3
+
+;호감도 변화 없음으로...
+SIF TARGET
+	TFLAG:13 = 1
+
+RETURN -1
+;-------------------------------------------------
+;실행 판정
+;-------------------------------------------------
+@COM_ABLE419
+
+;실행 판정
+SIF !TFLAG:100
+	RETURN 0
+;일괄관리
+SIF GLOBAL_COMABLE(419)
+	RETURN RESULT
+SIF !물긷기가능(CFLAG:MASTER:현재위치)
+	RETURN 0
+SIF CFLAG:우후후 == 2
+	RETURN 0
+RETURN 1
+

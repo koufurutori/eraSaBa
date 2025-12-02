@@ -1,0 +1,322 @@
+﻿;-------------------------------------------------
+;독서
+;일상계 커맨드, 레벨 1
+;-------------------------------------------------
+@COM436
+#DIM READING_EXP
+READING_EXP = 1
+
+
+PRINTL 무엇을 읽자?  
+CALL ASK_M("문학", 1, "실용서", 1, "야한 책", 1, "캔슬", 1)
+IF RESULT == 0
+	SELECTCASE RAND:10
+		;인살
+		CASE 0
+			TFLAG:193 = 1
+		;실패
+		CASE 1 TO 3
+			TFLAG:193 = 2
+		;문학
+		CASEELSE
+			TFLAG:193 = 3
+	ENDSELECT
+ELSEIF RESULT == 1
+	SELECTCASE RAND:10
+		;실패
+		CASE 0 TO 2
+			TFLAG:193 = 4
+		;실용
+		CASEELSE
+			TFLAG:193 = 5
+	ENDSELECT
+ELSEIF RESULT == 2
+	SELECTCASE RAND:9
+		;우스이타카이혼
+		CASE 0 TO 2
+			TFLAG:193 = 6
+		;보건 체육
+		CASE 3 TO 5
+			TFLAG:193 = 7
+		;카마수트라
+		CASE 6 TO 8
+			TFLAG:193 = 8
+		;위험한 책
+;		CASEELSE
+;		IF !TALENT:MASTER:금단의지식
+;			TFLAG:193 = 9
+;		ELSE
+;			GOTO LOOP
+;		ENDIF
+	ENDSELECT
+ELSEIF RESULT == 3
+	RETURN -1
+ENDIF
+
+PRINTFORM %마스터는% 책장 앞에 서 있었다.
+SELECTCASE TFLAG:193
+	CASE 1
+		PRINT 「닌자 슬레이어-」
+	CASE 2 TO 3
+		PRINT 문예서
+	CASE 4 TO 5
+		PRINT 실용서
+	CASE 6
+		PRINT 싱겁고 높은 책
+	CASE 7
+		PRINT 보건 체육의 책
+	CASE 8
+		PRINT 「카마·수트라」
+;	CASE 9
+;		PRINT 타이틀이 없는 가죽 장정의 습기를 띤 책
+ENDSELECT
+PRINTFORML (을)를 읽어 보았다
+
+;TARGET가 무지하고 H인 독서 또한 MASTER가 TARGET보다 교양이 높게 TARGET의 교양이 2이상 또한 5분의 1
+SIF !RAND:5 && TALENT:TARGET:무지 && TFLAG:193 >= 6 && TFLAG:193 <= 8 && ABL:MASTER:교양 > ABL:교양 && ABL:교양 >= 2
+	TFLAG:194 = 2
+
+SELECTCASE TFLAG:193
+	CASE 1
+		EXP:MASTER:전투경험 += 5
+	CASE 3
+	;문학
+		EXP:MASTER:학습경험 += READING_EXP
+	CASE 5
+	;실용
+		SELECTCASE RAND:7
+			CASE 0
+				EXP:MASTER:회화경험 += READING_EXP
+			CASE 1
+				EXP:MASTER:촬영경험 += READING_EXP
+			CASE 2
+				EXP:MASTER:요리경험 += READING_EXP
+			CASE 3
+				EXP:MASTER:낚시경험 += READING_EXP
+			CASE 4
+				EXP:MASTER:채집경험 += READING_EXP
+			CASE 5
+				EXP:MASTER:조제경험 += READING_EXP
+			CASEELSE
+				EXP:MASTER:벌채경험 += READING_EXP
+		ENDSELECT
+	CASE 6
+		CALL RECOVER(MASTER, 100,"정력")
+ENDSELECT
+
+IF TARGET > 0 && CFLAG:행동 != 5
+	;고정으로 획득하는 소스
+	SOURCE:환락 = 200
+	;신뢰
+	TFLAG:98 = 3
+
+	;ABL:순종을 본다
+	IF ABL:순종 <= 1
+		SOURCE:환락 += (ABL:순종 * 80)
+	ELSEIF ABL:순종 <= 3
+		SOURCE:환락 += 300 + (ABL:순종 * 80)
+	ELSEIF ABL:순종 <= 5
+		SOURCE:환락 += 700 + (ABL:순종 * 80)
+	ELSEIF ABL:순종 <= 8
+		SOURCE:환락 += 950 + (ABL:순종 * 100)
+	ELSEIF ABL:순종 <= 11
+		SOURCE:환락 += 1200 + (ABL:순종 * 90)
+	ELSE
+		SOURCE:환락 += 2000 + (ABL:순종 * 50)
+	ENDIF
+
+	;호감 도를 본다
+	IF CFLAG:2 <= 500
+		SOURCE:환락 += CFLAG:2 * 2
+	ELSEIF CFLAG:2 <= 5000
+		SOURCE:환락 += 1000 + (CFLAG:2 - 500) / 2
+	ELSE
+		SOURCE:환락 += 5000 + (CFLAG:2 - 5000) / 3
+	ENDIF
+	SIF SOURCE:환락 < 0
+		SOURCE:환락 = 0
+ENDIF
+
+IF BASE:MASTER:기력 > 0
+	DOWNBASE:MASTER:기력 += 200
+ELSE
+	DOWNBASE:MASTER:체력 += 25
+ENDIF
+
+;賢者タイムは読書がはかどる
+IF IS_WISEMAN()
+	PRINTFORML 번뇌가 사라진 덕분에, 효율적으로 학습이 진행되었다
+	TIME += 45
+ELSE
+	TIME += 60
+ENDIF
+RETURN 1
+
+
+;-------------------------------------------------
+;실행 가능 판정
+;-------------------------------------------------
+;독서
+@COM_ABLE436
+;실행 판정
+SIF !TFLAG:100
+	RETURN 0
+;일괄관리
+SIF GLOBAL_COMABLE(436)
+	RETURN RESULT
+;데이트 도중
+SIF TFLAG:데이트도중
+	RETURN 0
+;동침중
+SIF CFLAG:MASTER:동침중
+	RETURN 0
+;우후후 안도 안 돼
+SIF CFLAG:MASTER:우후후
+	RETURN 0
+;기력 0에서는 불가
+
+;도서관
+SIF !IS_LIBRARY(CFLAG:MASTER:현재위치)
+	RETURN 0
+;수면중
+SIF CFLAG:수면
+	RETURN 0
+RETURN 1
+
+;장서 열람 판정・개 @하견패치
+;되돌림값은 PLACE_ID로 할것
+;MASTER의 현재위치와 상관 없이 판정 가능하게
+;PERMISSION이 참이면 허가 프리
+@IS_LIBRARY(PLACE_ID, PERMISSION)
+#FUNCTION
+#DIM PLACE_ID
+#DIM PERMISSION
+;PLACE_IDを返す
+SELECTCASE PLACE_ID
+	CASE P76도서관, P77자료실
+		RETURNF PLACE_ID
+	CASE P65샐러맨더의방, P66운디네의방, P67노움의방, P73아틀리에
+		RETURNF PLACE_ID
+ENDSELECT
+RETURNF 0
+
+;옛 함수도 일단 남겨둠
+[SKIPSTART]
+
+;장서 열람 판정
+;
+;거점/산책 MAP 양쪽 모두 사용할 수 있습니다
+;MASTER의 현재위치를 던져 붐비면(자) 자료를 보여 줄지 어떨지를 판정
+;반환값은 0혹은 「거점 MAP의 장소 ID」입니다
+;산책 맵으로 어디어디(에)에서 자료 본 따라 주는 용
+;PLACE_ID와 MASTER의 현재위치가 다른 경우는 상정하고 있습니다
+;즉, 하쿠레이 신사에 있을 때에 아큐의 저택의 판정하면 안 돼
+@IS_LIBRARY(PLACE_ID)
+#FUNCTION
+#DIM PLACE_ID              ;반드시 MASTER의 현재위치를 건네주는 것
+SELECTCASE PLACE_ID
+	CASE P76도서관, P77자료실
+		RETURNF PLACE_ID
+	CASE P65샐러맨더의방, P66운디네의방, P67노움의방, P73아틀리에
+		RETURNF PLACE_ID
+ENDSELECT
+RETURNF 0
+;RETURNF CAN_READ_BOOK_COLLECTION(PLACE_LIBRARY)
+
+
+
+
+;장서 열람 허락 판정
+;·반드시 거점 맵의 장소 ID(상세한 지점의 (분)편)를 건네주는 것
+;·MASTER가 그 장소에 있는 것이 전제로 처리를 짜고 있습니다
+@CAN_READ_BOOK_COLLECTION(PLACE_ID)
+#FUNCTION
+#DIM PLACE_ID
+SELECTCASE PLACE_ID
+;몽환유적은 소안내
+CASE 48, 49, 50
+	RETURNF PLACE_ID
+;절과 신령묘도장 소안내
+CASE 105, 126
+	RETURNF PLACE_ID
+;스즈나안와 서당은 소안내
+CASE 213, 222
+	RETURNF PLACE_ID
+;아큐의 저택
+;사모/연모로 해방
+CASE 221
+	SIF !TALENT:80:연모 && !TALENT:80:사모
+		RETURNF 0
+	RETURNF PLACE_ID
+;케이네택
+CASE 224
+	SIF FLAG:역극 == 67
+		RETURNF PLACE_ID
+	SIF CFLAG:67:신뢰도 < 30
+		RETURNF 0
+	SIF CFLAG:67:현재위치 == CFLAG:MASTER:현재위치
+		RETURNF PLACE_ID
+;도서관은 소안내
+CASE 310
+	RETURNF PLACE_ID
+;카구야 방
+CASE 414
+	SIF GROUPMATCH(FLAG:역극, 52, 53, 62, 72)
+		RETURNF PLACE_ID
+	SIF !TALENT:62:연모 && !TALENT:62:사모
+		RETURNF 0
+	SIF CFLAG:62:현재위치 == CFLAG:MASTER:현재위치
+		RETURNF PLACE_ID
+;창고/창고의 수색은 느슨하고
+;누군가 한사람 동석 하고 있으면 좋아
+CASE 424, 427
+	SIF GROUPMATCH(FLAG:역극, 52, 53, 62, 72)
+		RETURNF PLACE_ID
+	SIF GROUPMATCH(CFLAG:MASTER:현재위치, CFLAG:52:현재위치, CFLAG:53:현재위치, CFLAG:62:현재위치, CFLAG:72:현재위치)
+		RETURNF PLACE_ID
+;마리사 택의 연구실
+;다소의 신뢰도로 k
+CASE 513
+	SIF FLAG:역극 == 11
+		RETURNF PLACE_ID
+	SIF CFLAG:11:신뢰도 < 30
+		RETURNF 0
+	SIF CFLAG:11:현재위치 == CFLAG:MASTER:현재위치
+		RETURNF PLACE_ID
+;인형관의 연구실
+CASE 524
+	SIF GROUPMATCH(FLAG:역극, 17, 102)
+		RETURNF PLACE_ID
+	SIF INRANGE(CFLAG:MASTER:초기위치, 521, 531)
+		RETURNF PLACE_ID
+	SIF !TALENT:17:연모 && !TALENT:17:사모 && !TALENT:102:연모 && !TALENT:102:사모
+		RETURNF 0
+	SIF GROUPMATCH(CFLAG:MASTER:현재위치, CFLAG:17:현재위치, CFLAG:102:현재위치)
+		RETURNF PLACE_ID
+;선인 저택의 서재
+CASE 724
+	SIF FLAG:역극 == 43
+		RETURNF PLACE_ID
+	SIF INRANGE(CFLAG:MASTER:초기위치, 720, 730)
+		RETURNF PLACE_ID
+	SIF !TALENT:43:연모 && !TALENT:43:사모
+		RETURNF 0
+	SIF CFLAG:43:현재위치 == CFLAG:MASTER:현재위치
+		RETURNF PLACE_ID
+;사토리의 서재
+;동거(同居) 해도 신뢰도 50 필요
+CASE 920
+	SIF FLAG:역극 == 49
+		RETURNF PLACE_ID
+	SIF CFLAG:49:신뢰도 < 50
+		RETURNF 0
+	SIF INRANGE(CFLAG:MASTER:초기위치, 902, 926)
+		RETURNF PLACE_ID
+	SIF !TALENT:49:연모 && !TALENT:49:사모
+		RETURNF 0
+	SIF CFLAG:49:현재위치 == CFLAG:MASTER:현재위치
+		RETURNF PLACE_ID
+CASE 1422
+	RETURNF PLACE_ID
+ENDSELECT
+[SKIPEND]

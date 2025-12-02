@@ -1,0 +1,364 @@
+﻿;-------------------------------------------------
+;고유 커맨드
+;일상계 커맨드, 레벨 X
+;-------------------------------------------------
+@COM443
+TRYCALLFORM UNIQUE_COM_%NAME_UNIQUE_COM(TARGET)%
+SIF RESULT == -1
+	RETURN -1
+TIME += 3
+RETURN 1
+
+@COM_ABLE443
+
+;실행 판정
+SIF !TFLAG:100
+	RETURN 0
+;일괄관리
+SIF GLOBAL_COMABLE(443)
+	RETURN RESULT
+SIF TARGET <= 0
+	RETURN 0
+SIF !SHIRAHU(TARGET)
+	RETURN 0
+SIF CFLAG:우후후
+	RETURN 0
+SIF !ABLE_UNIQUE_COM(TARGET)
+	RETURN 0
+RETURN 1
+
+
+@NAME_UNIQUE_COM(CHARA)
+#FUNCTIONS
+#DIM CHARA
+RETURNF GET_STR(0, "캐릭터데이터", CHARA, "고유커맨드")
+
+@ABLE_UNIQUE_COM(CHARA)
+#FUNCTION
+#DIM CHARA
+RETURNF GET_INT(0, "캐릭터데이터", CHARA, "고유커맨드 실행 가능")
+
+
+;-------------------------------------------------
+;유키 용
+;-------------------------------------------------
+@UNIQUE_COM_마법
+PRINTFORMW 「도와줬으면 좋겠다라…… 제가 무엇을 할지, 무섭지도 않은 건가요?」
+PRINTFORMW 「하지만 뭐, 히로니까요. 이 정도는 해드리도록 할까요.」
+PRINTFORML
+PRINTFORMW 「어떤 마법을 써줬으면 하나요?」
+CALL ASK_M("날씨조작", 1,"투시", 1,"역시 됐다",1)
+SELECTCASE RESULT
+	CASE 0
+		CALL UNIQUE_COM_날씨조작
+	CASE 1
+		CALL UNIQUE_COM_천리안
+	CASE 2
+		PRINTFORML 「그런가요?」
+		PRINTFORML 
+		PRINTFORML 그렇게 말하는 유키는 딱히 신경쓰는 눈치는 아니었다.
+		RETURN -1
+ENDSELECT
+
+
+;-------------------------------------------------
+;유키 용
+;-------------------------------------------------
+@UNIQUE_COM_날씨조작
+IF FLAG:이상기상
+	PRINTFORMW 「이 날씨는 저라도 못 바꾼답니다.」
+	PRINTFORML
+	SETCOLOR 184, 38, 71
+	PRINTFORMW 「네 마법으로도 안 되는 거야?」
+	RESETCOLOR
+	PRINTFORML
+	PRINTFORMW 「정확히는 바꾸기 싫다, 쪽에 가깝지만요.」
+	PRINTFORML 「이런 저런 마법이 섞인 끝에 나온 결과물이니까요. 엉킨 실타래 같은 거에요, 히로.」
+	PRINTFORMW 「시간을 들이면 엉킨 실타래는 풀 수 있지만…… 보통 굳이 그 정도의 시간을 들이면서 하지 않잖아요? 똑같아요.」
+	PRINTFORML
+	SETCOLOR 184, 38, 71
+	PRINTFORMW (그렇게 비유한다면 그렇지만…… 유키는 이런 날씨가 신경 쓰이지 않는 건가?)
+	RESETCOLOR
+	PRINTFORML
+	PRINTFORMW 유키는 딱히 해줄 생각이 없는 것 같다.
+	RETURN -1
+ENDIF
+IF GETBIT(TFLAG:일일일회, 6)
+	PRINTFORML 「오늘은 더 이상 하고 싶지 않네요.」
+	RETURN -1
+ENDIF
+PRINTFORML 「마법이라고는 하나, 어떤 결과가 나올지는 운. 방향성 정도밖에 잡을 수 없어요?」
+$LOOP
+CALL ASK_M("맑음", 1,"흐림", 1,"비", 1, "눈", DAY:2 == 4, "팬티", 1)
+SELECTCASE RESULT
+	CASE 0
+		;비라면 저확률로 무지개
+		SIF INRANGE(TIME:5, 4,7) && !RAND:7
+			TIME:7 = 1
+		;눈이라면 저확률로 다이아몬드 더스트
+		SIF INRANGE(TIME:5, 8,13) && !RAND:7
+			TIME:7 = 2
+		TIME:5 = RAND:2
+	CASE 1
+		TIME:5 = RAND:2 + 2
+	CASE 2
+		;맑음을 바꾸려고 하면 무지개
+		IF TIME:5 < 2 && !RAND:4
+			TIME:7 = 1
+		ELSE
+			TIME:5 = 4 + RAND:4
+		ENDIF
+	CASE 3
+		;맑음을 바꾸려고 하면 다이아몬드 더스트
+		IF TIME:5 < 2 && !RAND:4
+			TIME:7 = 2
+		ELSE
+			TIME:5 = 8 + RAND:6
+		ENDIF
+	CASE 4
+		PRINTFORML 「히로…… 어쩌다가 그렇게 되었나요.」
+		PRINTFORML 
+		PRINTFORML ……히로는 유키한테서 어딘가 측은하다는 눈빛을 받아버렸다.
+		RETURN -1
+ENDSELECT
+
+DOWNBASE:기력 = 300
+SETBIT TFLAG:일일일회, 6
+
+;(天候パッチ)風速を0にする
+WIND_VELOCITY = 0
+;(天候パッチ)1日が終わるまで天候変更を禁止する
+FORBIDDEN_CHANGE_WEATHER = 1
+
+
+;-------------------------------------------------
+;유키 용
+;-------------------------------------------------
+@UNIQUE_COM_천리안
+PRINTFORML 「어디를 볼까요?」
+CALL HITOSAGASI_2(1)
+CALL HITOSAGASI_2(2)
+
+
+
+;이건 외출맵 사람 찾는 거
+;CALL BROAD_HITOSAGASI
+
+
+@BROAD_HITOSAGASI
+$KAKUNIN
+FOR LOCAL,0,11
+	SIF LOCAL == MAIN_MAP
+		CONTINUE
+	LOCAL:1 = 5000 + LOCAL
+	PRINTFORMLC [{LOCAL}] - %STR:(LOCAL:1)%
+	CALL 광역체크(LOCAL,1)
+	CALL 광역체크(LOCAL,2)
+	PRINTL
+NEXT
+DRAWLINE
+PRINT [100] - 확인 종료
+$INPUT_LOOP
+INPUT
+IF RESULT == 100 || RESULT == MAIN_MAP
+	RETURN -1
+ELSEIF RESULT < 0
+	CLEARLINE 1
+	GOTO INPUT_LOOP
+ELSEIF RESULT >= 11
+	PRINTW 미작성입니다
+	CLEARLINE 2
+	GOTO INPUT_LOOP
+ENDIF
+CALL 광역체크(RESULT,2)
+CALL ASK_YN("다른 지역을 본다","확인 종료")
+SIF !RESULT
+	GOTO KAKUNIN
+
+@광역체크(ARG,ARG:1)
+VARSET LOCAL
+
+FOR LOCAL,1,CHARANUM
+	SIF AT_HOME(LOCAL) == 1
+		CONTINUE
+	SIF CFLAG:LOCAL:현재위치 == MAXROOM && CFLAG:LOCAL:수면
+		CONTINUE
+	FOR LOCAL:1,10,100,10
+		IF CFLAG:LOCAL:현재위치 == ARG * 100 + LOCAL:1
+			;그 지역에 있는 캐릭터를표시
+			IF ARG:1 == 2
+				SIF CFLAG:LOCAL:행동 == 5
+					SETCOLOR 255, 100, 0
+				PRINTFORM %CALLNAME:LOCAL%　
+				RESETCOLOR
+			ENDIF
+			LOCAL:2 ++
+		ENDIF
+	NEXT
+NEXT
+;그 지역에 있는 인원수
+IF ARG:1 == 1
+	IF LOCAL:2
+		PRINTFORML {LOCAL:2}인
+	ELSE
+		PRINTL 아무도 없다
+	ENDIF
+ENDIF
+
+
+
+;-------------------------------------------------
+;레이아 용
+;교우 관계 넓은 것 같고, 귀는 빠를 것이다
+;-------------------------------------------------
+@UNIQUE_COM_사람돕기
+#DIM PREV_DAY
+#DIM IRAI_ABLE
+#DIM CLIENT_ID
+PREV_DAY = DAY
+SETCOLOR 245, 222, 179
+PRINTFORMW 「음? 곤란해하는 애가 있다면 알려줬음 좋겠다고?」
+RESETCOLOR
+PRINTFORML 
+SETCOLOR 184, 38, 71
+PRINTFORMW 「그래. 곤란해하는 사람이 있다면 도와주는 것이 올바르니까.」
+PRINTFORML 「나도 최대한 도운다는 생각으로 주위를 둘러보고 있지만, 혼자서는 알 수 있는 정보에 한계가 있어.」
+PRINTFORMW 「레이아라면 내가 모르는 정보도 알고 있을 것 같아서.」
+RESETCOLOR
+PRINTFORML 
+SETCOLOR 245, 222, 179
+PRINTFORMW 「그렇고말고, 히로 군! 나는 평소에 주위에 관심을 기울이고 다니니까 말이지!」
+RESETCOLOR
+PRINTFORML 
+SETCOLOR 184, 38, 71
+PRINTFORMW 「아아. 그래서 혹시 아는 거라도 없어?」
+RESETCOLOR
+PRINTFORML 
+SETCOLOR 245, 222, 179
+PRINTFORMW 「그렇군, 곤란해하는 아이라……」
+RESETCOLOR
+CALL CAN_IRAI_START
+IRAI_ABLE = RESULT
+IF IRAI_ABLE && IRAI_CHARA_TO_PROGRESS(TARGET) == "의뢰미수탁"
+	SETCOLOR 245, 222, 179
+	PRINTFORML 「당장 여기에 있지 않는가!」
+	RESETCOLOR
+	CALL IRAI_START(TARGET)
+	SIF IRAI_CHARA_TO_PROGRESS(TARGET) != "의뢰중"
+		SETCOLOR 245, 222, 179
+		PRINTFORMW 「엇, 여기까지 왔는데 거절한다고?」
+		RESETCOLOR
+	RETURN
+ENDIF
+
+CLIENT_ID = SEARCH_UNIQUE_COM_사람돕기()
+SELECTCASE CLIENT_ID
+CASE 0
+	SETCOLOR 245, 222, 179
+	PRINTFORML 「……흠.」
+	PRINTFORML 「미안하지만 히로 군. 내가 아는 한에서는 더 없던 거 같아.」
+	PRINTFORMW 「도움이 되지 못해서 미안한 걸.」
+	RESETCOLOR
+	PRINTFORMW 
+	SETCOLOR 184, 38, 71
+	PRINTFORML 「아니, 괜찮아. 없다면 됐어.」
+	PRINTFORMW 「곤란해하는 사람이 없다면 좋은 일이지.」
+	RESETCOLOR
+CASEELSE
+	SETCOLOR 245, 222, 179
+	PRINTFORML 「%TEXTR("으음ㅡ/그러니까/분명히……")%」
+	PRINTDATAW
+		DATAFORM 「%CALLNAME:CLIENT_ID% 군이 그런 이야기를 하고 있었던 거 같은데.」
+		DATAFORM 「%CALLNAME:CLIENT_ID% 군이 무슨 말을 했던 거 같아.」
+		DATAFORM 「%CALLNAME:CLIENT_ID% 군이 곤란해 한다고 누가 전해줬었어.」
+		DATAFORM 「%CALLNAME:CLIENT_ID% 군을 찾아가보는 건 어때?」
+		DATAFORM 「%CALLNAME:CLIENT_ID% 군을 만나러 가면 좋을 것 같아.」
+	ENDDATA
+	RESETCOLOR
+	PRINTFORML
+	SETCOLOR 184, 38, 71
+	PRINTFORMW 「%CALLNAME:CLIENT_ID%인가. 알려줘서 고마워, 레이아.」
+	RESETCOLOR
+	PRINTFORML
+	SETCOLOR 245, 222, 179
+	PRINTFORMW 「뭘 이정도 가지고!」
+	RESETCOLOR
+ENDSELECT
+
+@SEARCH_UNIQUE_COM_사람돕기
+#FUNCTION
+#DIM DYNAMIC CLIENT_ID, 캐릭터수상한
+#DIM DYNAMIC CLIENT_CNT
+FOR LOCAL:0, 1, CHARANUM
+	SIF IRAI_CHARA_TO_PROGRESS(LOCAL:0) != "의뢰미수탁"
+		CONTINUE
+	CLIENT_ID:CLIENT_CNT = LOCAL:0
+	CLIENT_CNT ++
+NEXT
+SIF !CLIENT_CNT
+	RETURNF 0
+RETURNF CLIENT_ID:(RAND:CLIENT_CNT)
+
+
+;-------------------------------------------------
+;한나 용
+;-------------------------------------------------
+@UNIQUE_COM_우산의수리
+PRINTFORMW 한나에게 접는 우산을 고쳐달라고 했다.
+PRINTFORML 
+IF ITEM:망가진우산
+	SETCOLOR 171, 214, 100
+	PRINTFORMW 「물건을 좀 더 소중하게 쓰시는 것이와요!」
+	RESETCOLOR
+	DOWNBASE:기력 = 200
+	SOURCE:환락 += 1000
+	ITEM:망가진우산 = 0
+	ITEM:접는우산 = 1
+	TIME += 45
+ELSE
+	SETCOLOR 171, 214, 100
+	PRINTFORMW 「이런 우산도 잘 쓰면 오랫동안 쓸 수 있는 것이와요.」
+	RESETCOLOR
+	DOWNBASE:기력 = 100
+	SOURCE:환락 += 1000 + ABL:친밀 * 50
+	TFLAG:호감도보너스 = FLAG:우산내구도 / 10
+	TFLAG:98 = FLAG:우산내구도 / 1000
+	FLAG:우산내구도 = 0
+ENDIF
+SETBIT TFLAG:일일일회, 13
+TIME += 30
+
+
+;-------------------------------------------------
+;아리사 용
+;-------------------------------------------------
+;@UNIQUE_COM_물고기교환
+;#DIM PREV_DAY
+;#DIM CNG_NUM
+
+;IF PREV_DAY == DAY
+;	PRINTFORMW 「뭔디? 오늘은 벌써 교환해 줬잖어?」
+;	RETURN
+;ENDIF
+;CNG_NUM = GET_INT(0, "캐릭터데이터", TARGET, "고유커맨드：물고기교환비율")
+
+;PRINTFORML 「맛있는 물고기가 갖고 싶어?」
+;PRINTFORML 「그러네에。그냥 물고기 {CNG_NUM}마리라면 교환해도 좋아」
+;PRINTFORML 「어쩔래？」
+;CALL ASK_M("그만둔다", 1, "교환받는다", ITEM:물고기 >= CNG_NUM)
+;SELECTCASE RESULT
+;CASE 0
+;	PRINTFORML 「고런가」
+;CASE 1
+;	PRINTFORML 「매번감사。한나、둘、서이……짜、확실히 수는 맞네」
+;	PRINTFORML 「자、가져 가라!」
+;	PREV_DAY = DAY
+;	CALL LOST_ITEM("물고기", CNG_NUM, 1)
+;	CALL GET_ITEM("맛있는물고기", 1, 2)
+;ENDSELECT
+
+
+;@UNIQUE_COM_FISH_CHANGE_RATE
+;#FUNCTION
+;RETURNF 
+

@@ -1,0 +1,779 @@
+﻿;채집한다
+@COM445
+#DIM 채집물
+#DIM 채집파워
+#DIM 채집파워M
+#DIM 채집파워T
+#DIM 토지의은혜
+#DIM CHARA
+#DIM 채집위치
+;あからさまな人の敷地での無断採集はやめる、弾幕勝負で勝ってれば腕づくで
+SELECTCASE CFLAG:MASTER:현재위치
+;	CASE 태양의밭, 438
+;		IF ABL:[[유카]]:친밀 < 5 && CFLAG:[[유카]]:탄막승부승리 == 0
+;			DRAWLINE
+;			PRINTFORML 여기서 무단으로 채집을 하는 것은 매우 위험할 것 같다…
+;			RETURN -1
+;		ENDIF
+
+ENDSELECT
+
+채집물 = 0
+채집파워M = 0
+채집파워T = 0
+LOCAL:4 = 0
+
+;참가자 판정
+IF FLAG:데이트상대
+	CHARA = FLAG:데이트상대
+ELSEIF TARGET && ABL:TARGET:친밀 >= 5 && SHIRAHU(TARGET) && CFLAG:TARGET:동행 != 5
+	CHARA = TARGET
+ELSE
+	CHARA = 0
+ENDIF
+
+;토지의 은혜. 일일로-25～+25의 사이를 랜덤으로 부동. 낚시를 참고에.
+토지의은혜 = CFLAG:MASTER:오늘의운세 / 20 - 25
+
+;채집 파워 설정
+채집파워M = 10 + TALENT:MASTER:채집Lv * 10 + ABL:MASTER:교양 * 5 + TFLAG:행운보정 * 10
+SIF ITEM:108
+	채집파워M += 10
+
+SIF CHARA
+	채집파워T = 10 + TALENT:CHARA:채집Lv * 10 + ABL:CHARA:교양 * 5
+;참가자로 가장 파워가 높은 것을 기준에,1/2한 이제(이미/벌써/더는/정말) 1명의 파워를 더한다
+IF 채집파워M >= 채집파워T
+	채집파워 = 채집파워M + (채집파워T / 2)
+ELSE
+	채집파워 = 채집파워T + (채집파워M / 2)
+ENDIF
+채집위치 = GATHERING_SPOT(CFLAG:MASTER:현재위치)
+REPEAT 5
+	REUSELASTLINE  \@ CHARA ? %조사처리(CALLNAME:CHARA,"와")% 함께 #  \@채집중.%"." * COUNT%
+	TWAIT 150, 1
+REND
+;디버그용
+;PRINTFORML 채집위치{채집위치}
+;PRINTFORML 채집파워{채집파워}
+
+$TREASURSARCH
+
+CALL Gathering_Drawing(채집위치, 채집파워, 토지의은혜)
+
+채집물 = RESULT:0
+TFLAG:194 = RESULT:1
+VARSET RESULT
+;시행 회수를 1회늘린다
+LOCAL:4 ++
+;채집물이 마음에 들지 않는 경우는 당겨 수선
+IF 채집물 != 0
+	IF !FLAG:채집재추첨
+		CLEARLINE 3
+	ELSE
+		SETCOLOR 0x00FF00
+		PRINTFORM %ITEMNAME:(채집물)%
+		RESETCOLOR
+		PRINTFORML (소지수: {ITEM:(채집물)})%조사만처리(ITEMNAME:(채집물),"가")% 발견되었다. 채집합니까?
+		CALL ASK_YN("채집한다","다시 찾는다")
+		IF !RESULT
+			CLEARLINE 4
+		ELSE
+			CLEARLINE 4
+			채집물 = 0
+			TFLAG:194 = 0
+			REPEAT 5
+				REUSELASTLINE  \@ CHARA ? %조사처리(CALLNAME:CHARA,"와")% 함께 #  \@채집중.%"." * COUNT%
+				TWAIT 150, 1
+			REND
+		ENDIF
+	ENDIF
+ENDIF
+
+;시행 회수 3회 이하로 채집물이 확보되어 있지 않은 경우는 루프
+SIF LOCAL:4 <= 3 && 채집물 == 0
+	GOTO TREASURSARCH
+
+; 아이템 입수 처리 99개 이상이 되지 않도록 한다
+IF 채집물 != 0
+	LOCALS = %ITEMNAME:채집물%
+	CALL GET_ITEM(LOCALS, TFLAG:194 , 2)
+ENDIF
+
+;기본경험
+EXP:MASTER:채집경험 ++
+SIF !채집물
+	EXP:MASTER:채집경험 += 2
+SIF CHARA
+	EXP:CHARA:채집경험 ++
+
+SIF ITEM:108 && !RAND:2
+	EXP:MASTER:채집경험 ++
+
+SIF ABL:MASTER:교양 <= 2
+	EXP:MASTER:학습경험 ++
+
+;능력차이로 가르쳐 받는·가르쳐 준다
+IF 채집파워M >= 채집파워T && CHARA
+	EXP:CHARA:채집경험 ++
+ELSEIF CHARA
+	EXP:MASTER:채집경험 ++
+ENDIF
+
+;데이트 경험
+IF CHK_DATENOW(CFLAG:CHARA:데이트중) && CHARA > 0
+	EXP:MASTER:데이트경험 ++
+	EXP:CHARA:데이트경험 ++
+ENDIF
+
+
+	;시간 경과
+	TIME += 60
+	;虹龍洞は空気が薄い（無い）ので体力を余計に消耗する　ITEM:空色の勾玉の実装が待たれる
+	IF 채집위치 == P54호숫가
+		IF BASE:MASTER:기력 > 0
+			DOWNBASE:MASTER:기력 += 280
+		ELSE
+			DOWNBASE:MASTER:체력 += 320 - (ABL:MASTER:전투능력 * 10)
+		ENDIF
+		PRINTFORML 물가의 찬 바람이 불어와, 춥다…
+	ELSE
+		;체력 감소는 전투 능력에 의해 감소 억제
+		IF BASE:MASTER:기력 > 0
+			DOWNBASE:MASTER:기력 += 150 
+		ELSE
+			DOWNBASE:MASTER:체력 += 180 - (ABL:MASTER:전투능력 * 15)
+		ENDIF
+	ENDIF
+
+
+;참가자의 소스, 동일 커맨드 제한을 받지 않기 때문에 소극적으로, 발견되지 않으면 반감
+IF CHARA > 0
+	;고정으로 획득하는 소스
+	SOURCE:CHARA:환락 = 300
+	SOURCE:CHARA:사랑 = 50
+	
+	;ABL:순종을 본다
+	IF ABL:순종 <= 1
+		SOURCE:CHARA:환락 += (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += (ABL:친밀 * 20)
+	ELSEIF ABL:순종 <= 3
+		SOURCE:CHARA:환락 += 200 + (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += 50 + (ABL:친밀 * 30)
+	ELSEIF ABL:순종 <= 5
+		SOURCE:CHARA:환락 += 500 + (ABL:순종 * 40)
+		SOURCE:CHARA:사랑 += 200 + (ABL:친밀 * 30)
+	ELSEIF ABL:순종 <= 8
+		SOURCE:CHARA:환락 += 750 + (ABL:순종 * 60)
+		SOURCE:CHARA:사랑 += 300 + (ABL:친밀 * 40)
+	ELSEIF ABL:순종 <= 11
+		SOURCE:CHARA:환락 += 1000 + (ABL:순종 * 60)
+		SOURCE:CHARA:사랑 += 600 + (ABL:친밀 * 40)
+	ELSE
+		SOURCE:CHARA:환락 += 1600 + (ABL:순종 * 30)
+		SOURCE:CHARA:사랑 += 1000 + (ABL:친밀 * 20)
+	ENDIF
+	SIF CHARA != FLAG:데이트상대 
+		SOURCE:CHARA:사랑 = 0
+	
+	;호감도는 보지 않는다
+	
+	SOURCE:CHARA:수동 = 200 + 100 * ABL:순종
+	SOURCE:CHARA:정복 = 200 + 100 * ABL:새드끼
+	
+	;채집 성과를 보는, 아이템 가격을 없앴음으로 걍 랜덤 돌린다.
+	IF 채집물
+		SELECTCASE RAND:15500
+			CASE 0 TO 499
+				TIMES SOURCE:CHARA:환락 , 1.00
+				TIMES SOURCE:CHARA:수동 , 1.00
+				TIMES SOURCE:CHARA:정복 , 1.00
+				SOURCE:CHARA:달성 = 80
+			CASE 500 TO 999
+				TIMES SOURCE:CHARA:환락 , 1.10
+				TIMES SOURCE:CHARA:수동 , 1.10
+				TIMES SOURCE:CHARA:정복 , 1.10
+				SOURCE:CHARA:달성 = 115
+			CASE 1000 TO 2999
+				TIMES SOURCE:CHARA:환락 , 1.25
+				TIMES SOURCE:CHARA:수동 , 1.25
+				TIMES SOURCE:CHARA:정복 , 1.15
+				SOURCE:CHARA:달성 = 125
+			CASE 3000 TO 5999
+				TIMES SOURCE:CHARA:환락 , 1.50
+				TIMES SOURCE:CHARA:수동 , 1.50
+				TIMES SOURCE:CHARA:정복 , 1.25
+				SOURCE:CHARA:달성 = 150
+			CASE 6000 TO 9999
+				TIMES SOURCE:CHARA:환락 , 1.75
+				TIMES SOURCE:CHARA:수동 , 1.75
+				TIMES SOURCE:CHARA:정복 , 1.50
+				SOURCE:CHARA:달성 = 200
+			CASE 10000 TO 14999
+				TIMES SOURCE:CHARA:환락 , 2.00
+				TIMES SOURCE:CHARA:수동 , 2.00
+				TIMES SOURCE:CHARA:정복 , 1.75
+				SOURCE:CHARA:달성 = 300
+			CASEELSE
+				TIMES SOURCE:CHARA:환락 , 2.25
+				TIMES SOURCE:CHARA:수동 , 2.25
+				TIMES SOURCE:CHARA:정복 , 2.00
+				SOURCE:CHARA:달성 = 350
+		ENDSELECT
+	;발견되지 않는다
+	ELSE
+		TIMES SOURCE:CHARA:환락 , 0.50
+		TIMES SOURCE:CHARA:수동 , 0.50
+		TIMES SOURCE:CHARA:정복 , 0.50
+	ENDIF
+	;채집물의 캐릭터에게 응한 고유 반응（덧쓰기）
+	SELECTCASE 채집물
+		;개구리
+		CASE 706
+		;	IF CHARA == [[치르노]]
+		;		TIMES SOURCE:CHARA:환락 , 2.00
+		;		TIMES SOURCE:CHARA:수동 , 2.00
+		;		TIMES SOURCE:CHARA:정복 , 2.00
+		;	ELSE
+				TIMES SOURCE:CHARA:환락 , 1.25
+				TIMES SOURCE:CHARA:수동 , 1.00
+				TIMES SOURCE:CHARA:정복 , 1.00
+		;	ENDIF
+			SOURCE:CHARA:달성 = 110
+	ENDSELECT
+ENDIF
+
+;플래그 인도
+TFLAG:SELECTCOM분기 = 채집물
+
+RETURN 1
+
+;-------------------------------------------------
+;실행 가능 판정
+;-------------------------------------------------
+;채집한다
+@COM_ABLE445
+SIF !TFLAG:100
+	RETURN 0
+;일괄관리
+SIF GLOBAL_COMABLE(445)
+	RETURN RESULT
+;채집할 수 있는 장소이다
+SIF !GATHERING_SPOT(CFLAG:MASTER:현재위치)
+	RETURN 0
+;데이트중은 데이트 상대와 만
+SIF FLAG:데이트상대 && TARGET != FLAG:데이트상대
+	RETURN 0
+;수면중
+SIF CFLAG:MASTER:수면
+	RETURN 0
+SIF CFLAG:우후후
+	RETURN 0
+RETURN 1
+
+;-----------------------------------------------------------
+;현재 위치로부터 채집 스팟을 산출하는 함수
+;ARG		현재 위치
+;ARG:1		@ShowGatheringSpots부터의 참조용
+;RETURN		0 해당 없음
+;COMMENT	장소를 추가했을 경우, CASE를 변경의 일
+;-----------------------------------------------------------
+@GATHERING_SPOT(ARG, ARG:1)
+#FUNCTION
+
+;メインマップでの判定
+SELECTCASE ARG
+
+	CASE P22창고가는길
+		RETURNF 1
+	CASE P23벽가는길
+		RETURNF 2
+	CASE P24호수가는길
+		RETURNF 3
+	CASE P25꽃밭가는길
+		RETURNF 4
+	CASE P26감옥저택앞
+		RETURNF 5
+	CASE P36안뜰
+		RETURNF 6
+	CASE P53호수앞
+		RETURNF 7
+	CASE P54호숫가
+		RETURNF 8
+	CASE P56벽앞
+		RETURNF 9
+	CASE P57꽃밭앞
+		RETURNF 10
+	CASE P58꽃밭
+		RETURNF 11
+	CASE P68게스트하우스앞
+		RETURNF 12
+
+ENDSELECT
+
+RETURNF 0
+
+;-------------------------------------------------
+;그 채집 스팟에서의 채집물의 출현 판정을 하는 함수
+; 아이템 번호 ARG:0
+;GATHERING_SPOT(ARG)의 돌아가 값ARG:1（채집 스팟）  의
+;출현 가부를 숫자로 돌려주는 출현==1비출현==0
+; 아이템을 추가했을 경우는, GROUPMATCH내에 각각 덧붙여 씀
+;-------------------------------------------------
+@GATHERING_PRODUCT(ARG:0, ARG:1)
+#FUNCTION
+
+;(酒造パッチ)머루665・곰팡이핀포도666を追加
+SELECTCASE ARG:1
+	;P22창고가는길
+	CASE 1
+		SIF GROUPMATCH(ARG:0, 626, 627, 628, 629, 630)
+			RETURNF 1
+	;P23벽가는길
+	CASE 2
+		SIF GROUPMATCH(ARG:0, 646, 647, 648)
+			RETURNF 1
+	;P24호수가는길
+	CASE 3
+		SIF GROUPMATCH(ARG:0, 636, 610, 611, 636, 637)
+			RETURNF 1
+	;P25꽃밭가는길
+	CASE 4
+		SIF GROUPMATCH(ARG:0, 626, 627, 628, 629, 630)
+			RETURNF 1
+	;P26감옥저택앞
+	CASE 5
+		SIF GROUPMATCH(ARG:0, 621, 622, 623, 624, 625, 631, 632, 633, 634, 635, 638)
+			RETURNF 1
+	;P36안뜰
+	CASE 6
+		SIF GROUPMATCH(ARG:0, 607, 608, 611, 616, 617, 618, 619,)
+			RETURNF 1
+	;P53호수앞
+	CASE 7
+		SIF GROUPMATCH(ARG:0, 610, 611, 636, 637, 638, 641, 642)
+			RETURNF 1
+	;P54호숫가
+	CASE 8
+		SIF GROUPMATCH(ARG:0, 606, 609, 639, 640, 641, 642, 643, 644, 645) 
+			RETURNF 1
+	;P56벽앞 - 버섯류
+	CASE 9
+		SIF GROUPMATCH(ARG:0, 600, 601, 602, 603, 604, 605, )
+			RETURNF 1
+	;P57꽃밭앞
+	CASE 10
+		SIF GROUPMATCH(ARG:0, 607, 608, 612, 613)
+			RETURNF 1
+	;P58꽃밭
+	CASE 11
+		SIF GROUPMATCH(ARG:0, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620)
+			RETURNF 1
+	;P68게스트하우스앞
+	CASE 12
+		SIF GROUPMATCH(ARG:0, 611, 612, 649, 616, 617, 618, 619)
+			RETURNF 1
+	
+ENDSELECT
+RETURNF 0
+
+;-------------------------------------------------
+;채집물의 계절마다의 출현 판정
+; 아이템 번호 ARG:0의 계절마다의
+;출현 가부를 숫자로 돌려주는 함수 출현==1비출현==0
+; 아이템을 추가했을 경우는, CASE에 덧붙여 씀
+;ARG:1 に채집지점을 넣으면 아래 목록용 식으로 변환 생략가능
+;-------------------------------------------------
+@GATHERING_SEASON(ARG:0, ARG:1 = 0)
+#FUNCTION
+
+LOCAL = DAY:2
+SIF GatheringSeason
+	LOCAL = GatheringSeason
+
+;(酒造パッチ)머루665・곰팡이핀포도666を追加
+SELECTCASE LOCAL
+	;봄:
+	CASE 1
+		SELECTCASE ARG:0
+			CASE 600 TO 602, 604 TO 608, 610 TO 613, 616, 618 TO 627, 629, 631 TO 640, 647, 706
+				RETURNF 1
+		ENDSELECT
+	;여름
+	CASE 2
+		SELECTCASE ARG:0
+			CASE 600 TO 601, 603, 606 TO 608, 612 TO 613, 618 TO 627, 630 TO 640, 647, 665, 706
+				RETURNF 1
+		ENDSELECT
+	;가을
+	CASE 3
+		SELECTCASE ARG:0
+			CASE 600 TO 608, 611 TO 614, 616 TO 623, 625 TO 628, 631 TO 640, 647, 665, 706
+				RETURNF 1
+		ENDSELECT
+		;(酒造パッチ)(天候パッチ)かびたブドウ666は寒気の強さが5の時のみ
+		SIF ARG:0 == 666 && POWER_COLD_AIR == 5
+			RETURNF 1
+	;겨울
+	CASE 4
+		;天界、地底、月とキノコ群生地、虹龍洞は夏とみなして採集可能
+		IF ARG:1
+			LOCAL:1 = ARG:1
+		ELSE
+			LOCAL:1 = GATHERING_SPOT(CFLAG:MASTER:현재위치)
+		ENDIF
+
+		IF GROUPMATCH(LOCAL:1, 13, 14, 37, 63, 64, 65, 66, 67, 68)
+			SELECTCASE ARG:0
+				CASE 600 TO 601, 603, 606 TO 609, 612 TO 613, 618 TO 627, 630 TO 640, 647, 706
+					RETURNF 1
+			ENDSELECT
+		ELSE
+			SELECTCASE ARG:0
+				CASE 606, 609, 615, 620, 631 TO 635, 637 TO 640
+					RETURNF 1
+			ENDSELECT
+		ENDIF
+ENDSELECT
+RETURNF 0
+
+@SHOW_GATHERING_LIST
+#DIM PLACE
+PRINTFORML 채집 장소 일람
+CALL COLORMESSAGE(@"중급소재　",C_YELLOW)
+CALL COLORMESSAGE(@"고급소재　",C_P_GREEN)
+CALL COLORMESSAGE(@"최고급소재",C_AQUA)
+PRINTFORML 
+DRAWLINE
+FOR LOCAL,1, 90
+	IF ForagePlaceName(LOCAL) != ""
+		PRINTFORMLC [{LOCAL}] %ForagePlaceName(LOCAL)%
+	ENDIF
+NEXT
+PRINTFORML 
+DRAWLINE
+; 개인 임의수정, 소재 검색기능 추가
+;---- EDIT START ---------------------------------
+PRINTFORML [98] 소재 검색
+;---- EDIT END -----------------------------------
+PRINTFORML [99] 그만둔다
+INPUT
+PLACE = RESULT
+IF ForagePlaceName(PLACE) != ""
+	CALL SHOW_GATHERING_ITEM(PLACE)
+	PRINTFORMW 
+	CLEARLINE 1
+	RESTART
+;---- EDIT START ---------------------------------
+ELSEIF PLACE == 98
+	CALL SEARCH_GATHERING_ITEM
+;---- EDIT END -----------------------------------
+ELSE
+	RETURN -1
+ENDIF
+
+@SHOW_GATHERING_LIST_SELECT(PLACE)
+#DIM PLACE
+DRAWLINE
+PRINTFORML 채집 가능물 일람
+CALL COLORMESSAGE(@"중급소재　",C_YELLOW)
+CALL COLORMESSAGE(@"고급소재　",C_P_GREEN)
+CALL COLORMESSAGE(@"최고급소재",C_AQUA)
+PRINTFORML 
+DRAWLINE
+
+SELECTCASE PLACE
+	CASE 99
+		RETURN -1
+	CASEELSE
+		CALL SHOW_GATHERING_ITEM(PLACE)
+		PRINTFORML
+		DRAWLINE
+		PRINTFORMW
+ENDSELECT
+
+@SHOW_GATHERING_ITEM(PLACE)
+#DIM PLACE
+
+FOR LOCAL,600,710
+	IF GATHERING_PRODUCT(LOCAL, PLACE)
+		LOCALS = %ITEMNAME:LOCAL%
+		IF ITEMPRICE:LOCAL >= 1000
+			SETCOLOR C_YELLOW
+			SIF ABL:MASTER:교양 < 1
+				LOCALS = ？？？
+		ENDIF
+		IF ITEMPRICE:LOCAL >= 3000
+			SETCOLOR C_P_GREEN
+			SIF ABL:MASTER:교양 < 2
+				LOCALS = ？？？
+		ENDIF
+		IF ITEMPRICE:LOCAL >= 10000
+			SETCOLOR C_AQUA
+			SIF ABL:MASTER:교양 < 3
+				LOCALS = ？？？
+		ENDIF
+		;季節条件を満たしていない場合は灰色表記に
+		SIF !GATHERING_SEASON(LOCAL, PLACE)
+			SETCOLOR 0x606060
+
+		PRINTFORM %LOCALS%　
+	ENDIF
+	RESETCOLOR
+NEXT
+
+;-----------------------------
+;引数で指定した価格範囲内の素材の中からランダムに入手
+;-----------------------------
+@GetRandMaterial(QYT, PriceRange:0, PriceRange:1)
+#DIM PriceRange, 2
+#DIM cArray, 100
+#DIM cNumber
+#DIM Chosen
+#DIM QYT
+cNumber = 0
+FOR LOCAL, 600, 700
+	SIF ITEMNAME:LOCAL == ""
+		CONTINUE
+	;アイテム価格上限
+	SIF ITEMPRICE:LOCAL > PriceRange:0
+		CONTINUE
+	;下限は省略可
+	SIF ITEMPRICE:LOCAL < PriceRange:1
+		CONTINUE
+	SIF ITEM:LOCAL >= 99
+		CONTINUE
+	cArray:cNumber = LOCAL
+	cNumber ++
+NEXT
+SIF !cNumber
+	RETURN
+
+FOR LOCAL,0,QYT
+	Chosen = RAND:cNumber
+	ITEM:(cArray:Chosen) ++
+	CALL COLORMESSAGE(@"%조사처리(ITEMNAME:(cArray:Chosen),"를")% 손에 넣었다",C_YELLOW,1)
+NEXT
+
+@ForagePlaceName(ARG)
+#FUNCTIONS
+SELECTCASE ARG
+	;P22창고가는길
+	CASE 1
+		LOCALS = 창고 가는 길
+	;P23벽가는길
+	CASE 2
+		LOCALS = 벽 가는 길
+	;P24호수가는길
+	CASE 3
+		LOCALS = 호수 가는 길
+	;P25꽃밭가는길
+	CASE 4
+		LOCALS = 꽃밭 가는 길
+	;P26감옥저택앞
+	CASE 5
+		LOCALS = 감옥저택 앞
+	;P36안뜰
+	CASE 6
+		LOCALS = 안뜰
+	;P53호수앞
+	CASE 7
+		LOCALS = 호수 앞
+	;P54호숫가
+	CASE 8
+		LOCALS = 호숫가
+	;P56벽앞 
+	CASE 9
+		LOCALS = 벽 앞
+	;P57꽃밭앞
+	CASE 10
+		LOCALS = 꽃밭 앞
+	;P58꽃밭
+	CASE 11
+		LOCALS = 꽃밭
+	;P68게스트하우스앞
+	CASE 12
+		LOCALS = 게스트하우스 앞
+CASEELSE
+	LOCALS =
+ENDSELECT
+
+RETURNF LOCALS
+
+@Gathering_Drawing(채집위치, 채집파워, Modification)
+;RESULT:0	채집아이템
+;RESULT:1	채집량
+#DIM 채집위치
+#DIM 채집파워
+#DIM Chosen
+#DIM QTY
+#DIM Modification
+#DIM start			;抽選開始値
+#DIM end			;抽選終了値
+#DIM difference		;加算or減算
+#DIMS 低気圧位置
+#DIMS 積乱雲位置
+低気圧位置 = %GET_LOCATION_LOW()%
+積乱雲位置 = %GET_LOCATION_CUMULUS()%
+Chosen = 0
+QTY = 0
+;채집물의 선출
+;랜덤으로 검색 스타트 위치를 비켜 놓거나 검색의 방향을 바꾸거나 한다
+SELECTCASE RAND:5
+	CASE 0
+		start = 600 + RAND:40
+		end = 707
+		difference = 1
+	CASE 1
+		start = 706
+		end = 599
+		difference = -1
+	CASE 2
+		start = 640 - RAND:40
+		end = 599
+		difference = -1
+	CASEELSE
+		start = 600 + (5 * (RAND:9))
+		end = 707
+		difference = 1
+ENDSELECT
+
+FOR LOCAL:0, start, end, difference
+	;アイテムが無名でなく、出現条件を満たし、所有数上限でない
+	SIF ITEMNAME:(LOCAL:0) == ""
+		CONTINUE
+	IF ITEM:(LOCAL:0) == 99
+		DEBUGPRINTFORML 소지 상한 때문에 %ITEMNAME:(LOCAL:0)%를 스킵
+		CONTINUE
+	ENDIF
+	IF !GATHERING_SEASON(LOCAL:0)
+		DEBUGPRINTFORML 철이 지났기에 %ITEMNAME:(LOCAL:0)%를 스킵
+		CONTINUE
+	ENDIF
+	IF  GATHERING_PRODUCT(LOCAL:0, 채집위치) < 1
+		DEBUGPRINTFORML 위치가 부적절하기 때문에 %ITEMNAME:(LOCAL:0)%를 스킵
+		CONTINUE
+	ENDIF
+	LOCAL:5 = ITEMPRICE:(LOCAL:0) + 1000
+	;채집 파워＋보정치가 √ 아이템 비용+1000을 웃돌면 입수
+	;(天候パッチ)猛烈な台風通過後・二つ玉低気圧通過後・スーパーセル通過後は、龍の爪・竜血・竜骨・龍珠の入手成功率が上昇
+	IF GROUPMATCH(LOCAL:0, 606, 625, 634, 647) && ((低気圧位置 == "台風一過" && IS_TYPHOON:1 >= 5) || 低気圧位置 == "二つ玉低気圧通過" || (積乱雲位置 == "積乱雲通過" && CAN_CUMULUS:0 == 5))
+		DEBUGPRINTFORML %ITEMNAME:(LOCAL:0)% 입수 성공률 상승 중
+		IF 채집파워 + Modification < SQRT((LOCAL:5)/2)
+			DEBUGPRINTFORML 채집파워 부족 때문에 %ITEMNAME:(LOCAL:0)%를 스킵
+			CONTINUE
+		ENDIF
+	;(天候パッチ)寒冷渦通過後・二つ玉低気圧通過後は、氷の鱗の入手成功率が上昇
+	ELSEIF LOCAL:0 == 609 && (低気圧位置 == "寒冷渦通過" || 低気圧位置 == "二つ玉低気圧通過")
+		DEBUGPRINTFORML %ITEMNAME:(LOCAL:0)% 입수 성공률 상승 중
+		IF 채집파워 + Modification < SQRT((LOCAL:5)/2)
+			DEBUGPRINTFORML 채집파워 부족 때문에 %ITEMNAME:(LOCAL:0)%를 스킵
+			CONTINUE
+		ENDIF
+	ELSEIF 채집파워 + Modification < SQRT(LOCAL:5)
+		DEBUGPRINTFORML 채집파워 부족 때문에 %ITEMNAME:(LOCAL:0)%를 스킵
+		CONTINUE
+	ENDIF
+	DEBUGPRINTFORML %ITEMNAME:(LOCAL:0)%로 결정
+	Chosen = LOCAL:0
+	;가격 10000을 넘는 희소 아이템은 1개 밖에 손에 들어 오지 않는, 그것 이하의 가격대는 채집 파워에 응해 복수 입수가 가능하게
+	SELECTCASE LOCAL:5
+		CASE 0 TO 2000
+			QTY = MAX((RAND:(SQRT(채집파워)) - 1), 1)
+		CASE 2001 TO 4000
+			QTY = MAX((RAND:(SQRT(채집파워)) - 2), 1)
+		CASE 4001 TO 7000
+			QTY = MAX((RAND:(SQRT(채집파워)) - 3), 1)
+		CASE 7001 TO 9999
+			QTY = MAX((RAND:(SQRT(채집파워)) - 4), 1)
+		CASEELSE
+			QTY = 1
+	ENDSELECT
+	BREAK
+NEXT
+RETURN Chosen, QTY
+
+; 개인 임의수정, 소재 검색기능 추가
+;---- EDIT START ---------------------------------
+@SEARCH_GATHERING_ITEM
+#DIM ITEM_NUM
+#DIMS ITME_NAME
+
+PRINTFORML 채집 소재 검색
+CALL COLORMESSAGE(@"중급소재　",C_YELLOW)
+CALL COLORMESSAGE(@"고급소재　",C_P_GREEN)
+CALL COLORMESSAGE(@"최고급소재",C_AQUA)
+PRINTFORML 
+DRAWLINE
+
+FOR ITEM_NUM,600,641
+
+	SIF ITEMNAME:ITEM_NUM == ""
+		CONTINUE
+	; 나무만 예외처리
+	SIF ITEM_NUM == 610
+		CONTINUE
+
+	ITME_NAME = %ITEMNAME:ITEM_NUM%
+	IF ITEMPRICE:ITEM_NUM >= 1000
+		SETCOLOR C_YELLOW
+		SIF ABL:MASTER:교양 < 1
+			ITME_NAME = ？？？
+	ENDIF
+	IF ITEMPRICE:ITEM_NUM >= 3000
+		SETCOLOR C_P_GREEN
+		SIF ABL:MASTER:교양 < 2
+			ITME_NAME = ？？？
+	ENDIF
+	IF ITEMPRICE:ITEM_NUM >= 10000
+		SETCOLOR C_AQUA
+		SIF ABL:MASTER:교양 < 3
+			ITME_NAME = ？？？
+	ENDIF
+
+	PRINTFORMLC [{ITEM_NUM, 3}] %ITME_NAME%
+	RESETCOLOR
+NEXT
+
+PRINTFORML 
+DRAWLINE
+PRINTFORML [99] 그만둔다
+INPUT
+
+ITEM_NUM = RESULT
+IF ITEM_NUM == 99
+	RETURN -1
+ELSE
+	CALL SEARCH_GATHERING_ITEM_PLACE(ITEM_NUM)
+	CLEARLINE 1
+	RESTART
+ENDIF
+
+@SEARCH_GATHERING_ITEM_PLACE(ITEM_NUM)
+#DIM ITEM_NUM
+#DIM PLACE
+#DIMS PLACE_NAME
+
+IF (ITEMPRICE:ITEM_NUM >= 1000 && ABL:MASTER:교양 < 1) || (ITEMPRICE:ITEM_NUM >= 3000 && ABL:MASTER:교양 < 2) || (ITEMPRICE:ITEM_NUM >= 10000 && ABL:MASTER:교양 < 3)
+	PRINTFORMW 해당 소재의 채집 위치를 알기에는 교양이 부족하다…
+	RETURN
+ENDIF
+
+FOR PLACE,1, 90
+	IF ForagePlaceName(PLACE) == ""
+		CONTINUE
+	ELSE
+		IF GATHERING_PRODUCT(ITEM_NUM, PLACE)
+			PLACE_NAME '= ForagePlaceName(PLACE)
+
+			SIF !GATHERING_SEASON(ITEM_NUM, PLACE)
+				SETCOLOR 0x606060
+
+			PRINTFORMLC [{PLACE, 2}] %PLACE_NAME%
+			RESETCOLOR
+		ENDIF
+	ENDIF
+NEXT
+
+PRINTFORMW
+;---- EDIT END -----------------------------------
